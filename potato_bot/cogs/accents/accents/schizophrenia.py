@@ -87,23 +87,25 @@ topic_end = (
 
 
 def switch_topic(m: Match):
-    return " ".join(["," + random.choice(topics)] + [random.choice(topic_end)])
+    return f"{random.choice(topics)} {random.choice(topic_end)}"
 
 
 def repeat_word(m: Match):
-    n = random.randint(1, 2)
-    return " ".join(["," + m.original] * n)
+    severity = random.randint(0, 1) + min((m.severity, 10))
+
+    return f"{m.original}, {', '.join(m.original for _ in  range(severity - 1))}"
 
 
 def generate_neologism(m: Match):
-
-    neologism = random.choice(start) + random.choice(ending)
-
-    return " ".join([neologism])
+    return f"{random.choice(start)}{random.choice(ending)}"
 
 
 class Schizophrenia(Accent):
-    REPLACEMENTS = {
-        r"\w+": {switch_topic: 2, repeat_word: 3, None: 10},
-        f"({'|'.join(re.escape(word) for word in ending)})": generate_neologism,  # if new word matches any from 'ending' massive its replaced by 'generate_neologism()'
+    WORD_REPLACEMENTS = {
+        r"\w+": {
+            switch_topic: 0.13,
+            repeat_word: 0.2,
+        },
+        # if new word matches any from 'ending' list its replaced by 'generate_neologism()'
+        f"({'|'.join(re.escape(word) for word in ending)})": generate_neologism,
     }
