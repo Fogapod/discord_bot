@@ -55,10 +55,6 @@ _ReplacementType = Union[
 ]
 
 
-class Severity:
-    pass
-
-
 class Replacement:
     __slots__ = (
         "pattern",
@@ -69,10 +65,10 @@ class Replacement:
         self, pattern: str, replacement: _ReplacementType, flags: Any = re.IGNORECASE
     ):
         self.pattern = re.compile(pattern, flags)
-
         self.callback = self._get_callback(replacement)
 
-    def _get_callback(self, replacement: _ReplacementType) -> _ReplacementCallableType:
+    @staticmethod
+    def _get_callback(replacement: _ReplacementType) -> _ReplacementCallableType:
         if isinstance(replacement, str):
 
             def callback_static(match: Match):
@@ -183,17 +179,14 @@ class Replacement:
 
 
 class Accent:
+    # overridable variables
+    WORD_REPLACEMENTS: Dict[Union[re.Pattern, str], Any] = {}
+    REPLACEMENTS: Dict[Union[re.Pattern, str], Any] = {}
+
     # public variables
     # shortcuts for common regexes
     MESSAGE_START = r"\A(?!```)"
     MESSAGE_END = r"(?<!```)\Z"
-
-    # special value showing that chance depends on severity
-    SEVERITY = Severity()
-
-    # overridable variables
-    WORD_REPLACEMENTS: Dict[Union[re.Pattern, str], Any] = {}
-    REPLACEMENTS: Dict[Union[re.Pattern, str], Any] = {}
 
     # private class variables
     _registered_accents: Dict[str, Accent] = {}
