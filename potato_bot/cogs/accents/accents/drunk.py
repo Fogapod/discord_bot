@@ -6,22 +6,21 @@ from .accent import Match, Accent
 
 HICCBURPS = (
     "- burp... ",
-    "- hic- ",
+    "- hic -",
     "- hic! ",
     "- buuuurp... ",
 )
 
 
-def duplicate_char(match: Match) -> Optional[str]:
-    if random.random() > 0.8:
+def duplicate_char(m: Match) -> Optional[str]:
+    if random.random() * m.severity < 0.2:
         return
-    severity = random.randint(1, 6)
 
-    return match.original * severity
+    return m.original * (random.randint(0, 5) + m.severity)
 
 
-def hiccburp(match: Match) -> Optional[str]:
-    if random.random() > 0.1:
+def hiccburp(m: Match) -> Optional[str]:
+    if random.random() * m.severity < 0.1:
         return
 
     return random.choice(HICCBURPS)

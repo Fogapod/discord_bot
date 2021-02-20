@@ -12,9 +12,9 @@ class Spurdo(Accent):
         r"p": "b",
         r"x": "gs",
         r"\Bng\b": "gn",
-        r":?\)+": lambda m: f":{'D' * len(m.original) * random.randint(1, 5)}",
+        r":?\)+": lambda m: f":{'D' * len(m.original) * (random.randint(1, 5) + m.severity)}",
         Accent.MESSAGE_END: {
-            lambda m: f" :{'D' * random.randint(1, 5)}": 0.5,
+            lambda m: f" :{'D' * (random.randint(1, 5)+ m.severity)}": 0.5,
         },
     }
 
