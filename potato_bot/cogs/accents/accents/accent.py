@@ -8,20 +8,34 @@ from typing import Any, Dict, Union, Callable, Optional, Sequence
 
 
 class ReplacementContext:
+    """
+    Instance of this class is passed to every handler function as a part of Match.
+
+    `id` is an arbitrary identificator of translation source. For example, user id.
+    Passed value depends on implementation and might be not set at all (None).
+
+    `state` can be used to store arbitrary accent state. Since every accent get their
+    own instance of this context, accent is free to store any information there.
+    """
+
     __slots__ = (
-        "position",
-        "data",
+        "id",
+        "state",
     )
 
-    def __init__(self, position: int = 0, data: Any = None):
-        self.position = position
-        self.data = data
+    def __init__(self, id: Any = None):
+        self.id = id
+        self.state = None
 
     def __repr__(self) -> str:
-        return f"<{type(self).__name__} position={self.position} data={self.data}>"
+        return f"<{type(self).__name__} id={self.id} state={self.state}>"
 
 
 class Match:
+    """
+    Contains information about current match. Passed to every handler function.
+    """
+
     __slots__ = (
         "match",
         "severity",
@@ -157,8 +171,6 @@ class Replacement:
             if result_len > limit:
                 return original
 
-            context.position += 1
-
             if original.islower():
                 return replacement
 
@@ -179,6 +191,27 @@ class Replacement:
 
 
 class Accent:
+    """
+    Main accent class.
+
+    Each time this class is inherited, child class is added to the pool of accents.
+
+    Accent replacements are defined with WORD_REPLACEMENTS and REPLACEMENTS variables.
+    Both of these variables are dicts where keys are regular expressions and keys are:
+    - strings: for direct replacements
+    - handlers: functions acception Match as argument and returning Optional[str]
+    - tuples of strings or handlers: one item is selected with equal probabilities
+    - dicts where keys are strings or handlers and values are relative probabilities
+
+    Additional notes:
+    In case None is selected, match remains untouched.
+    If sum of dict probabilities < 1, None is added with probability 1 - SUM.
+    Dict probabilities can be dynamic, callables accepting int (severity value).
+
+    You can see examples of accents in same folder. OwO is one of the most advanced
+    accents where most features are used.
+    """
+
     # overridable variables
     WORD_REPLACEMENTS: Dict[Union[re.Pattern, str], Any] = {}
     REPLACEMENTS: Dict[Union[re.Pattern, str], Any] = {}
@@ -221,10 +254,10 @@ class Accent:
         *,
         severity: int = 1,
         limit: int = 2000,
-        context_data: Any = None,
+        context_id: Any = None,
     ) -> str:
         if severity >= 1:
-            context = ReplacementContext(data=context_data)
+            context = ReplacementContext(id=context_id)
             for replacement in self._replacemtns:
                 text = replacement.apply(
                     text,
