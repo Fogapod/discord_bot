@@ -106,5 +106,5 @@ def generate_neologism(m: Match):
 class Schizophrenia(Accent):
     REPLACEMENTS = {
         r"\w+": {switch_topic: 2, repeat_word: 3, None: 10},
-        f"({'|'.join(re.escape(word) for word in ending)})": generate_neologism(), #if new word matches any from 'ending' massive its replaced by 'generate_neologism()'
+        f"({'|'.join(re.escape(word) for word in ending)})": generate_neologism, #if new word matches any from 'ending' massive its replaced by 'generate_neologism()'
     }
