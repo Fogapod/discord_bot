@@ -51,6 +51,7 @@ def nya(m: Match) -> Optional[str]:
 
 
 def exponential_owo(s: int) -> float:
+    # TODO: actual exponential owo
     return min((1, 0.1 * s))
 
 

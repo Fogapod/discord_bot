@@ -13,7 +13,7 @@ from potato_bot.bot import Bot
 from potato_bot.cog import Cog
 
 try:
-    from potato_bot.cogs.accents import AccentConvertable
+    from potato_bot.cogs.accents import AccentWithSeverity
 except ImportError:
     raise Exception("This cog relies on the existance of accents cog")
 
@@ -44,7 +44,7 @@ class SessionSettings:
         *,
         channel_id: int,
         emotion: tt.Emotion = tt.Emotion.neutral,
-        accents: Sequence[AccentConvertable] = [],  # noqa
+        accents: Sequence[AccentWithSeverity] = [],  # noqa
     ):
         self.session_id = session_id
         self.channel_id = channel_id
@@ -100,7 +100,7 @@ class Chat(Cog):
             await ctx.send(result)
 
     @commands.command()
-    async def session(self, ctx, emotion: Emotion, *accents: AccentConvertable):
+    async def session(self, ctx, emotion: Emotion, *accents: AccentWithSeverity):
         """Start chat session in channel
 
         Use  accent list  commamd to get list of accents.
