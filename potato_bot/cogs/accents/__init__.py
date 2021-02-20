@@ -91,11 +91,7 @@ _UserAccentsType = Sequence[AccentWithSeverity]
 
 
 class Accents(Cog):
-    """
-    Commands for managing accents.
-
-    In order to set accent severity use square brackets: OwO[100]
-    """
+    """Commands for managing accents."""
 
     # guild_id -> user_id -> accents
     # this has to be class variable because of hooks
@@ -141,7 +137,11 @@ class Accents(Cog):
         invoke_without_command=True, ignore_extra=False, aliases=["accents"]
     )
     async def accent(self, ctx: Context):
-        """Accent management"""
+        """
+        Accent management.
+
+        In order to set accent severity use square brackets: OwO[100]
+        """
 
         await ctx.send_help(ctx.command)
 
