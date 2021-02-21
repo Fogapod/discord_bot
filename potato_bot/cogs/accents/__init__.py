@@ -32,7 +32,7 @@ class AccentWithSeverity:
     )
 
     MIN_SEVERITY = 1
-    MAX_SEVERITY = 100
+    MAX_SEVERITY = 10
 
     @classmethod
     async def convert(cls, ctx: Context, argument: str) -> AccentWithSeverity:
