@@ -91,9 +91,9 @@ def switch_topic(m: Match):
 
 
 def repeat_word(m: Match):
-    severity = random.randint(0, 1) + min((m.severity, 10))
+    n = random.randint(0, 1) + m.severity - 1
 
-    return f"{m.original}, {', '.join(m.original for _ in  range(severity - 1))}"
+    return f"{m.original}, {', '.join(m.original for _ in  range(n))}"
 
 
 def generate_neologism(m: Match):

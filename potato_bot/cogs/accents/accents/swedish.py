@@ -9,7 +9,7 @@ def bork(m: Match) -> Optional[str]:
     if random.random() * m.severity < 1 / 3:
         return
 
-    return f" Bork{', bork' * random.randint(0, min(10, m.severity))}!"
+    return f" Bork{', bork' * random.randint(0, m.severity)}!"
 
 
 # https://github.com/unitystation/unitystation/blob/cf3bfff6563f0b3d47752e19021ab145ae318736/UnityProject/Assets/Resources/ScriptableObjects/Speech/Swedish.asset
