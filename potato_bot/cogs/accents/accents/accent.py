@@ -256,15 +256,14 @@ class Accent:
         limit: int = 2000,
         context_id: Any = None,
     ) -> str:
-        if severity >= 1:
-            context = ReplacementContext(id=context_id)
-            for replacement in self._replacemtns:
-                text = replacement.apply(
-                    text,
-                    severity=severity,
-                    limit=limit,
-                    context=context,
-                )
+        context = ReplacementContext(id=context_id)
+        for replacement in self._replacemtns:
+            text = replacement.apply(
+                text,
+                severity=severity,
+                limit=limit,
+                context=context,
+            )
 
         return text
 

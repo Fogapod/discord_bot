@@ -15,6 +15,5 @@ def honk(m: Match) -> Optional[str]:
 class Clown(Accent):
     REPLACEMENTS = {
         r"[a-z]+": lambda m: m.original.upper() if m.severity > 1 else m.original,
-        r"(?<!```)\n": lambda m: f"{honk(m)}\n",
         Accent.MESSAGE_END: honk,
     }
