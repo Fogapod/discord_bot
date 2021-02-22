@@ -344,6 +344,23 @@ class Accents(Cog):
 
         await ctx.send(text, accents=[accent])
 
+    @accent.command(aliases=["purge"])
+    @commands.has_permissions(manage_messages=True)
+    @commands.bot_has_permissions(manage_messages=True)
+    async def clean(self, ctx: Context, limit: int = 100):
+        """Removes webhook messages from channel, checking up to `limit` messages"""
+
+        upper_limit = 1000
+        if limit > upper_limit:
+            return await ctx.send(f"Limit should be between 1 and {upper_limit}")
+
+        def is_webhook(m: discord.Message) -> bool:
+            return m.webhook_id is not None
+
+        async with ctx.typing():
+            deleted = await ctx.channel.purge(limit=limit, check=is_webhook)
+            await ctx.send(f"Deleted **{len(deleted)}** out of **{limit}** message(s)")
+
     @commands.command()
     @commands.guild_only()
     async def owo(self, ctx: Context):
