@@ -346,7 +346,7 @@ class Accents(Cog):
 
     @accent.command(aliases=["purge"])
     @commands.has_permissions(manage_messages=True)
-    @commands.bot_has_permissions(manage_messages=True)
+    @commands.bot_has_permissions(manage_messages=True, manage_webhooks=True)
     async def clean(self, ctx: Context, limit: int = 100):
         """Removes webhook messages from channel, checking up to `limit` messages"""
 
@@ -354,11 +354,17 @@ class Accents(Cog):
         if limit > upper_limit:
             return await ctx.send(f"Limit should be between 1 and {upper_limit}")
 
-        def is_webhook(m: discord.Message) -> bool:
-            return m.webhook_id is not None
+        accent_webhook = await self._get_cached_webhook(ctx.channel, create=False)
+        if accent_webhook is None:
+            return await ctx.send(
+                "There is no accent webhook in this channel. Nothing to delete"
+            )
+
+        def is_accent_webhook(m: discord.Message) -> bool:
+            return m.webhook_id == accent_webhook.id
 
         async with ctx.typing():
-            deleted = await ctx.channel.purge(limit=limit, check=is_webhook)
+            deleted = await ctx.channel.purge(limit=limit, check=is_accent_webhook)
             await ctx.send(f"Deleted **{len(deleted)}** out of **{limit}** message(s)")
 
     @commands.command()
@@ -472,15 +478,19 @@ class Accents(Cog):
             await self._send_new_message(ctx, content, message)
 
     async def _get_cached_webhook(
-        self, channel: discord.TextChannel
-    ) -> discord.Webhook:
+        self,
+        channel: discord.TextChannel,
+        create: bool = True,
+    ) -> Optional[discord.Webhook]:
         if (wh := self._webhooks.get(channel.id)) is None:
-            wh_name = ACCENT_WEBHOOK_NAME
             for wh in await channel.webhooks():
-                if wh.name == wh_name:
+                if wh.name == ACCENT_WEBHOOK_NAME:
                     break
             else:
-                wh = await channel.create_webhook(name=wh_name)
+                if not create:
+                    return None
+
+                wh = await channel.create_webhook(name=ACCENT_WEBHOOK_NAME)
 
             self._webhooks[channel.id] = wh
 
