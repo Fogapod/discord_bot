@@ -140,13 +140,23 @@ class Accents(Cog):
         """
         Accent management.
 
-        In order to set accent severity use square brackets: OwO[100]
+        In order to set accent severity use square brackets: OwO[10]
         """
 
         await ctx.send_help(ctx.command)
 
-    def _format_accent_list(self, accents: _UserAccentsType) -> str:
-        body = ""
+    @accent.command()
+    @commands.guild_only()
+    async def list(self, ctx: Context, user: discord.Member = None):
+        """List accents for user"""
+
+        if user is None:
+            user = ctx.author
+        else:
+            if user.bot and user.id != ctx.me.id:
+                return await ctx.send("Bots cannot have accents")
+
+        accents = self.get_user_accents(ctx.guild.id, user.id)
 
         # I have no idea why this is not in stdlib, string has find method
         def sequence_find(seq: Sequence[Any], item: Any, default: int = -1) -> int:
@@ -161,11 +171,13 @@ class Accents(Cog):
 
         all_accents = Accent.all_accents()
 
+        body = ""
+
         for accent in sorted(
             all_accents,
             key=lambda a: (
                 # sort by position in global accent list, leave missing at the end
-                sequence_find(accent_map.keys(), a, len(all_accents)),
+                sequence_find(accents, a, len(all_accents)),
                 # sort the rest by names
                 str(a).lower(),
             ),
@@ -177,7 +189,9 @@ class Accents(Cog):
 
             body += line
 
-        return body
+        await ctx.send(
+            f"**{user}** accents (applied from top to bottom): ```diff\n{body}```"
+        )
 
     async def _add_accents(self, ctx: Context, user_id: int, accents: _UserAccentsType):
         current_accents = self.get_user_accents(ctx.guild.id, user_id)
@@ -264,19 +278,15 @@ class Accents(Cog):
         await ctx.me.edit(nick=new_nick)
 
     @accent.group(name="bot", invoke_without_command=True, ignore_extra=False)
+    @commands.has_permissions(manage_guild=True)
     async def _bot_accent(self, ctx: Context):
-        """Manage bot accents, lists accents without arguments"""
+        """Manage bot accents"""
 
-        accents = self.get_user_accents(ctx.guild.id, ctx.me.id)
-        formatted_list = self._format_accent_list(accents)
-
-        await ctx.send(
-            f"Bot accents (applied from top to bottom): ```diff\n{formatted_list}```"
-        )
+        await ctx.send_help(ctx.command)
 
     @_bot_accent.command(name="add", aliases=["enable", "on"])
     @commands.has_permissions(manage_guild=True)
-    async def _bot_accent_add(self, ctx: Context, *accents: AccentWithSeverity):
+    async def add_bot_accent(self, ctx: Context, *accents: AccentWithSeverity):
         """Add bot accents"""
 
         if not accents:
@@ -290,7 +300,7 @@ class Accents(Cog):
 
     @_bot_accent.command(name="remove", aliases=["disable", "off"])
     @commands.has_permissions(manage_guild=True)
-    async def _bot_accent_remove(self, ctx: Context, *accents: AccentWithSeverity):
+    async def remove_bot_accent(self, ctx: Context, *accents: AccentWithSeverity):
         """
         Remove bot accents
 
@@ -303,32 +313,9 @@ class Accents(Cog):
 
         await ctx.send("Removed bot accents")
 
-    @accent.command(name="use")
-    async def accent_use(self, ctx: Context, accent: AccentWithSeverity, *, text: str):
-        """Apply specified accent to text"""
-
-        await ctx.send(text, accents=[accent])
-
-    @accent.group(
-        name="me",
-        invoke_without_command=True,
-        ignore_extra=False,
-    )
-    @commands.guild_only()
-    async def my_accents(self, ctx: Context):
-        """Manage your accents, lists accents without arguments"""
-
-        accents = self.get_user_accents(ctx.guild.id, ctx.author.id)
-        formatted_list = self._format_accent_list(accents)
-
-        await ctx.send(
-            f"Your accents (applied from top to bottom): ```diff\n{formatted_list}```"
-        )
-
-    @my_accents.command(name="add", aliases=["enable", "on"])
-    @commands.guild_only()
+    @accent.command(name="add", aliases=["enable", "on"])
     @commands.bot_has_permissions(manage_messages=True, manage_webhooks=True)
-    async def add_my_accent(self, ctx, *accents: AccentWithSeverity):
+    async def add_accent(self, ctx, *accents: AccentWithSeverity):
         """Add personal accents"""
 
         if not accents:
@@ -338,9 +325,9 @@ class Accents(Cog):
 
         await ctx.send("Added personal accents")
 
-    @my_accents.command(name="remove", aliases=["disable", "off"])
+    @accent.command(name="remove", aliases=["disable", "off"])
     @commands.guild_only()
-    async def remove_my_accent(self, ctx, *accents: AccentWithSeverity):
+    async def remove_accent(self, ctx, *accents: AccentWithSeverity):
         """
         Remove personal accents
 
@@ -350,6 +337,12 @@ class Accents(Cog):
         await self._remove_accents(ctx, ctx.author.id, accents)
 
         await ctx.send("Removed personal accents")
+
+    @accent.command(name="use")
+    async def accent_use(self, ctx: Context, accent: AccentWithSeverity, *, text: str):
+        """Apply specified accent to text"""
+
+        await ctx.send(text, accents=[accent])
 
     @commands.command()
     @commands.guild_only()
