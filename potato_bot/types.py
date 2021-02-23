@@ -325,7 +325,7 @@ class Image:
             else:
                 error += str(e)
 
-            raise commands.ConversionError(error)
+            raise commands.ConversionError(error, e)
 
     async def to_pil_image(self, ctx: Context) -> PIL.Image:
         fetched = await self.fetch(ctx)
