@@ -1,18 +1,30 @@
+import copy
+import time
+
 from typing import Any, Dict
 
 from discord.ext import commands
 
 from potato_bot.bot import Bot
+from potato_bot.cog import Cog
 from potato_bot.context import Context
 
+SERVER_FETCH_INTERVAL = 10
 
-class UnityStation(commands.Cog):
+
+class UnityStation(Cog):
     """
     UnityStation related commands
 
     UnityStation is a SS13 remake in Unity.
     You can learn more about this game by joining their official server: discord.gg/tFcTpBp
     """
+
+    def __init__(self, bot: Bot):
+        super().__init__(bot)
+
+        self._fetched_servers_time = time.monotonic() - SERVER_FETCH_INTERVAL
+        self._fetched_servers: Dict[str, Any] = []
 
     @commands.command(aliases=["list", "sv"])
     async def servers(self, ctx: Context, *, server: str = None):
@@ -25,6 +37,9 @@ class UnityStation(commands.Cog):
                 await self._server(ctx, server)
 
     async def _fetch_servers(self, ctx: Context) -> Dict[str, Any]:
+        if time.monotonic() - self._fetched_servers_time < SERVER_FETCH_INTERVAL:
+            return copy.deepcopy(self._fetched_servers)
+
         async with ctx.session.get("https://api.unitystation.org/serverlist") as r:
             if r.status != 200:
                 await ctx.send(f"Bad API response status code: {r.status}", exit=True)
@@ -34,9 +49,14 @@ class UnityStation(commands.Cog):
 
         # sort using player count and name fields, player count is reversed and is more
         # significant
-        return sorted(
+        servers = sorted(
             data["servers"], key=lambda s: (-s["PlayerCount"], s["ServerName"])
         )
+
+        self._fetched_servers_time = time.monotonic()
+        self._fetched_servers = servers
+
+        return copy.deepcopy(servers)
 
     async def _server(self, ctx: Context, server_name: str):
         servers = await self._fetch_servers(ctx)
