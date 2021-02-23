@@ -9,7 +9,7 @@ ExecStartPre=-/usr/bin/docker build /srv/potato_bot -t fogapod/potato_bot
 ExecStartPre=-/usr/bin/docker stop %n
 ExecStartPre=-/usr/bin/docker rm %n
 ExecStart=/usr/bin/docker run --name %n --rm \
-    -v /srv/potato_bot:/code \
+    -v /srv/potato_bot/db.sqlite:/code/db.sqlite \
     --env-file /srv/potato_bot/.env fogapod/potato_bot
 
 [Install]
