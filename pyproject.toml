@@ -1,7 +1,6 @@
 [tool.black]
 target-version = ['py38']
 force-exclude = '''
-migrations
 '''
 
 [tool.isort]

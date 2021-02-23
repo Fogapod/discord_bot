@@ -11,7 +11,7 @@ from potato_bot.context import Context
 
 
 class Fun(Cog):
-    """Commands without practival use"""
+    """Commands without practical use"""
 
     THROWABLE_ITEMS = (
         "dead bird",

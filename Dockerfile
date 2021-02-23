@@ -13,8 +13,19 @@ WORKDIR /code
 
 COPY requirements.txt .
 
-RUN apk add --no-cache git \
+RUN apk add --no-cache \
+    git \
+    # Pillow
+    # refer to: https://pillow.readthedocs.io/en/stable/installation.html#external-libraries
+    # and: https://github.com/python-pillow/docker-images/blob/master/alpine/Dockerfile
+    zlib-dev \
+    jpeg-dev \
+    openjpeg-dev \
+    freetype-dev \
+    # Font for trocr
+    ttf-dejavu \
     && apk add --no-cache --virtual .build-deps \
+    # Required for almost everything
     gcc \
     musl-dev \
     && pip install -U pip \

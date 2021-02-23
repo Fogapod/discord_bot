@@ -22,6 +22,7 @@ initial_extensions = (
     "potato_bot.cogs.accents",
     "potato_bot.cogs.chat",
     "potato_bot.cogs.fun",
+    "potato_bot.cogs.images",
     "potato_bot.cogs.meta",
     "potato_bot.cogs.techadmin",
     "potato_bot.cogs.unitystation",
