@@ -1,16 +1,23 @@
+[Install]
+WantedBy=multi-user.target
+
 [Unit]
 Description=PotatoBot Discord bot
 
 [Service]
-TimeoutStartSec=0
+Type=simple
 Restart=always
-ExecStartPre=-/usr/bin/docker pull fogapod/potato_bot
-ExecStartPre=-/usr/bin/docker build /srv/potato_bot --cache-from fogapod/potato_bot -t fogapod/potato_bot
+
+WorkingDirectory=/srv/potato_bot
+Environment="IMAGE=fogapod/potato_bot"
+Environment="PWD=/srv/potato_bot"
+
+ExecStartPre=-/usr/bin/docker pull $IMAGE
+ExecStartPre=/usr/bin/docker build -t $IMAGE .
+
 ExecStartPre=-/usr/bin/docker stop %n
 ExecStartPre=-/usr/bin/docker rm %n
-ExecStart=/usr/bin/docker run --name %n --rm \
-    -v /srv/potato_bot/db.sqlite:/code/db.sqlite \
-    --env-file /srv/potato_bot/.env fogapod/potato_bot
 
-[Install]
-WantedBy=multi-user.target
+ExecStart=/usr/bin/docker run --name %n --rm \
+    -v ${PWD}/db.sqlite:/code/db.sqlite \
+    --env-file ${PWD}/.env $IMAGE
