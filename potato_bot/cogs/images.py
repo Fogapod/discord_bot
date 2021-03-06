@@ -16,7 +16,6 @@ from potato_bot.types import Image, StaticImage, AnimatedImage
 from potato_bot.context import Context
 
 OCR_API_URL = "https://api.tsu.sh/google/ocr"
-TRANSLATE_API_URL = "https://translate.yandex.net/api/v1.5/tr.json/"
 
 FONT_PATH = "DejaVuSans.ttf"
 
@@ -256,18 +255,23 @@ class Images(Cog):
             if r.status != 200:
                 if r.content_type.lower() != "application/json":
                     # something went terribly wrong
-                    return await ctx.reply(
-                        f"Something really bad happened with underlying OCR API: {r.status}"
+                    await ctx.reply(
+                        f"Something really bad happened with underlying OCR API: {r.status}",
+                        exit=True,
                     )
 
                 try:
                     json = await r.json()
                 except json.JSONDecodeError:
-                    return await ctx.reply("Unable to process response from OCR API")
+                    await ctx.reply(
+                        "Unable to process response from OCR API",
+                        exit=True,
+                    )
 
-                return await ctx.reply(
+                await ctx.reply(
                     f"Error in underlying OCR API[{r.status}]: "
-                    f'{json.get("message", "[MISSING]")}'
+                    f'{json.get("message", "[MISSING]")}',
+                    exit=True,
                 )
             json = await r.json()
 
