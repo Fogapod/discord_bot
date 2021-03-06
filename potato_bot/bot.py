@@ -49,7 +49,7 @@ class Bot(commands.Bot):
         )
 
         self.db = DB()
-        self.session = aiohttp.ClientSession()
+        self.session = aiohttp.ClientSession(headers={"user-agent": "PotatoBot"})
 
         self.owner_ids: Set[int] = set()
 

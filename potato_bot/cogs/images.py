@@ -3,7 +3,7 @@ import math
 import itertools
 
 from io import BytesIO
-from typing import Tuple
+from typing import Any, Dict, Tuple
 
 import PIL
 import discord
@@ -239,6 +239,54 @@ class Images(Cog):
 
         await ctx.send(i)
 
+    async def _ocr(
+        self, ctx: Context, image_url: str, *, raw: bool = False
+    ) -> Dict[str, Any]:
+        params = {"q": image_url}
+        if raw:
+            params["raw"] = 0
+
+        async with ctx.session.get(
+            OCR_API_URL,
+            params=params,
+            headers={
+                "authorization": os.environ["OCR_API_TOKEN"],
+            },
+        ) as r:
+            if r.status != 200:
+                if r.content_type.lower() != "application/json":
+                    # something went terribly wrong
+                    return await ctx.reply(
+                        f"Something really bad happened with underlying OCR API: {r.status}"
+                    )
+
+                try:
+                    json = await r.json()
+                except json.JSONDecodeError:
+                    return await ctx.reply("Unable to process response from OCR API")
+
+                return await ctx.reply(
+                    f"Error in underlying OCR API[{r.status}]: "
+                    f'{json.get("message", "[MISSING]")}'
+                )
+            json = await r.json()
+
+        return json
+
+    @commands.command()
+    async def ocr(self, ctx: Context, image: StaticImage = None):
+        """Read text on image"""
+
+        if image is None:
+            image = await StaticImage.from_history(ctx)
+
+        json = await self._ocr(ctx, image.url)
+
+        if not (text := json["text"]):
+            return await ctx.reply("No text detected")
+
+        await ctx.send(f"```\n{text}```")
+
     @commands.command()
     async def trocr(
         self, ctx: Context, language: str = "en", image: StaticImage = None
@@ -255,35 +303,10 @@ class Images(Cog):
 
         src = await image.to_pil_image(ctx)
 
-        async with ctx.session.get(
-            OCR_API_URL,
-            params=dict(q=image.url, raw=1),
-            headers={
-                "user-agent": "PotatoBot",
-                "authorization": os.environ["OCR_API_TOKEN"],
-            },
-        ) as r:
-            if r.status != 200:
-                return await r.read()
-                if r.content_type.lower() != "application/json":
-                    # something went terribly wrong
-                    return await ctx.send(
-                        f"Something really bad happened with underlying OCR API: {r.status}"
-                    )
-
-                try:
-                    json = await r.json()
-                except json.JSONDecodeError:
-                    return await ctx.send("Unable to process response from OCR API")
-
-                return await ctx.send(
-                    f"Error in underlying OCR API[{r.status}]: "
-                    f'{json.get("message", "[MISSING]")}'
-                )
-            json = await r.json()
+        json = await self._ocr(ctx, image.url, raw=True)
 
         if not (text_annotations := json["responses"][0].get("textAnnotations")):
-            return await ctx.send("No text detected")
+            return await ctx.reply("No text detected")
 
         # error reporting
         notes = ""

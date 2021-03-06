@@ -40,6 +40,7 @@ class Fun(Cog):
         "chessboard",
         "bowl of rice",
         "mug",
+        "mud",
         "egg",
         "up",
         "spear",

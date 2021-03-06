@@ -42,7 +42,7 @@ class UnityStation(Cog):
 
         async with ctx.session.get("https://api.unitystation.org/serverlist") as r:
             if r.status != 200:
-                await ctx.send(f"Bad API response status code: {r.status}", exit=True)
+                await ctx.reply(f"Bad API response status code: {r.status}", exit=True)
 
             # they send json with html mime type
             data = await r.json(content_type=None)
