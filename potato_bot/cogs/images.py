@@ -254,9 +254,13 @@ class Images(Cog):
         ) as r:
             if r.status != 200:
                 if r.content_type.lower() != "application/json":
-                    # something went terribly wrong
+                    reason = await r.text()
+                    if reason.count("\n") > 1:
+                        # we got some garbage HTML response
+                        reason = "unknown error"
+
                     await ctx.reply(
-                        f"Something really bad happened with underlying OCR API: {r.status}",
+                        f"Something really bad happened with underlying API[{r.status}]: {reason}",
                         exit=True,
                     )
 
@@ -264,13 +268,13 @@ class Images(Cog):
                     json = await r.json()
                 except json.JSONDecodeError:
                     await ctx.reply(
-                        "Unable to process response from OCR API",
+                        f"Unable to process response from API[{r.status}]",
                         exit=True,
                     )
 
                 await ctx.reply(
-                    f"Error in underlying OCR API[{r.status}]: "
-                    f'{json.get("message", "[MISSING]")}',
+                    f"Error in underlying API[{r.status}]: "
+                    f'{json.get("message", "unknown error")}',
                     exit=True,
                 )
             json = await r.json()
@@ -278,11 +282,11 @@ class Images(Cog):
         return json
 
     @commands.command()
-    async def ocr(self, ctx: Context, image: StaticImage = None):
+    async def ocr(self, ctx: Context, image: Image = None):
         """Read text on image"""
 
         if image is None:
-            image = await StaticImage.from_history(ctx)
+            image = await Image.from_history(ctx)
 
         json = await self._ocr(ctx, image.url)
 

@@ -3,7 +3,7 @@ import random
 from .accent import Match, Accent
 
 
-def brrrr(m: Match):
+def go_brrrr(m: Match):
     forms_of_go = (
         ("es", "goes"),
         ("e", "go"),
@@ -22,7 +22,7 @@ def brrrr(m: Match):
 class Autumn(Accent):
     WORD_REPLACEMENTS = {
         r"increas[a-z]+": {
-            lambda m: brrrr(m): 0.5,
+            lambda m: go_brrrr(m): 0.5,
         },
         "them": "em",
         "well": "welp",
@@ -32,13 +32,14 @@ class Autumn(Accent):
         "hey": "yo",
         "because": "cause",
         "let me": "lemme",
+        "this is": {
+            "dis": 0.2,
+            "tis": 0.3,
+        },
     }
     REPLACEMENTS = {
         # "who" does not work well with this
         r"\bwh(?!o)": "w",
-        r"\bth": {
-            "d": 0.25,
-        },
         r"oo": "u",
         # !!contextual syntax is hell!!
         # I'm not sure how to describe this rule universally yet

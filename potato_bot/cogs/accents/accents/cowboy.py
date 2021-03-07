@@ -2,14 +2,14 @@ import random
 
 from typing import Optional
 
-from .accent import Accent
+from .accent import Match, Accent
 
 
-def yeehaw(chance: float) -> Optional[str]:
-    if random.random() > chance:
+def yeehaw(m: Match) -> Optional[str]:
+    if random.random() > m.severity / 10:
         return
 
-    return f"y{'e'* random.randint(1,6)}haw"
+    return f"y{'e'* (random.randint(0,5) + m.severity)}haw"
 
 
 # https://en.m.wikipedia.org/wiki/Texan_English
@@ -27,7 +27,7 @@ class Cowboy(Accent):
         r"\B(?<!\bh)ey\b": "ay",
         r"(?<=g)r\B": "uh-r",
         r"(?<!h-)re": "hr",
-        Accent.MESSAGE_END: lambda m: f" {yeehaw(1.0)}",
+        Accent.MESSAGE_END: lambda m: f" {yeehaw(m)}",
     }
     WORD_REPLACEMENTS = {
         r"the": "thuh",

@@ -1,3 +1,4 @@
+import math
 import random
 
 from typing import Optional
@@ -46,13 +47,12 @@ def nya(m: Match) -> Optional[str]:
 
     return " ".join(
         random.choices(ALL_NYAS, weights)[0]
-        for _ in range(random.randint(1, m.severity))
+        for _ in range(random.randint(0, round(m.count_logarithmic() * 5)))
     )
 
 
-def exponential_owo(s: int) -> float:
-    # TODO: actual exponential owo
-    return min((1, 0.1 * s))
+def logarithmic_owo(s: int) -> float:
+    return max((0.25, math.log10(s)))
 
 
 class OwO(Accent):
@@ -60,7 +60,7 @@ class OwO(Accent):
         r"[rlv]": "w",
         r"ove": "uv",
         r"(?<!ow)o(?!wo)": {
-            "owo": 0.25,
+            "owo": 0.2,
         },
         # do not break mentions by avoiding @
         r"(?<!@)!": lambda m: f" {random.choice(NYAS)}!",
@@ -70,11 +70,11 @@ class OwO(Accent):
         r"no": "nyo",
         r"nu": "nyu",
         Accent.MESSAGE_START: {
-            lambda m: f"{nya(m)} ": exponential_owo,
+            lambda m: f"{nya(m)} ": logarithmic_owo,
             None: 1,
         },
         Accent.MESSAGE_END: {
-            lambda m: f" {nya(m)}": exponential_owo,
+            lambda m: f" {nya(m)}": logarithmic_owo,
             None: 1,
         },
     }
