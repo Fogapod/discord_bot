@@ -6,6 +6,7 @@ import discord
 
 from discord.ext import commands
 
+from potato_bot.bot import Bot
 from potato_bot.cog import Cog
 from potato_bot.context import Context
 
@@ -64,7 +65,7 @@ class Fun(Cog):
         ] = None,
         *,
         item: str = None,
-    ):
+    ) -> None:
         """Throw things, for FUN
 
         Target can be user, channel or just string.
@@ -147,13 +148,13 @@ class Fun(Cog):
             )
 
     @commands.command()
-    async def say(seld, ctx: Context, *, text: str):
+    async def say(seld, ctx: Context, *, text: str) -> None:
         """Make bot say something"""
 
         await ctx.send(text)
 
     @commands.command()
-    async def joke(self, ctx: Context):
+    async def joke(self, ctx: Context) -> None:
         """Summon the funny"""
 
         async with ctx.session.get(
@@ -164,5 +165,5 @@ class Fun(Cog):
         await ctx.send(f"{data['setup']}\n||{data['punchline']}||")
 
 
-def setup(bot):
+def setup(bot: Bot) -> None:
     bot.add_cog(Fun(bot))

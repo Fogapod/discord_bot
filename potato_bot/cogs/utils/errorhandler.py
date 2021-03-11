@@ -1,6 +1,6 @@
-import os
 import logging
-import traceback
+
+import sentry_sdk
 
 from discord.ext import commands
 
@@ -12,21 +12,8 @@ log = logging.getLogger(__name__)
 
 
 class ErrorHandler(Cog):
-    def __init__(self, bot: Bot):
-        super().__init__(bot)
-
-        self.error_channel = None
-
-    async def setup(self):
-        if "ERROR_CHANNEL" not in os.environ:
-            log.warn("error channel not set")
-        else:
-            self.error_channel = await self.bot.fetch_channel(
-                os.environ["ERROR_CHANNEL"]
-            )
-
     @Cog.listener()
-    async def on_command_error(self, ctx: Context, e: Exception):
+    async def on_command_error(self, ctx: Context, e: Exception) -> None:
         if isinstance(e, commands.CommandInvokeError):
             e = e.original
 
@@ -67,18 +54,10 @@ class ErrorHandler(Cog):
         else:
             await ctx.reply(f"Unexpected error: **{type(e).__name__}**: `{e}`")
 
-            await self.send_error(e)
+            sentry_sdk.capture_exception(e)
 
             raise e
 
-    async def send_error(self, e: Exception):
-        if self.error_channel is None:
-            return
 
-        tb = "".join(traceback.format_exception(None, e, e.__traceback__, limit=20))
-
-        await self.error_channel.send(f"**{type(e).__name__}**: {e}```\n{tb}```")
-
-
-def setup(bot: Bot):
+def setup(bot: Bot) -> None:
     bot.add_cog(ErrorHandler(bot))

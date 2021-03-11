@@ -19,7 +19,7 @@ class AsyncHookable:
             name = func.__name__
 
             @wraps(func)
-            async def wrapped(self, *args, **kwargs):
+            async def wrapped(self, *args: Any, **kwargs: Any):
                 handler = getattr(self, name).__original__
 
                 # thanks aiohttp
@@ -69,7 +69,7 @@ class AsyncHookable:
         return decorator
 
     @classmethod
-    def remove_hook(cls, hook: _HookType):
+    def remove_hook(cls, hook: _HookType) -> None:
         name = hook.__hook_name__
         if name in cls.__hooks__:
             try:

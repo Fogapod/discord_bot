@@ -3,7 +3,7 @@ import random
 from .accent import Match, Accent
 
 
-def go_brrrr(m: Match):
+def go_brrrr(m: Match) -> str:
     forms_of_go = (
         ("es", "goes"),
         ("e", "go"),

@@ -1,4 +1,5 @@
 from time import perf_counter
+from typing import Any
 
 from discord.ext import commands
 
@@ -15,7 +16,7 @@ POTATO_ART = r"""   ___      _        _
 
 
 class CustomHelp(commands.DefaultHelpCommand):
-    def get_destination(self):
+    def get_destination(self) -> Context:
         return self.context
 
 
@@ -30,11 +31,11 @@ class Meta(Cog):
         bot.help_command = CustomHelp()
         bot.help_command.cog = self
 
-    def cog_unload(self):
+    def cog_unload(self) -> None:
         self.bot.help_command = self.old_help_command
 
     @commands.command(aliases=["p"])
-    async def ping(self, ctx: Context, *args):
+    async def ping(self, ctx: Context, *args: Any) -> None:
         """Check bot latency"""
 
         start = perf_counter()
@@ -46,7 +47,7 @@ class Meta(Cog):
         await m.edit(content=f"Pong, **{send_diff}ms**\n\nLatency: **{latency}ms**")
 
     @commands.command(aliases=["info"])
-    async def about(self, ctx: Context):
+    async def about(self, ctx: Context) -> None:
         """General information about bot"""
 
         owners = [await self.bot.fetch_user(oid) for oid in self.bot.owner_ids]
@@ -70,5 +71,5 @@ class Meta(Cog):
         )
 
 
-def setup(bot):
+def setup(bot: Bot) -> None:
     bot.add_cog(Meta(bot))

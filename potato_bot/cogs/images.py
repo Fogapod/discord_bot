@@ -3,7 +3,7 @@ import math
 import itertools
 
 from io import BytesIO
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Tuple, Optional, Sequence
 
 import PIL
 import discord
@@ -11,9 +11,13 @@ import discord
 from PIL import ImageDraw, ImageFont, ImageFilter
 from discord.ext import commands
 
+from potato_bot.bot import Bot
 from potato_bot.cog import Cog
 from potato_bot.types import Image, StaticImage, AnimatedImage
 from potato_bot.context import Context
+
+_VertexType = Dict[str, int]
+_VerticesType = Tuple[_VertexType, _VertexType, _VertexType, _VertexType]
 
 OCR_API_URL = "https://api.tsu.sh/google/ocr"
 
@@ -37,10 +41,10 @@ class TextField:
     def __init__(self, full_text: str, src: PIL.Image, padding: int = 3):
         self.text = full_text
 
-        self.left = None
-        self.upper = None
-        self.right = None
-        self.lower = None
+        self.left: Optional[int] = None
+        self.upper: Optional[int] = None
+        self.right: Optional[int] = None
+        self.lower: Optional[int] = None
 
         self.angle = 0
 
@@ -48,7 +52,7 @@ class TextField:
 
         self._padding = padding
 
-    def add_word(self, vertices, src_size):
+    def add_word(self, vertices: _VerticesType, src_size: Tuple[int, int]) -> None:
         if not self.initialized:
             # Get angle from first word
             self.angle = self._get_angle(vertices)
@@ -63,7 +67,9 @@ class TextField:
         self.lower = lower if self.lower is None else max((self.lower, lower))
 
     @staticmethod
-    def _vertices_to_coords(vertices, src_size, angle: int):
+    def _vertices_to_coords(
+        vertices: _VerticesType, src_size: Tuple[int, int], angle: int
+    ) -> Tuple[int, int, int, int]:
         """Returns Pillow style coordinates (left, upper, right, lower)."""
 
         # A - 0
@@ -143,9 +149,9 @@ class TextField:
         return (left, upper, right, lower)
 
     @staticmethod
-    def _get_angle(vertices) -> int:
+    def _get_angle(vertices: _VerticesType) -> int:
         # https://stackoverflow.com/a/27481611
-        def get_coords(vertex):
+        def get_coords(vertex: _VertexType) -> Tuple[Optional[int], Optional[int]]:
             return vertex.get("x"), vertex.get("y")
 
         cycle = itertools.cycle(vertices)
@@ -155,7 +161,7 @@ class TextField:
 
             # Any vertex coordinate can be missing
             if None not in (x, y, next_x, next_y):
-                x_diff, y_diff = next_x - x, y - next_y
+                x_diff, y_diff = next_x - x, y - next_y  # type: ignore
                 degrees = math.degrees(math.atan2(y_diff, x_diff))
 
                 # compensate missing vertices
@@ -170,28 +176,28 @@ class TextField:
         elif degrees > 360:
             degrees -= 360
 
-        return degrees
+        return round(degrees)
 
     @property
     def coords(self) -> Tuple[int, int, int, int]:
-        return (self.left, self.upper, self.right, self.lower)
+        return (self.left, self.upper, self.right, self.lower)  # type: ignore
 
     @property
     def coords_padded(self) -> Tuple[int, int, int, int]:
         return (
-            max((0, self.left - self._padding)),
-            max((0, self.upper - self._padding)),
-            min((self._src_width, self.right + self._padding)),
-            min((self._src_height, self.lower + self._padding)),
+            max((0, self.left - self._padding)),  # type: ignore
+            max((0, self.upper - self._padding)),  # type: ignore
+            min((self._src_width, self.right + self._padding)),  # type: ignore
+            min((self._src_height, self.lower + self._padding)),  # type: ignore
         )
 
     @property
     def width(self) -> int:
-        return self.right - self.left
+        return self.right - self.left  # type: ignore
 
     @property
     def height(self) -> int:
-        return self.lower - self.upper
+        return self.lower - self.upper  # type: ignore
 
     @property
     def font_size(self) -> int:
@@ -212,27 +218,27 @@ class TextField:
 class Images(Cog):
     """Image manipulation"""
 
-    async def setup(self):
+    async def setup(self) -> None:
         self.font = ImageFont.truetype(FONT_PATH)
 
         # TODO: fetch list of languages from API or hardcode
 
     @commands.command(hidden=True)
-    async def i(self, ctx: Context, i: Image = None):
+    async def i(self, ctx: Context, i: Image = None) -> None:
         if i is None:
             i = await Image.from_history(ctx)
 
         await ctx.send(i)
 
     @commands.command(hidden=True)
-    async def si(self, ctx: Context, i: StaticImage = None):
+    async def si(self, ctx: Context, i: StaticImage = None) -> None:
         if i is None:
             i = await StaticImage.from_history(ctx)
 
         await ctx.send(i)
 
     @commands.command(hidden=True)
-    async def ai(self, ctx: Context, i: AnimatedImage = None):
+    async def ai(self, ctx: Context, i: AnimatedImage = None) -> None:
         if i is None:
             i = await AnimatedImage.from_history(ctx)
 
@@ -243,7 +249,7 @@ class Images(Cog):
     ) -> Dict[str, Any]:
         params = {"q": image_url}
         if raw:
-            params["raw"] = 0
+            params["raw"] = "1"
 
         async with ctx.session.get(
             OCR_API_URL,
@@ -282,7 +288,7 @@ class Images(Cog):
         return json
 
     @commands.command()
-    async def ocr(self, ctx: Context, image: Image = None):
+    async def ocr(self, ctx: Context, image: Image = None) -> None:
         """Read text on image"""
 
         if image is None:
@@ -298,7 +304,7 @@ class Images(Cog):
     @commands.command()
     async def trocr(
         self, ctx: Context, language: str = "en", image: StaticImage = None
-    ):
+    ) -> None:
         """!!! UNFINISHED !!! Translate text on image"""
 
         if language == "list":
@@ -361,7 +367,7 @@ class Images(Cog):
 
         await ctx.send(stats, file=discord.File(result, filename="trocr.png"))
 
-    def draw(self, src: PIL.Image, fields) -> BytesIO:
+    def draw(self, src: PIL.Image, fields: Sequence[TextField]) -> BytesIO:
         src = src.convert("RGBA")
 
         fields = fields[:BLUR_CAP]
@@ -426,5 +432,5 @@ class Images(Cog):
         return text
 
 
-def setup(bot):
+def setup(bot: Bot) -> None:
     bot.add_cog(Images(bot))

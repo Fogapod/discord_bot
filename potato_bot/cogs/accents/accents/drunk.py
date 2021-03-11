@@ -14,14 +14,14 @@ HICCBURPS = (
 
 def duplicate_char(m: Match) -> Optional[str]:
     if random.random() * m.severity < 0.2:
-        return
+        return None
 
     return m.original * (random.randint(0, 5) + m.severity)
 
 
 def hiccburp(m: Match) -> Optional[str]:
     if random.random() * m.severity < 0.1:
-        return
+        return None
 
     return random.choice(HICCBURPS)
 

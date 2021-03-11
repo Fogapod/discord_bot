@@ -1,7 +1,7 @@
 import copy
 import time
 
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from discord.ext import commands
 
@@ -24,10 +24,10 @@ class UnityStation(Cog):
         super().__init__(bot)
 
         self._fetched_servers_time = time.monotonic() - SERVER_FETCH_INTERVAL
-        self._fetched_servers: Dict[str, Any] = []
+        self._fetched_servers: List[Dict[str, Any]] = []
 
     @commands.command(aliases=["list", "sv"])
-    async def servers(self, ctx: Context, *, server: str = None):
+    async def servers(self, ctx: Context, *, server: str = None) -> None:
         """List hub servers"""
 
         async with ctx.typing():
@@ -36,7 +36,7 @@ class UnityStation(Cog):
             else:
                 await self._server(ctx, server)
 
-    async def _fetch_servers(self, ctx: Context) -> Dict[str, Any]:
+    async def _fetch_servers(self, ctx: Context) -> List[Dict[str, Any]]:
         if time.monotonic() - self._fetched_servers_time < SERVER_FETCH_INTERVAL:
             return copy.deepcopy(self._fetched_servers)
 
@@ -58,7 +58,7 @@ class UnityStation(Cog):
 
         return copy.deepcopy(servers)
 
-    async def _server(self, ctx: Context, server_name: str):
+    async def _server(self, ctx: Context, server_name: str) -> None:
         servers = await self._fetch_servers(ctx)
 
         server_name = server_name.lower()
@@ -108,7 +108,7 @@ class UnityStation(Cog):
 
         await ctx.send(f"```\n{main_info}\n\nDownloads\n{downloads}```")
 
-    async def _servers(self, ctx: Context):
+    async def _servers(self, ctx: Context) -> None:
         if not (servers := await self._fetch_servers(ctx)):
             return await ctx.send("No servers online")
 
@@ -151,5 +151,5 @@ class UnityStation(Cog):
         await ctx.send(f"```\n{header}\n{separator}\n{body}```")
 
 
-def setup(bot: Bot):
+def setup(bot: Bot) -> None:
     bot.add_cog(UnityStation(bot))

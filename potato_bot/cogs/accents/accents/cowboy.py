@@ -7,7 +7,7 @@ from .accent import Match, Accent
 
 def yeehaw(m: Match) -> Optional[str]:
     if random.random() > m.severity / 10:
-        return
+        return None
 
     return f"y{'e'* (random.randint(0,5) + m.severity)}haw"
 

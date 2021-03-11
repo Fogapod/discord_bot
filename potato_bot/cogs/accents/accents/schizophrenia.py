@@ -86,17 +86,17 @@ topic_end = (
 )
 
 
-def switch_topic(m: Match):
+def switch_topic(m: Match) -> str:
     return f"{random.choice(topics)} {random.choice(topic_end)}"
 
 
-def repeat_word(m: Match):
+def repeat_word(m: Match) -> str:
     n = random.randint(0, 1) + m.severity - 1
 
     return f"{m.original}, {', '.join(m.original for _ in  range(n))}"
 
 
-def generate_neologism(m: Match):
+def generate_neologism(m: Match) -> str:
     return f"{random.choice(start)}{random.choice(ending)}"
 
 

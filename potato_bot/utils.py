@@ -1,9 +1,10 @@
 import asyncio
 
+from typing import Any, Tuple
 from collections import OrderedDict
 
 
-async def run_process(cmd, *args):
+async def run_process(cmd: str, *args: str) -> Tuple[str, str]:
     process = await asyncio.create_subprocess_exec(
         cmd,
         *args,
@@ -12,10 +13,10 @@ async def run_process(cmd, *args):
     )
     data = await process.communicate()
 
-    return [stream.decode() if stream is not None else "" for stream in data]
+    return [stream.decode() if stream is not None else "" for stream in data]  # type: ignore
 
 
-async def run_process_shell(program):
+async def run_process_shell(program: str) -> Tuple[str, str]:
     process = await asyncio.create_subprocess_shell(
         program,
         stdout=asyncio.subprocess.PIPE,
@@ -23,7 +24,7 @@ async def run_process_shell(program):
     )
     data = await process.communicate()
 
-    return [stream.decode() if stream is not None else "" for stream in data]
+    return [stream.decode() if stream is not None else "" for stream in data]  # type: ignore
 
 
 def minutes_to_human_readable(minutes: int) -> str:
@@ -54,12 +55,12 @@ def minutes_to_human_readable(minutes: int) -> str:
 
 
 # https://docs.python.org/3/library/collections.html#ordereddict-examples-and-recipes
-class LRU(OrderedDict):
-    def __init__(self, maxsize=128, /, *args, **kwds):
+class LRU(OrderedDict[Any, Any]):
+    def __init__(self, maxsize: int = 128, /, *args: Any, **kwds: Any):
         self.maxsize = maxsize
         super().__init__(*args, **kwds)
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: Any, value: Any) -> None:
         if key in self:
             self.move_to_end(key)
 

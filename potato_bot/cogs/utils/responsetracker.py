@@ -11,7 +11,7 @@ _EmojiType = Union[discord.Reaction, discord.Emoji, discord.PartialEmoji, str]
 
 
 # https://github.com/Rapptz/discord.py/blob/5d75a0e7d613948245d1eb0353fb660f4664c9ed/discord/message.py#L56
-def convert_emoji_reaction(emoji: _EmojiType):
+def convert_emoji_reaction(emoji: _EmojiType) -> str:
     if isinstance(emoji, discord.Reaction):
         emoji = emoji.emoji
 
@@ -32,7 +32,7 @@ def convert_emoji_reaction(emoji: _EmojiType):
 
 
 class Response:
-    async def remove(self, bot):
+    async def remove(self, bot: Bot) -> None:
         raise NotImplementedError
 
 
@@ -46,7 +46,7 @@ class MessageResponse(Response):
         self.channel_id = message.channel.id
         self.message_id = message.id
 
-    async def remove(self, bot):
+    async def remove(self, bot: Bot) -> None:
         await bot.http.delete_message(self.channel_id, self.message_id)
 
     def __repr__(self) -> str:
@@ -69,7 +69,7 @@ class ReactionResponse(Response):
         self.message_id = message.id
         self.emoji = emoji
 
-    async def remove(self, bot):
+    async def remove(self, bot: Bot) -> None:
         await bot.http.remove_own_reaction(self.channel_id, self.message_id, self.emoji)
 
     def __repr__(self) -> str:
@@ -82,7 +82,7 @@ class ResponseTracker(Cog):
     @Context.hook()
     async def on_send(
         original, ctx: Context, *args: Any, register: bool = True, **kwargs: Any
-    ):
+    ) -> None:
         message = await original(ctx, *args, **kwargs)
 
         if register:
@@ -97,7 +97,7 @@ class ResponseTracker(Cog):
         emoji: Union[discord.Emoji, str],
         register: bool = True,
         **kwargs: Any,
-    ):
+    ) -> None:
         message = await original(ctx, emoji, **kwargs)
 
         if register:
@@ -108,7 +108,7 @@ class ResponseTracker(Cog):
         return message
 
     @Cog.listener()
-    async def on_message_edit(self, old: discord.Message, new: discord.Message):
+    async def on_message_edit(self, old: discord.Message, new: discord.Message) -> None:
         if new.author.bot:
             return
 
@@ -124,18 +124,18 @@ class ResponseTracker(Cog):
         await self.bot.process_commands(new)
 
     @Cog.listener()
-    async def on_message_delete(self, message: discord.Message):
+    async def on_message_delete(self, message: discord.Message) -> None:
         await self.remove_responses(message.id, self.bot)
 
     @classmethod
-    def register_response(cls, message_id: int, response: Response):
+    def register_response(cls, message_id: int, response: Response) -> None:
         existing = cls.responses.get(message_id, [])
         existing.append(response)
 
         cls.responses[message_id] = existing
 
     @classmethod
-    async def remove_responses(cls, message_id: int, bot: Bot):
+    async def remove_responses(cls, message_id: int, bot: Bot) -> None:
         responses = cls.responses.pop(message_id, [])
 
         for response in responses:
@@ -145,5 +145,5 @@ class ResponseTracker(Cog):
         # asyncio.gather(*[r.remove(bot) for r in responses])
 
 
-def setup(bot: Bot):
+def setup(bot: Bot) -> None:
     bot.add_cog(ResponseTracker(bot))

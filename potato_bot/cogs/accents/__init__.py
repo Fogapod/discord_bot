@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import re
+import json
 import random
 import importlib
 
-from typing import Any, Dict, Union, Optional, Sequence
+from typing import Any, Dict, List, Union, Optional, Sequence
 from pathlib import Path
 
 import discord
@@ -37,6 +38,8 @@ class AccentWithSeverity:
     @classmethod
     async def convert(cls, ctx: Context, argument: str) -> AccentWithSeverity:
         match = re.match(r"(.+?)(:?\[(\d+)\])?$", argument)
+        assert match
+
         name = match[1]
         severity = 1 if match[3] is None else int(match[3])
 
@@ -57,8 +60,12 @@ class AccentWithSeverity:
         self.accent = accent
         self.severity = severity
 
-    def apply(self, text: str, **kwargs) -> str:
+    def apply(self, text: str, **kwargs: Any) -> str:
         return self.accent.apply(text, severity=self.severity, **kwargs)
+
+    @property
+    def name(self) -> str:
+        return str(self.accent)
 
     def __eq__(self, other: Any) -> bool:
         if isinstance(other, Accent):
@@ -73,17 +80,17 @@ class AccentWithSeverity:
         return not (self == other)
 
     def __hash__(self) -> int:
-        return hash(self.accent)
+        return hash(self.name)
 
     def __str__(self) -> str:
-        name = str(self.accent)
+        name = self.name
 
         if self.severity != 1:
             name += f"[{self.severity}]"
 
         return name
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<{type(self).__name__} accent={self.accent} severity={self.severity}>"
 
 
@@ -93,50 +100,55 @@ _UserAccentsType = Sequence[AccentWithSeverity]
 class Accents(Cog):
     """Commands for managing accents."""
 
-    # guild_id -> user_id -> accents
-    # this has to be class variable because of hooks
-    accent_settings: Dict[int, Dict[int, _UserAccentsType]] = {}
+    # required for hooks
+    instance: Accents
 
     MAX_ACCENTS_PER_USER = 10
 
     def __init__(self, bot: Bot):
+        Accents.instance = self
+
         super().__init__(bot)
 
         # channel_id -> Webhook
         self._webhooks = LRU(50)
 
-    async def setup(self):
-        async with self.bot.db.cursor() as cur:
-            await cur.execute("SELECT * FROM user_accent")
-            accents = await cur.fetchall()
+        self._accents: Dict[int, Dict[int, List[AccentWithSeverity]]] = {}
 
-        for row in accents:
-            accent = AccentWithSeverity(
-                Accent.get_by_name(row["accent"]), severity=row["severity"]
-            )
+    async def setup(self) -> None:
+        for accent in await self.bot.edb.query(
+            """
+            SELECT AccentSettings {
+                guild_id,
+                user_id,
+                accents,
+            }
+            """
+        ):
+            if accent.guild_id not in self._accents:
+                self._accents[accent.guild_id] = {}
 
-            guild_id = row["guild_id"]
-            user_id = row["user_id"]
+            self._accents[accent.guild_id][accent.user_id] = [
+                AccentWithSeverity(Accent.get_by_name(a.name), severity=a.severity)
+                for a in accent.accents
+            ]
 
-            if guild_id not in self.accent_settings:
-                self.accent_settings[guild_id] = {}
+    def get_user_accents(self, member: discord.Member) -> _UserAccentsType:
+        if member.guild.id not in self._accents:
+            self._accents[member.guild.id] = {}
 
-            if user_id not in self.accent_settings[guild_id]:
-                self.accent_settings[guild_id][user_id] = []
+        return self._accents[member.guild.id].get(member.id, [])
 
-            self.accent_settings[guild_id][user_id].append(accent)
+    def set_user_accents(self, member: discord.Member, accents: Any) -> None:
+        if member.guild.id not in self._accents:
+            self._accents[member.guild.id] = {}
 
-    @classmethod
-    def get_user_accents(cls, guild_id: int, user_id: int) -> _UserAccentsType:
-        if guild_id not in cls.accent_settings:
-            cls.accent_settings[guild_id] = {}
-
-        return cls.accent_settings[guild_id].get(user_id, [])
+        self._accents[member.guild.id][member.id] = accents
 
     @commands.group(
         invoke_without_command=True, ignore_extra=False, aliases=["accents"]
     )
-    async def accent(self, ctx: Context):
+    async def accent(self, ctx: Context) -> None:
         """
         Accent management.
 
@@ -147,7 +159,7 @@ class Accents(Cog):
 
     @accent.command()
     @commands.guild_only()
-    async def list(self, ctx: Context, user: discord.Member = None):
+    async def list(self, ctx: Context, user: discord.Member = None) -> None:
         """List accents for user"""
 
         if user is None:
@@ -156,7 +168,7 @@ class Accents(Cog):
             if user.bot and user.id != ctx.me.id:
                 return await ctx.send("Bots cannot have accents")
 
-        accents = self.get_user_accents(ctx.guild.id, user.id)
+        accents = self.get_user_accents(user)
 
         # I have no idea why this is not in stdlib, string has find method
         def sequence_find(seq: Sequence[Any], item: Any, default: int = -1) -> int:
@@ -193,106 +205,121 @@ class Accents(Cog):
             f"**{user}** accents (applied from top to bottom): ```diff\n{body}```"
         )
 
-    async def _add_accents(self, ctx: Context, user_id: int, accents: _UserAccentsType):
-        current_accents = self.get_user_accents(ctx.guild.id, user_id)
+    async def _add_accents(
+        self, ctx: Context, member: discord.Member, accents: _UserAccentsType
+    ) -> None:
+        # deduplicate using names
+        accents = list(dict.fromkeys(accents))
 
-        if not (to_add := set(accents).difference(current_accents)):
-            await ctx.send("Nothing to add", exit=True)
+        all_accents = {a: a for a in self.get_user_accents(member)}
 
-        if len(current_accents) + len(to_add) > self.MAX_ACCENTS_PER_USER:
+        something_updated = False
+
+        for accent_to_add in accents:
+            existing = all_accents.get(accent_to_add)
+            if existing is None or existing.severity != accent_to_add.severity:
+                something_updated = True
+                all_accents[accent_to_add] = accent_to_add
+
+        if not something_updated:
+            await ctx.send("Nothing to do", exit=True)
+
+        if len(all_accents) > self.MAX_ACCENTS_PER_USER:
             await ctx.send(
                 f"Cannot have more than **{self.MAX_ACCENTS_PER_USER}** enabled at once",
                 exit=True,
             )
 
-        # sets are nice, but we must preserve order here
-        to_add = sorted(to_add, key=lambda x: accents.index(x))
+        all_accents = list(all_accents)  # type: ignore
 
-        current_accents.extend(to_add)
+        self.set_user_accents(member, all_accents)
 
-        self.accent_settings[ctx.guild.id][user_id] = current_accents
-
-        async with ctx.db.cursor(commit=True) as cur:
-            await cur.executemany(
-                """
-                INSERT OR REPLACE INTO user_accent (
-                    guild_id,
-                    user_id,
-                    accent,
-                    severity
-                ) VALUES (
-                    ?,
-                    ?,
-                    ?,
-                    ?
-                )
-                """,
-                [
-                    (ctx.guild.id, user_id, str(accent.accent), accent.severity)
-                    for accent in to_add
-                ],
+        # json cast because tuples are not supported
+        # https://github.com/edgedb/edgedb/issues/2334#issuecomment-793041555
+        await ctx.bot.edb.query(
+            """
+            INSERT AccentSettings {
+                guild_id := <snowflake>$guild_id,
+                user_id  := <snowflake>$user_id,
+                accents  := <array<tuple<str, int16>>><json>$accents,
+            } UNLESS CONFLICT ON .exclusive_hack
+            ELSE (
+                UPDATE AccentSettings
+                SET {
+                    accents := <array<tuple<str, int16>>><json>$accents,
+                }
             )
+            """,
+            guild_id=ctx.guild.id,
+            user_id=member.id,
+            accents=json.dumps([(a.name, a.severity) for a in all_accents]),
+        )
 
     async def _remove_accents(
-        self, ctx: Context, user_id: int, accents: _UserAccentsType
-    ):
-        current_accents = self.get_user_accents(ctx.guild.id, user_id)
-
+        self, ctx: Context, member: discord.Member, accents: _UserAccentsType
+    ) -> None:
         if not accents:
-            accents = current_accents
+            all_accents: Union[
+                Dict[AccentWithSeverity, AccentWithSeverity], List[AccentWithSeverity]
+            ] = []
+        else:
+            # deduplicate using names
+            accents = list(dict.fromkeys(accents))
 
-        if not (to_remove := set(current_accents).intersection(accents)):
-            await ctx.send("Nothing to remove", exit=True)
+            all_accents = {a: a for a in self.get_user_accents(member)}
 
-        self.accent_settings[ctx.guild.id][user_id] = [
-            a for a in current_accents if a not in to_remove
-        ]
+            something_updated = False
 
-        def accent_name(accent: Union[Accent, AccentWithSeverity]) -> str:
-            # this is a hack for owo command.
-            # since Accent and AccentWithSeverity instances have same hashes,
-            # it is possible to use them interchangeably there, but names work
-            # differently
-            if isinstance(accent, AccentWithSeverity):
-                accent = accent.accent
+            for accent_to_remove in accents:
+                if accent_to_remove in all_accents:
+                    something_updated = True
+                    del all_accents[accent_to_remove]
 
-            return str(accent)
+            if not something_updated:
+                await ctx.send("Nothing to do", exit=True)
 
-        async with ctx.db.cursor(commit=True) as cur:
-            await cur.executemany(
-                """
-                DELETE FROM user_accent
-                WHERE
-                    guild_id = ? AND
-                    user_id = ? AND
-                    accent = ?
-                """,
-                [(ctx.guild.id, user_id, accent_name(accent)) for accent in to_remove],
-            )
+            all_accents = list(all_accents)
 
-    async def _update_nick(self, ctx: Context):
+        self.set_user_accents(member, all_accents)
+
+        # json cast because tuples are not supported
+        # https://github.com/edgedb/edgedb/issues/2334#issuecomment-793041555
+        await self.bot.edb.query(
+            """
+            UPDATE AccentSettings
+            FILTER .guild_id = <snowflake>$guild_id AND .user_id = <snowflake>$user_id
+            SET {
+                accents := <array<tuple<str, int16>>><json>$accents,
+            }
+            """,
+            guild_id=ctx.guild.id,
+            user_id=member.id,
+            accents=json.dumps([(a.name, a.severity) for a in all_accents]),
+        )
+
+    async def _update_nick(self, ctx: Context) -> None:
         new_nick = ctx.me.name
-        for accent in self.get_user_accents(ctx.guild.id, ctx.me.id):
+        for accent in self.get_user_accents(ctx.me):
             new_nick = accent.apply(new_nick, limit=32).strip()
 
         await ctx.me.edit(nick=new_nick)
 
     @accent.group(name="bot", invoke_without_command=True, ignore_extra=False)
     @commands.has_permissions(manage_guild=True)
-    async def _bot_accent(self, ctx: Context):
+    async def _bot_accent(self, ctx: Context) -> None:
         """Manage bot accents"""
 
         await ctx.send_help(ctx.command)
 
     @_bot_accent.command(name="add", aliases=["enable", "on"])
     @commands.has_permissions(manage_guild=True)
-    async def add_bot_accent(self, ctx: Context, *accents: AccentWithSeverity):
+    async def add_bot_accent(self, ctx: Context, *accents: AccentWithSeverity) -> None:
         """Add bot accents"""
 
         if not accents:
             return await ctx.send("No accents provided")
 
-        await self._add_accents(ctx, ctx.me.id, accents)
+        await self._add_accents(ctx, ctx.me, accents)
 
         await self._update_nick(ctx)
 
@@ -300,14 +327,16 @@ class Accents(Cog):
 
     @_bot_accent.command(name="remove", aliases=["disable", "off"])
     @commands.has_permissions(manage_guild=True)
-    async def remove_bot_accent(self, ctx: Context, *accents: AccentWithSeverity):
+    async def remove_bot_accent(
+        self, ctx: Context, *accents: AccentWithSeverity
+    ) -> None:
         """
         Remove bot accents
 
         Removes all if used without arguments
         """
 
-        await self._remove_accents(ctx, ctx.me.id, accents)
+        await self._remove_accents(ctx, ctx.me, accents)
 
         await self._update_nick(ctx)
 
@@ -315,31 +344,33 @@ class Accents(Cog):
 
     @accent.command(name="add", aliases=["enable", "on"])
     @commands.bot_has_permissions(manage_messages=True, manage_webhooks=True)
-    async def add_accent(self, ctx, *accents: AccentWithSeverity):
+    async def add_accent(self, ctx: Context, *accents: AccentWithSeverity) -> None:
         """Add personal accents"""
 
         if not accents:
             return await ctx.send("No accents provided")
 
-        await self._add_accents(ctx, ctx.author.id, accents)
+        await self._add_accents(ctx, ctx.author, accents)
 
         await ctx.send("Added personal accents")
 
     @accent.command(name="remove", aliases=["disable", "off"])
     @commands.guild_only()
-    async def remove_accent(self, ctx, *accents: AccentWithSeverity):
+    async def remove_accent(self, ctx: Context, *accents: AccentWithSeverity) -> None:
         """
         Remove personal accents
 
         Removes all if used without arguments
         """
 
-        await self._remove_accents(ctx, ctx.author.id, accents)
+        await self._remove_accents(ctx, ctx.author, accents)
 
         await ctx.send("Removed personal accents")
 
     @accent.command(name="use")
-    async def accent_use(self, ctx: Context, accent: AccentWithSeverity, *, text: str):
+    async def accent_use(
+        self, ctx: Context, accent: AccentWithSeverity, *, text: str
+    ) -> None:
         """Apply specified accent to text"""
 
         await ctx.send(text, accents=[accent])
@@ -347,21 +378,22 @@ class Accents(Cog):
     @accent.command(aliases=["purge"])
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_messages=True, manage_webhooks=True)
-    async def clean(self, ctx: Context, limit: int = 100):
+    async def clean(self, ctx: Context, limit: int = 100) -> None:
         """Removes webhook messages from channel, checking up to `limit` messages"""
 
         upper_limit = 1000
         if limit > upper_limit:
             return await ctx.send(f"Limit should be between 1 and {upper_limit}")
 
-        accent_webhook = await self._get_cached_webhook(ctx.channel, create=False)
-        if accent_webhook is None:
+        if (
+            accent_webhook := await self._get_cached_webhook(ctx.channel, create=False)
+        ) is None:
             return await ctx.send(
                 "There is no accent webhook in this channel. Nothing to delete"
             )
 
         def is_accent_webhook(m: discord.Message) -> bool:
-            return m.webhook_id == accent_webhook.id
+            return m.webhook_id == accent_webhook.id  # type: ignore
 
         async with ctx.typing():
             deleted = await ctx.channel.purge(limit=limit, check=is_accent_webhook)
@@ -369,14 +401,14 @@ class Accents(Cog):
 
     @commands.command()
     @commands.guild_only()
-    async def owo(self, ctx: Context):
+    async def owo(self, ctx: Context) -> None:
         """OwO what's this"""
 
         owo = Accent.get_by_name("OwO")
-        my_accents = self.get_user_accents(ctx.guild.id, ctx.me.id)
+        my_accents = self.get_user_accents(ctx.me)
 
         if owo in my_accents:
-            await self._remove_accents(ctx, ctx.me.id, [owo])
+            await self._remove_accents(ctx, ctx.me.id, [AccentWithSeverity(owo)])
         else:
             await self._add_accents(
                 ctx, ctx.me.id, [AccentWithSeverity(owo, severity=random.randint(1, 3))]
@@ -399,13 +431,13 @@ class Accents(Cog):
         ctx: Context,
         content: Any = None,
         *,
-        accents: Optional[AccentWithSeverity] = None,
+        accents: Optional[_UserAccentsType] = None,
         **kwargs: Any,
     ) -> discord.Message:
         if content is not None:
             if accents is None:
                 if ctx.guild is not None:
-                    accents = Accents.get_user_accents(ctx.guild.id, ctx.me.id)
+                    accents = Accents.instance.get_user_accents(ctx.me)
                 else:
                     accents = []
 
@@ -419,14 +451,14 @@ class Accents(Cog):
         ctx: Context,
         message: discord.Message,
         *,
-        accents: Optional[AccentWithSeverity] = None,
+        accents: Optional[_UserAccentsType] = None,
         content: Optional[str] = None,
         **kwargs: Any,
-    ):
+    ) -> None:
         if content is not None:
             if accents is None:
                 if ctx.guild is not None:
-                    accents = Accents.get_user_accents(ctx.guild.id, ctx.me.id)
+                    accents = Accents.instance.get_user_accents(ctx.me)
                 else:
                     accents = []
 
@@ -434,7 +466,7 @@ class Accents(Cog):
 
         return await original(ctx, message, content=content, **kwargs)
 
-    async def _replace_message(self, message: discord.Message):
+    async def _replace_message(self, message: discord.Message) -> None:
         if message.author.bot:
             return
 
@@ -452,7 +484,7 @@ class Accents(Cog):
         if message.reference is not None:
             return
 
-        if not (accents := self.get_user_accents(message.guild.id, message.author.id)):
+        if not (accents := self.get_user_accents(message.author)):
             return
 
         if not message.channel.permissions_for(message.guild.me).is_superset(
@@ -519,16 +551,16 @@ class Accents(Cog):
         )
 
     @Cog.listener()
-    async def on_message(self, message: discord.Message):
+    async def on_message(self, message: discord.Message) -> None:
         await self._replace_message(message)
 
     # needed in case people use command and edit their message
     @Cog.listener()
-    async def on_message_edit(self, old: discord.Message, new: discord.Message):
+    async def on_message_edit(self, old: discord.Message, new: discord.Message) -> None:
         await self._replace_message(new)
 
 
-def load_accents():
+def load_accents() -> None:
     for child in (Path(__file__).parent / "accents").iterdir():
         if child.suffix != ".py":
             continue
@@ -542,7 +574,7 @@ def load_accents():
         importlib.import_module(f"{__name__}.accents.{child.stem}")
 
 
-def setup(bot: Bot):
+def setup(bot: Bot) -> None:
     load_accents()
 
     bot.add_cog(Accents(bot))

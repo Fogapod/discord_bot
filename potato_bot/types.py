@@ -5,7 +5,7 @@ import asyncio
 import warnings
 
 from io import BytesIO
-from typing import Any, Optional
+from typing import Any, List, Optional
 from asyncio import TimeoutError
 
 import PIL
@@ -267,6 +267,8 @@ class Image:
 
         await ctx.send("Nothing found in latest 200 messages", exit=True)
 
+        assert False  # noqa
+
     async def fetch(
         self,
         ctx: Context,
@@ -306,7 +308,7 @@ class Image:
                 if (r.content_length or 0) > max_content_length:
                     raise Exception("content is too big")
 
-                allowed_extensions = []
+                allowed_extensions: List[str] = []
                 if allow_static:
                     allowed_extensions.extend(cls.STATIC_FORMATS)
                 if allow_animated:

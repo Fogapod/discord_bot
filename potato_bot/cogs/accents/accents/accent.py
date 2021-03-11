@@ -5,7 +5,7 @@ import math
 import random
 import itertools
 
-from typing import Any, Dict, Union, Callable, Optional, Sequence
+from typing import Any, Dict, Tuple, Union, Callable, Optional, Sequence
 
 
 class ReplacementContext:
@@ -26,7 +26,7 @@ class ReplacementContext:
 
     def __init__(self, id: Any = None):
         self.id = id
-        self.state = None
+        self.state: Any = None
 
     def __repr__(self) -> str:
         return f"<{type(self).__name__} id={self.id} state={self.state}>"
@@ -43,13 +43,15 @@ class Match:
         "context",
     )
 
-    def __init__(self, *, match: re.Match, severity: int, context: ReplacementContext):
+    def __init__(
+        self, *, match: re.Match[str], severity: int, context: ReplacementContext
+    ) -> None:
         self.match = match
         self.severity = severity
         self.context = context
 
     @property
-    def original(self):
+    def original(self) -> str:
         """Original text that is being replaced"""
 
         return self.match[0]
@@ -85,7 +87,7 @@ class Match:
 
 
 _ReplacedType = Optional[str]
-_ReplacementCallableType = Callable[[Match, int], _ReplacedType]
+_ReplacementCallableType = Callable[[Match], _ReplacedType]
 _ReplacementSequenceType = Sequence[Union[_ReplacedType, _ReplacementCallableType]]
 _ReplacementDictType = Dict[
     Union[_ReplacedType, _ReplacementCallableType, _ReplacementSequenceType],
@@ -105,24 +107,31 @@ class Replacement:
     )
 
     def __init__(
-        self, pattern: str, replacement: _ReplacementType, flags: Any = re.IGNORECASE
+        self,
+        pattern: Union[str, re.Pattern[str]],
+        replacement: _ReplacementType,
+        flags: Any = re.IGNORECASE,
     ):
-        self.pattern = re.compile(pattern, flags)
+        if isinstance(pattern, re.Pattern):
+            self.pattern = pattern
+        else:
+            self.pattern = re.compile(pattern, flags)
+
         self.callback = self._get_callback(replacement)
 
     @staticmethod
     def _get_callback(replacement: _ReplacementType) -> _ReplacementCallableType:
         if isinstance(replacement, str):
 
-            def callback_static(match: Match):
-                return replacement
+            def callback_static(match: Match) -> str:
+                return replacement  # type: ignore
 
             return callback_static
 
         elif isinstance(replacement, Sequence):
             # sequence of equally weighted items
             def callback_select_equal(match: Match) -> _ReplacedType:
-                selected = random.choice(replacement)
+                selected = random.choice(replacement)  # type: ignore
 
                 if isinstance(selected, str) or selected is None:
                     return selected
@@ -136,7 +145,7 @@ class Replacement:
             keys = [*replacement.keys()]
             values = [*replacement.values()]
 
-            computable_weights = []
+            computable_weights: Sequence[Tuple[int, Callable[[int], float]]] = []
             for i, v in enumerate(values):
                 if not isinstance(v, (int, float)):
                     # assume is a callable
@@ -163,7 +172,8 @@ class Replacement:
                 if computable_weights:
                     for index, fn in computable_weights:
                         # NOTE: is this racy? without threads it's fine I guess
-                        values[index] = fn(match.severity)
+                        # why is mypy angry???
+                        values[index] = fn(match.severity)  # type: ignore
 
                     selected = random.choices(keys, weights=values)[0]
                 else:
@@ -172,20 +182,20 @@ class Replacement:
                 if isinstance(selected, str) or selected is None:
                     return selected
 
-                return selected(match)
+                return selected(match)  # type: ignore
 
             return callback_select_weighted
         else:
             # assume callable
             # TODO: check
-            return replacement
+            return replacement  # type: ignore
 
     def apply(
         self, text: str, *, severity: int, limit: int, context: ReplacementContext
     ) -> str:
         result_len = len(text)
 
-        def repl(match: re.Match) -> str:
+        def repl(match: re.Match[str]) -> str:
             nonlocal result_len
 
             original = match[0]
@@ -242,8 +252,8 @@ class Accent:
     """
 
     # overridable variables
-    WORD_REPLACEMENTS: Dict[Union[re.Pattern, str], Any] = {}
-    REPLACEMENTS: Dict[Union[re.Pattern, str], Any] = {}
+    WORD_REPLACEMENTS: Dict[Union[re.Pattern[str], str], Any] = {}
+    REPLACEMENTS: Dict[Union[re.Pattern[str], str], Any] = {}
 
     # public variables
     # shortcuts for common regexes
@@ -253,14 +263,14 @@ class Accent:
     # private class variables
     _registered_accents: Dict[str, Accent] = {}
 
-    def __init_subclass__(cls, is_accent: bool = True, **kwargs: Any):
-        super().__init_subclass__(**kwargs)
+    def __init_subclass__(cls, is_accent: bool = True):
+        super().__init_subclass__()
 
         if is_accent:
             instance = cls()
             cls._registered_accents[str(instance).lower()] = instance
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._replacemtns: Sequence[Replacement] = []
 
         for k, v in self.WORD_REPLACEMENTS.items():

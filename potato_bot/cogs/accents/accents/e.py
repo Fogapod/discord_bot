@@ -25,7 +25,7 @@ def next_cursed_e(ctx: ReplacementContext) -> str:
     return letter
 
 
-def e(m: Match):
+def e(m: Match) -> str:
     if m.severity < 5:
         return "e"
 

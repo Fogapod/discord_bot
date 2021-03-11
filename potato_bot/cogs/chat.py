@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import time
 import asyncio
@@ -11,6 +13,7 @@ from discord.ext import tasks, commands
 
 from potato_bot.bot import Bot
 from potato_bot.cog import Cog
+from potato_bot.context import Context
 
 try:
     from potato_bot.cogs.accents import AccentWithSeverity
@@ -19,7 +22,7 @@ except ImportError:
 
 
 class Emotion(commands.Converter):
-    async def convert(self, ctx, argument: str):
+    async def convert(self, ctx: Context, argument: str) -> tt.Emotion:
         try:
             return tt.Emotion(argument)
         except ValueError:
@@ -72,13 +75,13 @@ class Chat(Cog):
 
         self.cleanup_sessions.start()
 
-    def cog_unload(self):
+    def cog_unload(self) -> None:
         self.bot.loop.create_task(self.chatbot.close())
 
         self.cleanup_sessions.stop()
 
     @commands.command()
-    async def emotion(self, ctx, emotion: Emotion = None):
+    async def emotion(self, ctx: Context, emotion: Emotion = None) -> None:
         """Manage chatbot emotion globally"""
 
         if emotion is None:
@@ -89,7 +92,7 @@ class Chat(Cog):
         await ctx.ok()
 
     @commands.command(aliases=["cb", "talk"])
-    async def ask(self, ctx, *, text: str):
+    async def ask(self, ctx: Context, *, text: str) -> None:
         """Talk to PotatoBot"""
 
         async with ctx.typing():
@@ -100,7 +103,9 @@ class Chat(Cog):
             await ctx.send(result)
 
     @commands.command()
-    async def session(self, ctx, emotion: Emotion, *accents: AccentWithSeverity):
+    async def session(
+        self, ctx: Context, emotion: Emotion, *accents: AccentWithSeverity
+    ) -> None:
         """Start chat session in channel
 
         Use  accent list  commamd to get list of accents.
@@ -142,7 +147,7 @@ class Chat(Cog):
         return response.text
 
     @tasks.loop(minutes=5)
-    async def cleanup_sessions(self):
+    async def cleanup_sessions(self) -> None:
         now = time.time()
 
         expired = []
@@ -158,7 +163,7 @@ class Chat(Cog):
             del self.sessions[user_id]
 
     @Cog.listener()
-    async def on_message(self, message: discord.Message):
+    async def on_message(self, message: discord.Message) -> None:
         if message.author.id not in self.sessions:
             return
 
@@ -190,5 +195,5 @@ class Chat(Cog):
             settings.last_reply = time.time()
 
 
-def setup(bot):
+def setup(bot: Bot) -> None:
     bot.add_cog(Chat(bot))

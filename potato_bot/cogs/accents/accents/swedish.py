@@ -7,7 +7,7 @@ from .accent import Match, Accent
 
 def bork(m: Match) -> Optional[str]:
     if random.random() * m.severity < 1 / 3:
-        return
+        return None
 
     return f" Bork{', bork' * random.randint(0, m.severity)}!"
 

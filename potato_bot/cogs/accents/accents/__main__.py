@@ -11,7 +11,7 @@ Starts interactive session if used without arguments.
 Lists accents if no accents provided."""
 
 
-def load_accents():
+def load_accents() -> None:
     for child in Path(__file__).parent.iterdir():
         if child.suffix != ".py":
             continue
@@ -25,7 +25,7 @@ def load_accents():
         importlib.import_module(f"{__package__}.{child.stem}")
 
 
-def main():
+def main() -> None:
     load_accents()
 
     if len(sys.argv) == 1:

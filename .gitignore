@@ -131,5 +131,6 @@ dmypy.json
 # IDEs
 .vscode
 
+# legacy files
 db.sqlite
 

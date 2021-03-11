@@ -5,11 +5,10 @@ import asyncio
 import textwrap
 import traceback
 
-from typing import Union, Sequence
+from typing import Union, Iterator
 from contextlib import redirect_stdout
 
 import discord
-import aiosqlite
 
 from discord.ext import commands
 
@@ -17,6 +16,7 @@ from potato_bot.bot import Bot
 from potato_bot.cog import Cog
 from potato_bot.utils import run_process_shell
 from potato_bot.checks import is_owner
+from potato_bot.context import Context
 
 
 class TechAdmin(Cog):
@@ -25,35 +25,35 @@ class TechAdmin(Cog):
     SQL_VALUE_LEN_CAP = 30
     PAGINATOR_PAGES_CAP = 5
 
-    async def cog_check(self, ctx):
+    async def cog_check(self, ctx: Context) -> None:
         return await is_owner().predicate(ctx)
 
     @commands.command()
-    async def load(self, ctx, module: str):
+    async def load(self, ctx: Context, module: str) -> None:
         """Load extension"""
 
         self.bot.load_extension(f"potato_bot.cogs.{module}")
         await ctx.ok()
 
     @commands.command()
-    async def unload(self, ctx, module: str):
+    async def unload(self, ctx: Context, module: str) -> None:
         """Unload extension"""
 
         self.bot.unload_extension(f"potato_bot.cogs.{module}")
         await ctx.ok()
 
     @commands.command()
-    async def reload(self, ctx, module: str):
+    async def reload(self, ctx: Context, module: str) -> None:
         """Reload extension"""
 
         self.bot.reload_extension(f"potato_bot.cogs.{module}")
         await ctx.ok()
 
     # https://github.com/Rapptz/RoboDanny/blob/715a5cf8545b94d61823f62db484be4fac1c95b1/cogs/admin.py#L422
-    @commands.command(aliases=["sudo"])
+    @commands.command(aliases=["sudo", "doas", "da"])
     async def runas(
-        self, ctx, user: Union[discord.Member, discord.User], *, command: str
-    ):
+        self, ctx: Context, user: Union[discord.Member, discord.User], *, command: str
+    ) -> None:
         """Run command as other user"""
 
         msg = copy.copy(ctx.message)
@@ -72,7 +72,7 @@ class TechAdmin(Cog):
             paginator.max_size - len(paginator.prefix) - len(paginator.suffix) - 2
         )
 
-        def wrap_with_limit(text: str, limit: int):
+        def wrap_with_limit(text: str, limit: int) -> Iterator[str]:
             limit -= 1
 
             line_len = 0
@@ -93,7 +93,9 @@ class TechAdmin(Cog):
 
         return paginator
 
-    async def _send_paginator(self, ctx, paginator: commands.Paginator):
+    async def _send_paginator(
+        self, ctx: Context, paginator: commands.Paginator
+    ) -> None:
         if len(paginator.pages) > self.PAGINATOR_PAGES_CAP:
             pages = paginator.pages[-self.PAGINATOR_PAGES_CAP :]
 
@@ -107,7 +109,7 @@ class TechAdmin(Cog):
             await ctx.send(page)
 
     @commands.command()
-    async def eval(self, ctx, *, program: str):
+    async def eval(self, ctx: Context, *, program: str) -> None:
         """
         Evaluate code inside bot, with async support
         Has conveniece shortcuts like
@@ -131,7 +133,7 @@ class TechAdmin(Cog):
             await self._send_paginator(ctx, paginator)
 
     @commands.command()
-    async def exec(self, ctx, *, arguments: str):
+    async def exec(self, ctx: Context, *, arguments: str) -> None:
         """Execute shell command"""
 
         async with ctx.typing():
@@ -139,23 +141,24 @@ class TechAdmin(Cog):
 
             await self._send_paginator(ctx, paginator)
 
-    @commands.command()
-    async def sql(self, ctx, *, program: str):
-        """Run SQL command against bot database"""
+    @commands.command(aliases=["edgeql", "edb"])
+    async def edgedb(self, ctx: Context, *, program: str) -> None:
+        """Run EdgeQL code against bot database"""
 
         async with ctx.typing():
-            async with self.bot.db.cursor() as cur:
-                await cur.execute(program)
-                result = await cur.fetchall()
+            await ctx.send("TODO")
+            # async with self.bot.db.cursor(commit=True) as cur:
+            #     await cur.execute(program)
+            #     result = await cur.fetchall()
 
-                if not result:
-                    return await ctx.ok()
+            #     if not result:
+            #         return await ctx.ok()
 
-                paginator = await self._sql_table(result)
+            #     paginator = await self._sql_table(result)
 
-            await self._send_paginator(ctx, paginator)
+            # await self._send_paginator(ctx, paginator)
 
-    async def _eval(self, ctx, program) -> str:
+    async def _eval(self, ctx: Context, program: str) -> str:
         # copied from https://github.com/Fogapod/KiwiBot/blob/49743118661abecaab86388cb94ff8a99f9011a8/modules/owner/module_eval.py
         # (originally copied from R. Danny bot)
         glob = {
@@ -200,7 +203,7 @@ class TechAdmin(Cog):
             else:
                 return f"{from_stdout}{returned}"
 
-    async def _exec(self, ctx, arguments: str) -> commands.Paginator:
+    async def _exec(self, ctx: Context, arguments: str) -> commands.Paginator:
         stdout, stderr = await run_process_shell(arguments)
 
         if stderr:
@@ -212,46 +215,46 @@ class TechAdmin(Cog):
 
         return self._make_paginator(result, prefix="```bash\n")
 
-    async def _sql_table(self, result: Sequence[aiosqlite.Row]) -> commands.Paginator:
-        columns = result[0].keys()
-        col_widths = [len(c) for c in columns]
+    # async def _sql_table(self, result: Sequence[aiosqlite.Row]) -> commands.Paginator:
+    #     columns = result[0].keys()
+    #     col_widths = [len(c) for c in columns]
 
-        for row in result:
-            for i, column in enumerate(columns):
-                col_widths[i] = min(
-                    (
-                        max((col_widths[i], len(str(row[column])))),
-                        self.SQL_VALUE_LEN_CAP,
-                    )
-                )
+    #     for row in result:
+    #         for i, column in enumerate(columns):
+    #             col_widths[i] = min(
+    #                 (
+    #                     max((col_widths[i], len(str(row[column])))),
+    #                     self.SQL_VALUE_LEN_CAP,
+    #                 )
+    #             )
 
-        header = " | ".join(
-            f"{column:^{col_widths[i]}}" for i, column in enumerate(columns)
-        )
-        separator = "-+-".join("-" * width for width in col_widths)
+    #     header = " | ".join(
+    #         f"{column:^{col_widths[i]}}" for i, column in enumerate(columns)
+    #     )
+    #     separator = "-+-".join("-" * width for width in col_widths)
 
-        def sanitize_value(value):
-            value = str(value).replace("\n", "\\n")
+    #     def sanitize_value(value):
+    #         value = str(value).replace("\n", "\\n")
 
-            if len(value) > self.SQL_VALUE_LEN_CAP:
-                value = f"{value[:self.SQL_VALUE_LEN_CAP - 2]}.."
+    #         if len(value) > self.SQL_VALUE_LEN_CAP:
+    #             value = f"{value[:self.SQL_VALUE_LEN_CAP - 2]}.."
 
-            return value
+    #         return value
 
-        paginator = commands.Paginator()
-        paginator.add_line(header)
-        paginator.add_line(separator)
+    #     paginator = commands.Paginator()
+    #     paginator.add_line(header)
+    #     paginator.add_line(separator)
 
-        for row in result:
-            paginator.add_line(
-                " | ".join(
-                    f"{sanitize_value(value):<{col_widths[i]}}"
-                    for i, value in enumerate(row)
-                )
-            )
+    #     for row in result:
+    #         paginator.add_line(
+    #             " | ".join(
+    #                 f"{sanitize_value(value):<{col_widths[i]}}"
+    #                 for i, value in enumerate(row)
+    #             )
+    #         )
 
-        return paginator
+    #     return paginator
 
 
-def setup(bot: Bot):
+def setup(bot: Bot) -> None:
     bot.add_cog(TechAdmin(bot))

@@ -1,11 +1,11 @@
 from typing import Any, Union, Optional
 
+import edgedb
 import aiohttp
 import discord
 
 from discord.ext import commands
 
-from .db import DB
 from .hookable import AsyncHookable
 
 
@@ -25,13 +25,13 @@ class Context(commands.Context, AsyncHookable):
         return self._prefix  # type: ignore
 
     @prefix.setter
-    def prefix(self, value: Optional[str]):
+    def prefix(self, value: Optional[str]) -> None:
         # because custom get_prefix can leave spaces
         self._prefix = None if value is None else value.rstrip()
 
     @property
-    def db(self) -> DB:
-        return self.bot.db
+    def edb(self) -> edgedb.AsyncIOPool:
+        return self.bot.edb
 
     @property
     def session(self) -> aiohttp.ClientSession:
@@ -67,7 +67,7 @@ class Context(commands.Context, AsyncHookable):
         content: Optional[str] = None,
         exit: bool = False,
         **kwargs: Any,
-    ):
+    ) -> None:
 
         await message.edit(content=content, **kwargs)
 
@@ -92,13 +92,13 @@ class Context(commands.Context, AsyncHookable):
 
         return message
 
-    async def ok(self, message: discord.Message = None):
+    async def ok(self, message: discord.Message = None) -> discord.Message:
         if message is None:
             message = self.message
 
         return await self.react("\N{HEAVY CHECK MARK}", message=message)
 
-    async def nope(self, message: discord.Message = None):
+    async def nope(self, message: discord.Message = None) -> discord.Message:
         if message is None:
             message = self.message
 

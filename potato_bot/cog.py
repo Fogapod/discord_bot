@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import inspect
 
 from typing import Any
@@ -8,7 +10,7 @@ from potato_bot.bot import Bot
 
 
 class Cog(commands.Cog):
-    def __new__(cls, *args: Any, **kwargs: Any):
+    def __new__(cls, *args: Any, **kwargs: Any) -> Cog:
         self = super().__new__(cls, *args, **kwargs)
 
         hooks = []
@@ -28,14 +30,14 @@ class Cog(commands.Cog):
 
         self.bot.loop.create_task(self._setup())
 
-    async def _setup(self):
+    async def _setup(self) -> None:
         await self.bot.wait_until_ready()
 
         await self.setup()
 
-    async def setup(self):
+    async def setup(self) -> None:
         pass
 
-    def cog_unload(self):
+    def cog_unload(self) -> None:
         for hook in self.__cog_hooks__:
             hook.__hook_target__.remove_hook(hook)
