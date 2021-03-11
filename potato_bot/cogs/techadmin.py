@@ -1,5 +1,7 @@
 import io
 import copy
+import json
+import pprint
 import random
 import asyncio
 import textwrap
@@ -146,7 +148,10 @@ class TechAdmin(Cog):
         """Run EdgeQL code against bot database"""
 
         async with ctx.typing():
-            await ctx.send("TODO")
+            # https://github.com/edgedb/edgedb-python/issues/107
+            data = json.loads(await ctx.edb.query_json(program))
+
+            await ctx.send(f"```json\n{pprint.pformat(data, indent=0)}```\n")
             # async with self.bot.db.cursor(commit=True) as cur:
             #     await cur.execute(program)
             #     result = await cur.fetchall()
