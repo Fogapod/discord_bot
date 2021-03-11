@@ -50,7 +50,7 @@ class GuildSettings:
         # custom prefix or mention
         # this way prefix logic is simplified and it hopefully runs faster at a cost of
         # storing duplicate mention regexes
-        self.prefix_re = mention_or_prefix_regex([prefix], bot.user.id)
+        self.prefix_re = mention_or_prefix_regex(bot.user.id, [prefix])
 
     @classmethod
     def from_edb(cls, bot: Bot, data: edgedb.Object) -> GuildSettings:
