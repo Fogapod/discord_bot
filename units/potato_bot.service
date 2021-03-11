@@ -12,6 +12,8 @@ WorkingDirectory=/srv/potato_bot
 Environment="IMAGE=fogapod/potato_bot"
 Environment="PWD=/srv/potato_bot"
 
+TimeoutStartSec=600
+
 ExecStartPre=-/usr/bin/docker pull $IMAGE
 ExecStartPre=/usr/bin/docker build -t $IMAGE .
 
