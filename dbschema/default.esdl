@@ -1,7 +1,9 @@
 module default {
     type GuildSettings {
-        required property guild_id -> snowflake;
-        required property prefix -> str;
+        required property guild_id -> snowflake {
+            constraint exclusive;
+        };
+        property prefix -> str;
     }
 
     type AccentSettings {

@@ -3,7 +3,7 @@ from typing import Any
 
 from discord.ext import commands
 
-from potato_bot.bot import Bot
+from potato_bot.bot import Bot, GuildSettings
 from potato_bot.cog import Cog
 from potato_bot.context import Context
 from potato_bot.constants import PREFIX
@@ -71,6 +71,65 @@ class Meta(Cog):
             f"Support server: discord.gg/{invite}\n"
             f"```"
         )
+
+    @commands.group()
+    @commands.guild_only()
+    async def prefix(self, ctx: Context) -> None:
+        """
+        Get local prefix (if any)
+        """
+
+        if ctx.subcommand_passed:
+            if ctx.invoked_subcommand:
+                return
+            else:
+                return await ctx.send_help(ctx.command)
+
+        if (
+            ctx.guild.id not in ctx.bot.guild_settings
+            or ctx.bot.guild_settings[ctx.guild.id] is None
+        ):
+            return await ctx.send(
+                f"Custom prefix not set, default is @mention or {PREFIX}"
+            )
+
+        await ctx.send(
+            f"Local prefix: {ctx.bot.guild_settings[ctx.guild.id].prefixes[0]}"
+        )
+
+    @prefix.command()
+    @commands.has_permissions(manage_guild=True)
+    async def set(self, ctx: Context, *, prefix: str) -> None:
+        """
+        Set custom prefix for server
+        """
+
+        settings = GuildSettings(ctx.bot, prefixes=[prefix.lower()])
+        await settings.write(ctx)
+
+        ctx.bot.guild_settings[ctx.guild.id] = settings
+
+        await ctx.ok()
+
+    @prefix.command(aliases=["remove", "del"])
+    @commands.has_permissions(manage_guild=True)
+    async def unset(self, ctx: Context) -> None:
+        """
+        Remove local prefix override
+        """
+
+        if (
+            ctx.guild.id in ctx.bot.guild_settings
+            and ctx.bot.guild_settings[ctx.guild.id] is not None
+        ):
+            # deleting for now because there seem to be no way to set optional
+            # edgedb row to None
+            del ctx.bot.guild_settings[ctx.guild.id]
+
+            settings = GuildSettings(ctx.bot, prefixes=[])
+            await settings.delete(ctx)
+
+        await ctx.ok()
 
 
 def setup(bot: Bot) -> None:

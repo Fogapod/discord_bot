@@ -33,31 +33,61 @@ initial_extensions = (
 
 
 def mention_or_prefix_regex(user_id: int, prefixes: Sequence[str]) -> re.Pattern[str]:
-    choices = [*[re.escape(prefix) for prefix in prefixes], rf"<@!?{user_id}>"]
+    choices = [
+        *[re.escape(prefix) for prefix in prefixes],
+        rf"<@!?{user_id}>",
+    ]
 
     return re.compile(fr"(?:{'|'.join(choices)})\s*", re.I)
 
 
 class GuildSettings:
     __slots__ = (
-        "prefix",
+        "prefixes",
         "prefix_re",
     )
 
-    def __init__(self, bot: Bot, *, prefix: str):
-        self.prefix = prefix
+    def __init__(self, bot: Bot, *, prefixes: Sequence[Optional[str]]):
+        self.prefixes = list(filter(None, prefixes))
 
         # custom prefix or mention
         # this way prefix logic is simplified and it hopefully runs faster at a cost of
         # storing duplicate mention regexes
-        self.prefix_re = mention_or_prefix_regex(bot.user.id, [prefix])
+        self.prefix_re = mention_or_prefix_regex(bot.user.id, self.prefixes)
 
     @classmethod
     def from_edb(cls, bot: Bot, data: edgedb.Object) -> GuildSettings:
-        return cls(bot, prefix=data.prefix)
+        return cls(bot, prefixes=[data.prefix])
+
+    async def write(self, ctx: Context) -> None:
+        await ctx.bot.edb.query(
+            """
+            INSERT GuildSettings {
+                guild_id := <snowflake>$guild_id,
+                prefix := <str>$prefix,
+            } UNLESS CONFLICT ON .guild_id
+            ELSE (
+                UPDATE GuildSettings
+                SET {
+                    prefix := <str>$prefix,
+                }
+            )
+            """,
+            guild_id=ctx.guild.id,
+            prefix=self.prefixes[0],
+        )
+
+    async def delete(self, ctx: Context) -> None:
+        await ctx.bot.edb.query(
+            """
+            DELETE GuildSettings
+            FILTER .guild_id = <snowflake>$guild_id
+            """,
+            guild_id=ctx.guild.id,
+        )
 
     def __repr__(self) -> str:
-        return f"<{type(self).__name__} prefix={self.prefix}>"
+        return f"<{type(self).__name__} prefixes={self.prefixes}>"
 
 
 class Bot(commands.Bot):
