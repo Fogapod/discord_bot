@@ -5,7 +5,7 @@ import re
 import logging
 import traceback
 
-from typing import Any, Set, Dict, List, Type, Union, Optional
+from typing import Any, Set, Dict, List, Type, Union, Optional, Sequence
 
 import edgedb
 import aiohttp
@@ -32,34 +32,32 @@ initial_extensions = (
 )
 
 
+def mention_or_prefix_regex(user_id: int, prefixes: Sequence[str]) -> re.Pattern[str]:
+    choices = [*[re.escape(prefix) for prefix in prefixes], rf"<@!?{user_id}>"]
+
+    return re.compile(fr"(?:{'|'.join(choices)})\s*", re.I)
+
+
 class GuildSettings:
     __slots__ = (
         "prefix",
         "prefix_re",
     )
 
-    def __init__(self, bot: Bot, data: edgedb.Object):
-        self.prefix = data.prefix
+    def __init__(self, bot: Bot, *, prefix: str):
+        self.prefix = prefix
 
         # custom prefix or mention
         # this way prefix logic is simplified and it hopefully runs faster at a cost of
         # storing duplicate mention regexes
-        self.prefix_re = re.compile(
-            fr"(?:{re.escape(data.prefix)}|<@!?{bot.user.id}>)\s*"
-        )
+        self.prefix_re = mention_or_prefix_regex([prefix], bot.user.id)
+
+    @classmethod
+    def from_edb(cls, bot: Bot, data: edgedb.Object) -> GuildSettings:
+        return cls(bot, prefix=data.prefix)
 
     def __repr__(self) -> str:
         return f"<{type(self).__name__} prefix={self.prefix}>"
-
-
-class UserGuildSettings:
-    __slots__ = ("accents",)
-
-    def __init__(self, bot: Bot, data: edgedb.Object):
-        self.accents = data.accents
-
-    def __repr__(self) -> str:
-        return f"<{type(self).__name__} accents={self.accents}>"
 
 
 class Bot(commands.Bot):
@@ -85,7 +83,7 @@ class Bot(commands.Bot):
 
         self.guild_settings: Dict[int, GuildSettings] = {}
 
-        self.mention_prefix_re: Optional[re.Pattern[str]] = None
+        self._default_prefix_re: Optional[re.Pattern[str]] = None
 
         self.owner_ids: Set[int] = set()
 
@@ -100,15 +98,16 @@ class Bot(commands.Bot):
                 traceback.print_exc()
 
     async def get_prefix(self, message: discord.Message) -> Union[List[str], str]:
-        if self.mention_prefix_re is None:
+        if self._default_prefix_re is None:
             # prefixes are not initialized
             return []
 
-        prefix_re = self.mention_prefix_re
+        guild_id = getattr(message.guild, "id", -1)
 
-        if message.guild:
-            if (settings := self.guild_settings.get(message.guild.id)) :
-                prefix_re = settings.prefix_re
+        if (settings := self.guild_settings.get(guild_id)) :
+            prefix_re = settings.prefix_re
+        else:
+            prefix_re = self._default_prefix_re
 
         if (match := prefix_re.match(message.content)) :
             return match[0]
@@ -129,6 +128,8 @@ class Bot(commands.Bot):
         )
 
     async def _get_guild_settings(self) -> None:
+        self._default_prefix_re = mention_or_prefix_regex(self.user.id, [PREFIX])
+
         for guild_settings in await self.edb.query(
             """
             SELECT GuildSettings {
@@ -137,7 +138,7 @@ class Bot(commands.Bot):
             }
             """
         ):
-            self.guild_settings[guild_settings.guild_id] = GuildSettings(
+            self.guild_settings[guild_settings.guild_id] = GuildSettings.from_edb(
                 self, guild_settings
             )
 
@@ -150,10 +151,6 @@ class Bot(commands.Bot):
 
     async def setup(self) -> None:
         await self.wait_until_ready()
-
-        self.mention_prefix_re = re.compile(
-            fr"<@!?{self.user.id}>|{re.escape(PREFIX)}\s*"
-        )
 
         await self._get_guild_settings()
 
