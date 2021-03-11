@@ -44,7 +44,9 @@ class Meta(Cog):
 
         latency = round(self.bot.latency * 1000)
 
-        await m.edit(content=f"Pong, **{send_diff}ms**\n\nLatency: **{latency}ms**")
+        await ctx.edit(
+            m, content=f"Pong, **{send_diff}ms**\n\nLatency: **{latency}ms**"
+        )
 
     @commands.command(aliases=["info"])
     async def about(self, ctx: Context) -> None:
