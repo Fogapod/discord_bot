@@ -39,6 +39,6 @@ RUN addgroup -S potato_bot \
 USER potato_bot
 
 COPY --chown=potato_bot:potato_bot potato_bot potato_bot
-COPY --chown=potato_bot:potato_bot migrations migrations
+COPY --chown=potato_bot:potato_bot dbschema dbschema
 
 ENTRYPOINT ["python", "-m", "potato_bot"]
