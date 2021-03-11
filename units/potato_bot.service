@@ -19,5 +19,4 @@ ExecStartPre=-/usr/bin/docker stop %n
 ExecStartPre=-/usr/bin/docker rm %n
 
 ExecStart=/usr/bin/docker run --name %n --rm \
-    -v ${PWD}/db.sqlite:/code/db.sqlite \
     --env-file ${PWD}/.env $IMAGE
