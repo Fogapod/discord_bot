@@ -1,13 +1,12 @@
 import io
 import copy
 import json
-import pprint
 import random
 import asyncio
 import textwrap
 import traceback
 
-from typing import Union, Iterator
+from typing import Any, Dict, Union, Iterator, Sequence
 from contextlib import redirect_stdout
 
 import discord
@@ -151,17 +150,12 @@ class TechAdmin(Cog):
             # https://github.com/edgedb/edgedb-python/issues/107
             data = json.loads(await ctx.edb.query_json(program))
 
-            await ctx.send(f"```json\n{pprint.pformat(data, indent=0)}```\n")
-            # async with self.bot.db.cursor(commit=True) as cur:
-            #     await cur.execute(program)
-            #     result = await cur.fetchall()
+            if not data:
+                return await ctx.ok()
 
-            #     if not result:
-            #         return await ctx.ok()
+            paginator = await self._sql_table(data)
 
-            #     paginator = await self._sql_table(result)
-
-            # await self._send_paginator(ctx, paginator)
+            await self._send_paginator(ctx, paginator)
 
     async def _eval(self, ctx: Context, program: str) -> str:
         # copied from https://github.com/Fogapod/KiwiBot/blob/49743118661abecaab86388cb94ff8a99f9011a8/modules/owner/module_eval.py
@@ -220,45 +214,52 @@ class TechAdmin(Cog):
 
         return self._make_paginator(result, prefix="```bash\n")
 
-    # async def _sql_table(self, result: Sequence[aiosqlite.Row]) -> commands.Paginator:
-    #     columns = result[0].keys()
-    #     col_widths = [len(c) for c in columns]
+    async def _sql_table(
+        self, result: Union[Sequence[Dict[str, Any]], Sequence[Any]]
+    ) -> commands.Paginator:
+        if not isinstance(result[0], dict):
+            paginator = commands.Paginator(prefix="```python\n")
+            paginator.add_line(str(result))
+            return paginator
 
-    #     for row in result:
-    #         for i, column in enumerate(columns):
-    #             col_widths[i] = min(
-    #                 (
-    #                     max((col_widths[i], len(str(row[column])))),
-    #                     self.SQL_VALUE_LEN_CAP,
-    #                 )
-    #             )
+        columns = result[0].keys()
+        col_widths = [len(c) for c in columns]
 
-    #     header = " | ".join(
-    #         f"{column:^{col_widths[i]}}" for i, column in enumerate(columns)
-    #     )
-    #     separator = "-+-".join("-" * width for width in col_widths)
+        for row in result:
+            for i, column in enumerate(columns):
+                col_widths[i] = min(
+                    (
+                        max((col_widths[i], len(str(row[column])))),
+                        self.SQL_VALUE_LEN_CAP,
+                    )
+                )
 
-    #     def sanitize_value(value):
-    #         value = str(value).replace("\n", "\\n")
+        header = " | ".join(
+            f"{column:^{col_widths[i]}}" for i, column in enumerate(columns)
+        )
+        separator = "-+-".join("-" * width for width in col_widths)
 
-    #         if len(value) > self.SQL_VALUE_LEN_CAP:
-    #             value = f"{value[:self.SQL_VALUE_LEN_CAP - 2]}.."
+        def sanitize_value(value: Any) -> str:
+            value = str(value).replace("\n", "\\n")
 
-    #         return value
+            if len(value) > self.SQL_VALUE_LEN_CAP:
+                value = f"{value[:self.SQL_VALUE_LEN_CAP - 2]}.."
 
-    #     paginator = commands.Paginator()
-    #     paginator.add_line(header)
-    #     paginator.add_line(separator)
+            return value
 
-    #     for row in result:
-    #         paginator.add_line(
-    #             " | ".join(
-    #                 f"{sanitize_value(value):<{col_widths[i]}}"
-    #                 for i, value in enumerate(row)
-    #             )
-    #         )
+        paginator = commands.Paginator(prefix="```python\n")
+        paginator.add_line(header)
+        paginator.add_line(separator)
 
-    #     return paginator
+        for row in result:
+            paginator.add_line(
+                " | ".join(
+                    f"{sanitize_value(value):<{col_widths[i]}}"
+                    for i, value in enumerate(row.values())
+                )
+            )
+
+        return paginator
 
 
 def setup(bot: Bot) -> None:
