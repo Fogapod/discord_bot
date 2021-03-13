@@ -211,7 +211,7 @@ class TextField:
 
 
 def language_iterator(blocks: Sequence[Any]) -> Iterator[Optional[str]]:
-    """Extracts language for each word in Google OCR output"""
+    """Extracts language for each paragraph in Google OCR output"""
 
     def extract_language(data: Any) -> Optional[str]:
         if (properties := data.get("property")) is None:
@@ -230,7 +230,22 @@ def language_iterator(blocks: Sequence[Any]) -> Iterator[Optional[str]]:
         for paragraph in block["paragraphs"]:
             paragraph_language = extract_language(paragraph)
 
-            for _ in paragraph["words"]:
+            yield paragraph_language or block_language
+
+            # line grouping differs between simple annotations and paragraph grouping in
+            # full annotations. "EOL_SURE_SPACE" indicates line break matching simple
+            # annotations
+            for word in paragraph["words"]:
+                last_symbol = word["symbols"][-1]
+                if (symbol_properties := last_symbol.get("property")) is None:
+                    continue
+
+                if (detected_break := symbol_properties.get("detectedBreak")) is None:
+                    continue
+
+                if detected_break["type"] != "EOL_SURE_SPACE":
+                    continue
+
                 yield paragraph_language or block_language
 
 
@@ -365,7 +380,6 @@ class Images(Cog):
         if not (annotations.get("textAnnotations")):
             return await ctx.reply("No text detected")
 
-        summary_annotation = annotations["textAnnotations"][0]
         word_annotations = annotations["textAnnotations"][1:]
         block_annotations = annotations["fullTextAnnotation"]["pages"][0]["blocks"]
 
@@ -373,7 +387,7 @@ class Images(Cog):
         # by checking full image description. In description words are combined into
         # lines, lines are separated by newlines, there is a trailing newline.
         # Coordinates from words in the same line can be merged
-        lines = summary_annotation["description"][:-1].split("\n")
+        lines = annotations["fullTextAnnotation"]["text"][:-1].split("\n")
 
         need_trasnslation = {}
         word_languages = language_iterator(block_annotations)
@@ -382,19 +396,23 @@ class Images(Cog):
                 if word_language != "und" and word_language != language:
                     need_trasnslation[i] = line
 
-        if need_trasnslation:
-            translated = await self.translate(
-                "\n".join(need_trasnslation.values()), language
+        if not need_trasnslation:
+            return await ctx.send(
+                "Nothing to translate on image (either entire text is in target language or language is undetected)"
             )
 
-            translated_lines = translated.split("\n")
-            if len(translated_lines) != len(need_trasnslation):
-                return await ctx.reply(
-                    f"Error: expected {len(need_trasnslation)} translated lines, got {len(translated_lines)}"
-                )
+        translated = await self.translate(
+            "\n".join(need_trasnslation.values()), language
+        )
 
-            for idx, translated_line in zip(need_trasnslation.keys(), translated_lines):
-                lines[idx] = translated_line
+        translated_lines = translated.split("\n")
+        if len(translated_lines) != len(need_trasnslation):
+            return await ctx.reply(
+                f"Error: expected {len(need_trasnslation)} translated lines, got {len(translated_lines)}"
+            )
+
+        for idx, translated_line in zip(need_trasnslation.keys(), translated_lines):
+            lines[idx] = translated_line
 
         # error reporting
         notes = ""
@@ -424,7 +442,7 @@ class Images(Cog):
                 fields.append(field)
 
         if not fields:
-            return await ctx.send("Nothing to translate")
+            return await ctx.send("Could not translate anything on image")
 
         result = await self.bot.loop.run_in_executor(None, self.draw, src, fields)
 
