@@ -406,6 +406,7 @@ class Images(Cog):
             field = TextField(line, src)
             original_line = need_trasnslation.get(i, line)
 
+            # TODO: sane iterator instead of this
             for word in word_annotations[current_word:]:
                 text = word["description"]
                 if original_line.startswith(text):
@@ -421,6 +422,9 @@ class Images(Cog):
 
             if field.initialized and line != need_trasnslation.get(i, line):
                 fields.append(field)
+
+        if not fields:
+            return await ctx.send("Nothing to translate")
 
         result = await self.bot.loop.run_in_executor(None, self.draw, src, fields)
 
