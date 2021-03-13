@@ -457,7 +457,7 @@ class Images(Cog):
         await ctx.send(stats, file=discord.File(result, filename="trocr.png"))
 
     def draw(self, src: PIL.Image, fields: Sequence[TextField]) -> BytesIO:
-        FIELD_CAP = 50
+        FIELD_CAP = 120
 
         src = src.convert("RGBA")
 
