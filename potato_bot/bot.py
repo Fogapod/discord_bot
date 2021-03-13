@@ -41,53 +41,54 @@ def mention_or_prefix_regex(user_id: int, prefixes: Sequence[str]) -> re.Pattern
     return re.compile(fr"(?:{'|'.join(choices)})\s*", re.I)
 
 
-class GuildSettings:
+class Prefix:
     __slots__ = (
-        "prefixes",
+        "prefix",
         "prefix_re",
     )
 
-    def __init__(self, bot: Bot, *, prefixes: Sequence[Optional[str]]):
-        self.prefixes = list(filter(None, prefixes))
+    def __init__(self, bot: Bot, *, prefix: Optional[str]):
+        self.prefix = prefix
 
         # custom prefix or mention
         # this way prefix logic is simplified and it hopefully runs faster at a cost of
         # storing duplicate mention regexes
-        self.prefix_re = mention_or_prefix_regex(bot.user.id, self.prefixes)
+        self.prefix_re = mention_or_prefix_regex(bot.user.id, self.prefix)
 
     @classmethod
-    def from_edb(cls, bot: Bot, data: edgedb.Object) -> GuildSettings:
-        return cls(bot, prefixes=[data.prefix])
+    def from_edb(cls, bot: Bot, data: edgedb.Object) -> Prefix:
+        return cls(bot, prefix=data.prefix)
 
     async def write(self, ctx: Context) -> None:
         await ctx.bot.edb.query(
             """
-            INSERT GuildSettings {
+            INSERT Prefix {
                 guild_id := <snowflake>$guild_id,
                 prefix := <str>$prefix,
             } UNLESS CONFLICT ON .guild_id
             ELSE (
-                UPDATE GuildSettings
+                UPDATE Prefix
                 SET {
                     prefix := <str>$prefix,
                 }
             )
             """,
             guild_id=ctx.guild.id,
-            prefix=self.prefixes[0],
+            prefix=self.prefix,
         )
 
-    async def delete(self, ctx: Context) -> None:
+    @staticmethod
+    async def delete(ctx: Context) -> None:
         await ctx.bot.edb.query(
             """
-            DELETE GuildSettings
+            DELETE Prefix
             FILTER .guild_id = <snowflake>$guild_id
             """,
             guild_id=ctx.guild.id,
         )
 
     def __repr__(self) -> str:
-        return f"<{type(self).__name__} prefixes={self.prefixes}>"
+        return f"<{type(self).__name__} prefix={self.prefix}>"
 
 
 class Bot(commands.Bot):
@@ -111,14 +112,14 @@ class Bot(commands.Bot):
 
         self.session = aiohttp.ClientSession(headers={"user-agent": "PotatoBot"})
 
-        self.guild_settings: Dict[int, GuildSettings] = {}
-
         self._default_prefix_re: Optional[re.Pattern[str]] = None
+
+        self.prefixes: Dict[int, Prefix] = {}
 
         self.owner_ids: Set[int] = set()
 
         self.loop.run_until_complete(self.critical_setup())
-        self.loop.create_task(self.setup())
+        self.loop.create_task(self._setup())
 
         for extension in initial_extensions:
             try:
@@ -134,7 +135,7 @@ class Bot(commands.Bot):
 
         guild_id = getattr(message.guild, "id", -1)
 
-        if (settings := self.guild_settings.get(guild_id)) :
+        if (settings := self.prefixes.get(guild_id)) :
             prefix_re = settings.prefix_re
         else:
             prefix_re = self._default_prefix_re
@@ -157,20 +158,18 @@ class Bot(commands.Bot):
             dsn=os.environ["EDGEDB_DSN"], min_size=1, max_size=2
         )
 
-    async def _get_guild_settings(self) -> None:
+    async def _get_prefixes(self) -> None:
         self._default_prefix_re = mention_or_prefix_regex(self.user.id, [PREFIX])
 
-        for guild_settings in await self.edb.query(
+        for guild in await self.edb.query(
             """
-            SELECT GuildSettings {
+            SELECT Prefix {
                 guild_id,
                 prefix,
             }
             """
         ):
-            self.guild_settings[guild_settings.guild_id] = GuildSettings.from_edb(
-                self, guild_settings
-            )
+            self.prefixes[guild.guild_id] = Prefix.from_edb(self, guild)
 
     async def _fetch_owners(self) -> None:
         app_info = await self.application_info()
@@ -182,9 +181,16 @@ class Bot(commands.Bot):
     async def setup(self) -> None:
         await self.wait_until_ready()
 
-        await self._get_guild_settings()
-
+        await self._get_prefixes()
         await self._fetch_owners()
+
+    async def _setup(self) -> None:
+        try:
+            await self.setup()
+        except Exception:
+            await self.close()
+
+            raise
 
     async def close(self) -> None:
         await self.edb.aclose()
