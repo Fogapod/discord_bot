@@ -14,7 +14,7 @@ if __name__ == "__main__":
             traces_sample_rate=1.0,
         )
     else:
-        log.warn("skipped sentry initialization")
+        log.warning("skipped sentry initialization")
 
     bot = Bot()
 

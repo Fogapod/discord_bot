@@ -51,6 +51,10 @@ class ErrorHandler(Cog):
             await ctx.send_help(ctx.command)
         elif isinstance(e, (commands.ArgumentParsingError, commands.BadUnionArgument)):
             await ctx.reply(f"Unable to process command arguments: {e}")
+        elif isinstance(e, commands.CommandOnCooldown):
+            await ctx.reply(e)
+        elif isinstance(e, commands.MaxConcurrencyReached):
+            await ctx.reply(e)
         else:
             await ctx.reply(f"Unexpected error: **{type(e).__name__}**: `{e}`")
 

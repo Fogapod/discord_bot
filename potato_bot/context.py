@@ -56,7 +56,7 @@ class Context(commands.Context, AsyncHookable):
 
         return message
 
-    async def reply(self, content: str = None, **kwargs: Any) -> discord.Message:
+    async def reply(self, content: Any = None, **kwargs: Any) -> discord.Message:
         return await self.send(content, reference=self.message, **kwargs)
 
     @AsyncHookable.hookable()
@@ -64,7 +64,7 @@ class Context(commands.Context, AsyncHookable):
         self,
         message: discord.Message,
         *,
-        content: Optional[str] = None,
+        content: Any = None,
         exit: bool = False,
         **kwargs: Any,
     ) -> None:

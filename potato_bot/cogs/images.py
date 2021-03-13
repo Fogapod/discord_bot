@@ -1,5 +1,6 @@
 import os
 import math
+import functools
 import itertools
 
 from io import BytesIO
@@ -10,6 +11,7 @@ import discord
 
 from PIL import ImageDraw, ImageFont, ImageFilter
 from discord.ext import commands
+from googletrans import LANGCODES, LANGUAGES, Translator
 
 from potato_bot.bot import Bot
 from potato_bot.cog import Cog
@@ -20,13 +22,6 @@ _VertexType = Dict[str, int]
 _VerticesType = Tuple[_VertexType, _VertexType, _VertexType, _VertexType]
 
 OCR_API_URL = "https://api.tsu.sh/google/ocr"
-
-FONT_PATH = "DejaVuSans.ttf"
-
-PX_TO_PT_RATIO = 1.3333333
-
-TRANSLATE_CAP = 10
-BLUR_CAP = 40
 
 
 class TROCRException(Exception):
@@ -201,7 +196,7 @@ class TextField:
 
     @property
     def font_size(self) -> int:
-        return max((1, int(PX_TO_PT_RATIO * self.height) - 2))
+        return max((1, int(1.3333333 * self.height) - 2))
 
     @property
     def stroke_width(self) -> int:
@@ -219,9 +214,21 @@ class Images(Cog):
     """Image manipulation"""
 
     async def setup(self) -> None:
-        self.font = ImageFont.truetype(FONT_PATH)
+        self.font = ImageFont.truetype("DejaVuSans.ttf")
 
         # TODO: fetch list of languages from API or hardcode
+        self.translator = Translator(
+            service_urls=[
+                "translate.google.com",
+                "translate.google.co.kr",
+                "translate.google.at",
+                "translate.google.de",
+                "translate.google.ru",
+                "translate.google.ch",
+                "translate.google.fr",
+                "translate.google.es",
+            ]
+        )
 
     @commands.command(hidden=True)
     async def i(self, ctx: Context, i: Image = None) -> None:
@@ -302,15 +309,25 @@ class Images(Cog):
         await ctx.send(f"```\n{text}```")
 
     @commands.command()
+    @commands.max_concurrency(1, per=commands.BucketType.default)
+    @commands.cooldown(1, 5, type=commands.BucketType.channel)
     async def trocr(
-        self, ctx: Context, language: str = "en", image: StaticImage = None
+        self, ctx: Context, language: str, image: StaticImage = None
     ) -> None:
-        """!!! UNFINISHED !!! Translate text on image"""
+        """Translate text on image"""
+
+        language = language.lower()
 
         if language == "list":
-            await ctx.send("TODO: send language list")
+            ctx.command.reset_cooldown(ctx)
 
-        # TODO: check language argument
+            return await ctx.send("TODO: send language list")
+
+        language = LANGCODES.get(language, language)
+        if language not in LANGUAGES:
+            ctx.command.reset_cooldown(ctx)
+
+            return await ctx.reply("Invalid language")
 
         if image is None:
             image = await StaticImage.from_history(ctx)
@@ -318,36 +335,60 @@ class Images(Cog):
         src = await image.to_pil_image(ctx)
 
         json = await self._ocr(ctx, image.url, raw=True)
+        annotations = json["responses"][0]
 
-        if not (text_annotations := json["responses"][0].get("textAnnotations")):
+        if not (annotations.get("textAnnotations")):
             return await ctx.reply("No text detected")
 
-        # error reporting
-        notes = ""
+        summary_annotation = annotations["textAnnotations"][0]
+        word_annotations = annotations["textAnnotations"][1:]
+        char_annotations = annotations["fullTextAnnotation"]["pages"][0]["blocks"]
 
         # Google OCR API returns entry for each word separately, but they can be joined
         # by checking full image description. In description words are combined into
         # lines, lines are separated by newlines, there is a trailing newline.
         # Coordinates from words in the same line can be merged
-        current_word = 1  # 1st annotation is entire text
-        translations_count = 0
+        lines = summary_annotation["description"][:-1].split("\n")
+
+        need_trasnslation = {}
+        for i, line in enumerate(lines):
+            relevant_block = char_annotations[i]
+            if (block_properties := relevant_block.get("property")) is not None:
+                if (
+                    block_language := block_properties.get("detectedLanguages")
+                ) is not None:
+                    if block_language != "und" and block_language != language:
+                        need_trasnslation[i] = line
+
+        if need_trasnslation:
+            translated = await self.translate(
+                "\n".join(need_trasnslation.values()), language
+            )
+
+            translated_lines = translated.split("\n")
+            if len(translated_lines) != len(need_trasnslation):
+                return await ctx.reply(
+                    f"Error: expected {len(need_trasnslation)} translated lines, got {len(translated_lines)}"
+                )
+
+            for idx, translated_line in zip(need_trasnslation.keys(), translated_lines):
+                lines[idx] = translated_line
+
+        # error reporting
+        notes = ""
+
+        current_word = 0
         fields = []
-        for line in text_annotations[0]["description"].split("\n")[:-1]:
-            translated_line = line
-            if translations_count < TRANSLATE_CAP:
-                in_lang = text_annotations[0]["locale"]
-                # seems like "und" is an unknown language
-                if in_lang != "und" and in_lang != language:
-                    translated_line = await self.translate(line, in_lang, language)
-                    translations_count += 1
 
-            field = TextField(translated_line, src)
+        for i, line in enumerate(lines):
+            field = TextField(line, src)
+            original_line = need_trasnslation.get(i, line)
 
-            for word in text_annotations[current_word:]:
+            for word in word_annotations[current_word:]:
                 text = word["description"]
-                if line.startswith(text):
+                if original_line.startswith(text):
                     current_word += 1
-                    line = line[len(text) :].lstrip()
+                    original_line = original_line[len(text) :].lstrip()
                     # TODO: merge multiple lines into box
                     try:
                         field.add_word(word["boundingPoly"]["vertices"], src.size)
@@ -356,21 +397,23 @@ class Images(Cog):
                 else:
                     break
 
-            if field.initialized:
+            if field.initialized and line != need_trasnslation.get(i, line):
                 fields.append(field)
 
         result = await self.bot.loop.run_in_executor(None, self.draw, src, fields)
 
-        stats = f"Words: {current_word - 1}\nLines: {len(fields)}\nTranslated: {translations_count}"
+        stats = f"Words: {current_word}\nLines: {len(fields)}"
         if notes:
             stats += f"\nNotes: {notes}"
 
         await ctx.send(stats, file=discord.File(result, filename="trocr.png"))
 
     def draw(self, src: PIL.Image, fields: Sequence[TextField]) -> BytesIO:
+        FIELD_CAP = 50
+
         src = src.convert("RGBA")
 
-        fields = fields[:BLUR_CAP]
+        fields = fields[:FIELD_CAP]
 
         for field in fields:
             cropped = src.crop(field.coords_padded)
@@ -384,10 +427,6 @@ class Images(Cog):
             # ).getpixel((0, 0))  # ugly!!!
 
             src.paste(blurred, field.coords_padded)
-
-            # might not be needed, but fly command creates memory leak
-            cropped.close()
-            blurred.close()
 
         for field in fields:
             # TODO: figure out how to fit text into boxes with Pillow without creating
@@ -419,17 +458,17 @@ class Images(Cog):
                 field.coords_padded[:2],
             )
 
-            text_im.close()
-
         result = BytesIO()
         src.save(result, format="PNG")
 
-        src.close()
-
         return BytesIO(result.getvalue())
 
-    async def translate(self, text: str, in_lang: str, out_lang: str) -> str:
-        return text
+    async def translate(self, text: str, out_lang: str) -> str:
+        translation = await self.bot.loop.run_in_executor(
+            None, functools.partial(self.translator.translate, text, dest=out_lang)
+        )
+
+        return translation.text
 
 
 def setup(bot: Bot) -> None:
