@@ -9,6 +9,7 @@ import traceback
 from typing import Any, Dict, Union, Iterator, Sequence
 from contextlib import redirect_stdout
 
+import edgedb
 import discord
 
 from discord.ext import commands
@@ -21,7 +22,7 @@ from potato_bot.context import Context
 
 
 class TechAdmin(Cog):
-    """Commands for technical staff"""
+    """Commands for bot administrators"""
 
     SQL_VALUE_LEN_CAP = 30
     PAGINATOR_PAGES_CAP = 5
@@ -147,13 +148,16 @@ class TechAdmin(Cog):
         """Run EdgeQL code against bot database"""
 
         async with ctx.typing():
-            # https://github.com/edgedb/edgedb-python/issues/107
-            data = json.loads(await ctx.edb.query_json(program))
+            try:
+                # https://github.com/edgedb/edgedb-python/issues/107
+                data = json.loads(await ctx.edb.query_json(program))
+            except edgedb.EdgeDBError as e:
+                return await ctx.send(f"Error: **{type(e).__name__}**: `{e}`")
 
             if not data:
                 return await ctx.ok()
 
-            paginator = await self._sql_table(data)
+            paginator = await self._edgedb_table(data)
 
             await self._send_paginator(ctx, paginator)
 
@@ -214,7 +218,7 @@ class TechAdmin(Cog):
 
         return self._make_paginator(result, prefix="```bash\n")
 
-    async def _sql_table(
+    async def _edgedb_table(
         self, result: Union[Sequence[Dict[str, Any]], Sequence[Any]]
     ) -> commands.Paginator:
         if not isinstance(result[0], dict):
