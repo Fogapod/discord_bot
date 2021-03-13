@@ -21,4 +21,4 @@ ExecStartPre=-/usr/bin/docker stop %n
 ExecStartPre=-/usr/bin/docker rm %n
 
 ExecStart=/usr/bin/docker run --name %n --rm \
-    --env-file ${PWD}/.env $IMAGE
+    --env-file ${PWD}/.env --hostname potato_prod $IMAGE
