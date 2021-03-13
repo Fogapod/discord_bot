@@ -360,13 +360,17 @@ class Images(Cog):
         if language == "list":
             ctx.command.reset_cooldown(ctx)
 
-            return await ctx.send("TODO: send language list")
+            return await ctx.send(
+                "TODO: <https://github.com/ssut/py-googletrans/blob/d15c94f176463b2ce6199a42a1c517690366977f/googletrans/constants.py#L76-L182>"
+            )
 
         language = LANGCODES.get(language, language)
         if language not in LANGUAGES:
             ctx.command.reset_cooldown(ctx)
 
-            return await ctx.reply("Invalid language")
+            return await ctx.reply(
+                "Invalid language. Use `list` to get list of supported languages"
+            )
 
         if image is None:
             image = await StaticImage.from_history(ctx)
