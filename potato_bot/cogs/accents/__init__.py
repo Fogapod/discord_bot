@@ -408,10 +408,10 @@ class Accents(Cog):
         my_accents = self.get_user_accents(ctx.me)
 
         if owo in my_accents:
-            await self._remove_accents(ctx, ctx.me.id, [AccentWithSeverity(owo)])
+            await self._remove_accents(ctx, ctx.me, [AccentWithSeverity(owo)])
         else:
             await self._add_accents(
-                ctx, ctx.me.id, [AccentWithSeverity(owo, severity=random.randint(1, 3))]
+                ctx, ctx.me, [AccentWithSeverity(owo, severity=random.randint(1, 3))]
             )
 
         await self._update_nick(ctx)
