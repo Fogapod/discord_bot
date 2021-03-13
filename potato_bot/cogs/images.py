@@ -4,7 +4,7 @@ import functools
 import itertools
 
 from io import BytesIO
-from typing import Any, Dict, Tuple, Optional, Sequence
+from typing import Any, Dict, Tuple, Iterator, Optional, Sequence
 
 import PIL
 import discord
@@ -210,6 +210,30 @@ class TextField:
         return f"<TextField text='{self.text}' coords={self.coords} angle={self.angle}>"
 
 
+def language_iterator(blocks: Sequence[Any]) -> Iterator[Optional[str]]:
+    """Extracts language for each word in Google OCR output"""
+
+    def extract_language(data: Any) -> Optional[str]:
+        if (properties := data.get("property")) is None:
+            return None
+
+        if (languages := properties.get("detectedLanguages")) is None:
+            return None
+
+        return sorted(languages, key=lambda l: l.get("confidence", 1))[-1][
+            "languageCode"
+        ]
+
+    for block in blocks:
+        block_language = extract_language(block)
+
+        for paragraph in block["paragraphs"]:
+            paragraph_language = extract_language(paragraph)
+
+            for _ in paragraph["words"]:
+                yield paragraph_language or block_language
+
+
 class Images(Cog):
     """Image manipulation"""
 
@@ -334,15 +358,16 @@ class Images(Cog):
 
         src = await image.to_pil_image(ctx)
 
-        json = await self._ocr(ctx, image.url, raw=True)
-        annotations = json["responses"][0]
+        raw_ocr = await self._ocr(ctx, image.url, raw=True)
+
+        annotations = raw_ocr["responses"][0]
 
         if not (annotations.get("textAnnotations")):
             return await ctx.reply("No text detected")
 
         summary_annotation = annotations["textAnnotations"][0]
         word_annotations = annotations["textAnnotations"][1:]
-        char_annotations = annotations["fullTextAnnotation"]["pages"][0]["blocks"]
+        block_annotations = annotations["fullTextAnnotation"]["pages"][0]["blocks"]
 
         # Google OCR API returns entry for each word separately, but they can be joined
         # by checking full image description. In description words are combined into
@@ -351,14 +376,11 @@ class Images(Cog):
         lines = summary_annotation["description"][:-1].split("\n")
 
         need_trasnslation = {}
+        word_languages = language_iterator(block_annotations)
         for i, line in enumerate(lines):
-            relevant_block = char_annotations[i]
-            if (block_properties := relevant_block.get("property")) is not None:
-                if (
-                    block_language := block_properties.get("detectedLanguages")
-                ) is not None:
-                    if block_language != "und" and block_language != language:
-                        need_trasnslation[i] = line
+            if (word_language := next(word_languages)) is not None:
+                if word_language != "und" and word_language != language:
+                    need_trasnslation[i] = line
 
         if need_trasnslation:
             translated = await self.translate(
