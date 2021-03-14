@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import re
+import asyncio
 import logging
 import traceback
 
@@ -179,14 +180,14 @@ class Bot(commands.Bot):
             self.owner_ids = set(m.id for m in app_info.team.members)
 
     async def setup(self) -> None:
-        await self.wait_until_ready()
-
         await self._get_prefixes()
         await self._fetch_owners()
 
     async def _setup(self) -> None:
+        await self.wait_until_ready()
+
         try:
-            await self.setup()
+            await asyncio.shield(self.setup())
         except Exception:
             await self.close()
 
