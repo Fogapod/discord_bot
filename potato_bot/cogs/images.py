@@ -166,12 +166,10 @@ class TextField:
         else:
             raise AngleUndetectable
 
-        if degrees < 0:
-            degrees += 360
-        elif degrees > 360:
-            degrees -= 360
+        degrees = abs(degrees) % 360
 
-        return round(degrees)
+        # drop last digit, OCR often returns 1-2 degree tilted text, ignore this
+        return int(degrees / 10) * 10
 
     @property
     def coords(self) -> Tuple[int, int, int, int]:
@@ -461,9 +459,7 @@ class Images(Cog):
 
         src = src.convert("RGBA")
 
-        fields = fields[:FIELD_CAP]
-
-        for field in fields:
+        for field in fields[:FIELD_CAP]:
             cropped = src.crop(field.coords_padded)
 
             # NOTE: next line causes segfaults if coords are wrong, debug from here
