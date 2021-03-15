@@ -470,8 +470,10 @@ class Images(Cog):
                 else:
                     break
 
-            if field.initialized and line != need_trasnslation.get(i, line):
-                fields.append(field)
+            if field.initialized:
+                if (original_line := need_trasnslation.get(i, line)) is not None:
+                    if line.casefold() != original_line.casefold():
+                        fields.append(field)
 
         if not fields:
             return await ctx.send("Could not translate anything on image")
