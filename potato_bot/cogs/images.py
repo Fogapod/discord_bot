@@ -488,6 +488,8 @@ class Images(Cog):
         FIELD_CAP = 150
         MAX_SIZE = 1024  # current OCR API limitation
 
+        fields = fields[:FIELD_CAP]
+
         if (largest_dim := max(src.size)) > MAX_SIZE:
             ratio = MAX_SIZE / largest_dim
 
@@ -500,7 +502,7 @@ class Images(Cog):
 
         src = src.convert("RGBA")
 
-        for field in fields[:FIELD_CAP]:
+        for field in fields:
             cropped = src.crop(field.coords_padded)
 
             # NOTE: next line causes segfaults if coords are wrong, debug from here
