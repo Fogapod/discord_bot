@@ -4,6 +4,7 @@ import re
 import json
 import random
 import importlib
+import contextlib
 
 from typing import Any, Dict, List, Union, Optional, Sequence
 from pathlib import Path
@@ -302,7 +303,8 @@ class Accents(Cog):
         for accent in self.get_user_accents(ctx.me):
             new_nick = accent.apply(new_nick, limit=32).strip()
 
-        await ctx.me.edit(nick=new_nick)
+        with contextlib.suppress(discord.Forbidden):
+            await ctx.me.edit(nick=new_nick)
 
     @accent.group(name="bot", invoke_without_command=True, ignore_extra=False)
     @commands.has_permissions(manage_guild=True)
@@ -423,7 +425,7 @@ class Accents(Cog):
         for accent in accents:
             content = accent.apply(content)
 
-        return content
+        return content.strip()
 
     @Context.hook()
     async def on_send(

@@ -298,7 +298,7 @@ class Image:
         *,
         allow_static: bool = True,
         allow_animated: bool = False,
-        timeout: int = 5,
+        timeout: int = 10,
         max_content_length: int = 7000000,
     ) -> bytes:
         try:

@@ -145,31 +145,40 @@ class TextField:
 
     @staticmethod
     def _get_angle(vertices: _VerticesType) -> int:
-        # https://stackoverflow.com/a/27481611
         def get_coords(vertex: _VertexType) -> Tuple[Optional[int], Optional[int]]:
             return vertex.get("x"), vertex.get("y")
 
         cycle = itertools.cycle(vertices)
+        x, y = get_coords(next(cycle))
         for i in range(4):
-            x, y = get_coords(next(cycle))
             next_x, next_y = get_coords(next(cycle))
 
             # Any vertex coordinate can be missing
-            if None not in (x, y, next_x, next_y):
-                x_diff, y_diff = next_x - x, y - next_y  # type: ignore
-                degrees = math.degrees(math.atan2(y_diff, x_diff))
+            if None in (x, y, next_x, next_y):
+                x, y = next_x, next_y
+                continue
 
-                # compensate missing vertices
-                degrees += 90 * i
+            # algo: https://stackoverflow.com/a/27481611
 
-                break
+            # mypy literally does not see previous statement
+            delta_y = y - next_y  # type: ignore
+            delta_x = next_x - x  # type: ignore
+
+            degrees = math.degrees(math.atan2(delta_y, delta_x))
+
+            if degrees < 0:
+                degrees += 360
+
+            # compensate missing vertices
+            degrees += 90 * i
+
+            break
         else:
             raise AngleUndetectable
 
-        degrees = abs(degrees) % 360
-
-        # drop last digit, OCR often returns 1-2 degree tilted text, ignore this
-        return int(degrees / 10) * 10
+        # # truncate last digit, OCR often returns 1-2 degree tilted text, ignore this
+        # TEMPORARY: truncate angle to 90 degrees
+        return 90 * round(degrees / 90)
 
     @property
     def coords(self) -> Tuple[int, int, int, int]:
@@ -184,13 +193,31 @@ class TextField:
             min((self._src_height, self.lower + self._padding)),  # type: ignore
         )
 
+    # TODO: implement w/h detection ASAP, this is temporary
+    # solutions:
+    # 1) https://stackoverflow.com/a/9972699
+    # text surrounding box dimensions are known, but i had no success implementing this
+    # 2) try to keep track of full coords and just calculate distance
+    # a lot of coordinates might be missing, 1st solution is more reliable if it worked
     @property
     def width(self) -> int:
-        return self.right - self.left  # type: ignore
+        if self.angle in (0, 180, 360):
+            return self.right - self.left  # type: ignore
+
+        if self.angle in (90, 270):
+            return self.lower - self.upper  # type: ignore
+
+        assert False  # noqa
 
     @property
     def height(self) -> int:
-        return self.lower - self.upper  # type: ignore
+        if self.angle in (0, 180, 360):
+            return self.lower - self.upper  # type: ignore
+
+        if self.angle in (90, 270):
+            return self.right - self.left  # type: ignore
+
+        assert False  # noqa
 
     @property
     def font_size(self) -> int:
@@ -345,22 +372,23 @@ class Images(Cog):
 
         await ctx.send(f"```\n{text}```")
 
-    @commands.command()
-    @commands.max_concurrency(1, per=commands.BucketType.default)
+    @commands.group(invoke_without_command=True)
     @commands.cooldown(1, 5, type=commands.BucketType.channel)
     async def trocr(
         self, ctx: Context, language: str, image: StaticImage = None
     ) -> None:
-        """Translate text on image"""
+        """
+        Translate text on image
+
+        Note: images will be scaled down to 1024 px
+        Note: text rotation is truncated to 90 degrees for now
+        Note:
+            Entire text is translated at once for the sake of optimization,
+            this might produce bad results. This might be improved in future
+            (for multi-language images)
+        """
 
         language = language.lower()
-
-        if language == "list":
-            ctx.command.reset_cooldown(ctx)
-
-            return await ctx.send(
-                "TODO: <https://github.com/ssut/py-googletrans/blob/d15c94f176463b2ce6199a42a1c517690366977f/googletrans/constants.py#L76-L182>"
-            )
 
         language = LANGCODES.get(language, language)
         if language not in LANGUAGES:
@@ -391,11 +419,13 @@ class Images(Cog):
         # Coordinates from words in the same line can be merged
         lines = annotations["fullTextAnnotation"]["text"][:-1].split("\n")
 
+        # TODO: group by input languages to improve translation?
         need_trasnslation = {}
-        word_languages = language_iterator(block_annotations)
+        paragraph_languages = language_iterator(block_annotations)
+
         for i, line in enumerate(lines):
-            if (word_language := next(word_languages)) is not None:
-                if word_language != "und" and word_language != language:
+            if (paragraph_language := next(paragraph_languages)) is not None:
+                if paragraph_language != language:
                     need_trasnslation[i] = line
 
         if not need_trasnslation:
@@ -481,9 +511,8 @@ class Images(Cog):
                 "RGBA",
                 size=font.getsize(field.text, stroke_width=field.stroke_width),
             )
-            draw = ImageDraw.Draw(text_im)
 
-            draw.text(
+            ImageDraw.Draw(text_im).text(
                 (0, 0),
                 text=field.text,
                 font=font,
@@ -497,7 +526,7 @@ class Images(Cog):
                     (
                         min((text_im.width, field.width)),
                         min((text_im.height, field.height)),
-                    )
+                    ),
                 ).rotate(field.angle, expand=True, resample=PIL.Image.BICUBIC),
                 field.coords_padded[:2],
             )
@@ -513,6 +542,14 @@ class Images(Cog):
         )
 
         return translation.text
+
+    @trocr.command(name="list")
+    async def _language_list(self, ctx: Context) -> None:
+        """Get a list of supported languages"""
+
+        await ctx.send(
+            "TODO: <https://github.com/ssut/py-googletrans/blob/d15c94f176463b2ce6199a42a1c517690366977f/googletrans/constants.py#L76-L182>"
+        )
 
 
 def setup(bot: Bot) -> None:
