@@ -427,6 +427,11 @@ class Accents(Cog):
 
         return content.strip()
 
+    def apply_member_accents_to_text(self, *, member: discord.Member, text: str) -> str:
+        accents = self.get_user_accents(member)
+
+        return self._apply_accents(text, accents)
+
     @Context.hook()
     async def on_send(
         original,

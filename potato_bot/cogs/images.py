@@ -440,6 +440,16 @@ class Images(Cog):
             "\n".join(need_trasnslation.values()), language
         )
 
+        if (accent_cog := self.bot.get_cog("Accents")) is not None:
+            # trocr fully depends on newlines, apply accents to each line separately and
+            # replace any newlines with spaces to make sure text order is preserved
+            translated = "\n".join(
+                accent_cog.apply_member_accents_to_text(
+                    member=ctx.me, text=line
+                ).replace("\n", " ")
+                for line in translated.split("\n")
+            )
+
         translated_lines = translated.split("\n")
         if len(translated_lines) != len(need_trasnslation):
             return await ctx.reply(
