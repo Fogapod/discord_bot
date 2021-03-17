@@ -21,7 +21,7 @@ from potato_bot.context import Context
 _VertexType = Dict[str, int]
 _VerticesType = Tuple[_VertexType, _VertexType, _VertexType, _VertexType]
 
-OCR_API_URL = "https://api.tsu.sh/google/ocr"
+OCR_API_URL = "https://content-vision.googleapis.com/v1/images:annotate"
 
 
 class TROCRException(Exception):
@@ -315,18 +315,27 @@ class Images(Cog):
 
         await ctx.send(i)
 
-    async def _ocr(
-        self, ctx: Context, image_url: str, *, raw: bool = False
-    ) -> Dict[str, Any]:
-        params = {"q": image_url}
-        if raw:
-            params["raw"] = "1"
-
-        async with ctx.session.get(
+    async def _ocr(self, ctx: Context, image_url: str) -> Dict[str, Any]:
+        async with ctx.session.post(
             OCR_API_URL,
-            params=params,
+            params={
+                "key": os.environ["OCR_API_TOKEN"],
+            },
+            json={
+                "requests": [
+                    {
+                        "features": [{"type": "TEXT_DETECTION"}],
+                        "image": {
+                            "source": {
+                                "imageUri": image_url,
+                            }
+                        },
+                    }
+                ]
+            },
             headers={
-                "authorization": os.environ["OCR_API_TOKEN"],
+                "x-origin": "https://explorer.apis.google.com",
+                "x-referer": "https://explorer.apis.google.com",
             },
         ) as r:
             if r.status != 200:
@@ -341,13 +350,7 @@ class Images(Cog):
                         exit=True,
                     )
 
-                try:
-                    json = await r.json()
-                except json.JSONDecodeError:
-                    await ctx.reply(
-                        f"Unable to process response from API[{r.status}]",
-                        exit=True,
-                    )
+                json = await r.json()
 
                 await ctx.reply(
                     f"Error in underlying API[{r.status}]: "
@@ -356,7 +359,10 @@ class Images(Cog):
                 )
             json = await r.json()
 
-        return json
+        if len((responses := json["responses"])) == 0:
+            return {}
+
+        return responses[0]
 
     @commands.command()
     async def ocr(self, ctx: Context, image: Image = None) -> None:
@@ -365,12 +371,12 @@ class Images(Cog):
         if image is None:
             image = await Image.from_history(ctx)
 
-        json = await self._ocr(ctx, image.url)
+        annotations = await self._ocr(ctx, image.url)
 
-        if not (text := json["text"]):
+        if not (annotations.get("textAnnotations")):
             return await ctx.reply("No text detected")
 
-        await ctx.send(f"```\n{text}```")
+        await ctx.send(f"```\n{annotations['fullTextAnnotation']['text']}```")
 
     @commands.group(invoke_without_command=True)
     @commands.cooldown(1, 5, type=commands.BucketType.channel)
@@ -403,9 +409,7 @@ class Images(Cog):
 
         src = await image.to_pil_image(ctx)
 
-        raw_ocr = await self._ocr(ctx, image.url, raw=True)
-
-        annotations = raw_ocr["responses"][0]
+        annotations = await self._ocr(ctx, image.url)
 
         if not (annotations.get("textAnnotations")):
             return await ctx.reply("No text detected")
