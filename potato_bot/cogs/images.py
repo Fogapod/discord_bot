@@ -386,7 +386,6 @@ class Images(Cog):
         """
         Translate text on image
 
-        Note: images will be scaled down to 1024 px
         Note: text rotation is truncated to 90 degrees for now
         Note:
             Entire text is translated at once for the sake of optimization,
@@ -492,19 +491,8 @@ class Images(Cog):
 
     def draw(self, src: PIL.Image, fields: Sequence[TextField]) -> BytesIO:
         FIELD_CAP = 150
-        MAX_SIZE = 1024  # current OCR API limitation
 
         fields = fields[:FIELD_CAP]
-
-        if (largest_dim := max(src.size)) > MAX_SIZE:
-            ratio = MAX_SIZE / largest_dim
-
-            if largest_dim == src.size[0]:
-                width, height = MAX_SIZE, round(src.size[1] * ratio)
-            else:
-                width, height = round(src.size[0] * ratio), MAX_SIZE
-
-            src = src.resize((width, height))
 
         src = src.convert("RGBA")
 
