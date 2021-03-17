@@ -427,9 +427,8 @@ class Images(Cog):
         paragraph_languages = language_iterator(block_annotations)
 
         for i, line in enumerate(lines):
-            if (paragraph_language := next(paragraph_languages)) is not None:
-                if paragraph_language != language:
-                    need_trasnslation[i] = line
+            if next(paragraph_languages) is not None:
+                need_trasnslation[i] = line
 
         if not need_trasnslation:
             return await ctx.send(
