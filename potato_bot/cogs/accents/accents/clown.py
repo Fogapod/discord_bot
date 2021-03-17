@@ -6,7 +6,8 @@ from .accent import Match, Accent
 
 
 def honk(m: Match) -> Optional[str]:
-    n = random.randint(0, 3) + m.severity
+    # severity 2 only adds uppercase, it does not increase honk count
+    n = random.randint(0, 3) + max((1, m.severity - 1))
 
     return f"{' HONK' * n}!"
 

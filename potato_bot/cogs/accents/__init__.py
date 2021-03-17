@@ -420,6 +420,25 @@ class Accents(Cog):
 
         await ctx.send("owo toggled")
 
+    @commands.command(aliases=["clown"])
+    @commands.guild_only()
+    async def honk(self, ctx: Context) -> None:
+        """Loud == funny"""
+
+        honk = Accent.get_by_name("Clown")
+        my_accents = self.get_user_accents(ctx.me)
+
+        if honk in my_accents:
+            await self._remove_accents(ctx, ctx.me, [AccentWithSeverity(honk)])
+        else:
+            await self._add_accents(
+                ctx, ctx.me, [AccentWithSeverity(honk, severity=random.choice((1, 2)))]
+            )
+
+        await self._update_nick(ctx)
+
+        await ctx.send("honk toggled")
+
     @staticmethod
     def _apply_accents(content: str, accents: _UserAccentsType) -> str:
         for accent in accents:
