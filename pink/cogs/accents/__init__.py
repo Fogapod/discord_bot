@@ -13,14 +13,14 @@ import discord
 
 from discord.ext import commands
 
-from potato_bot.bot import Bot
-from potato_bot.cog import Cog
-from potato_bot.utils import LRU
-from potato_bot.context import Context
+from pink.bot import Bot
+from pink.cog import Cog
+from pink.utils import LRU
+from pink.context import Context
 
 from .accents.accent import Accent
 
-ACCENT_WEBHOOK_NAME = "PotatoBot accent Webhook"
+ACCENT_WEBHOOK_NAME = "PINK bot accent webhook"
 
 REQUIRED_PERMS = discord.Permissions(
     send_messages=True, manage_messages=True, manage_webhooks=True

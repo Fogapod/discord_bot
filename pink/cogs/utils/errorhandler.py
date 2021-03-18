@@ -4,9 +4,9 @@ import sentry_sdk
 
 from discord.ext import commands
 
-from potato_bot.bot import Bot
-from potato_bot.cog import Cog
-from potato_bot.context import Context, CTXExit
+from pink.bot import Bot
+from pink.cog import Cog
+from pink.context import Context, CTXExit
 
 log = logging.getLogger(__name__)
 

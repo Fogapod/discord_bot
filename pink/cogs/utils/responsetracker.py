@@ -2,10 +2,10 @@ from typing import Any, Union
 
 import discord
 
-from potato_bot.bot import Bot
-from potato_bot.cog import Cog
-from potato_bot.utils import LRU
-from potato_bot.context import Context
+from pink.bot import Bot
+from pink.cog import Cog
+from pink.utils import LRU
+from pink.context import Context
 
 _EmojiType = Union[discord.Reaction, discord.Emoji, discord.PartialEmoji, str]
 

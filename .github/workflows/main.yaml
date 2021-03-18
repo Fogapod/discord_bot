@@ -8,7 +8,7 @@ on:
       - main
 
 env:
-  IMAGE_NAME: fogapod/potato_bot
+  IMAGE_NAME: fogapod/pink
 
 jobs:
   lint:

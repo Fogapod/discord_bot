@@ -21,15 +21,15 @@ from .constants import PREFIX
 log = logging.getLogger(__name__)
 
 initial_extensions = (
-    "potato_bot.cogs.utils.errorhandler",
-    "potato_bot.cogs.utils.responsetracker",
-    "potato_bot.cogs.accents",
-    "potato_bot.cogs.chat",
-    "potato_bot.cogs.fun",
-    "potato_bot.cogs.images",
-    "potato_bot.cogs.meta",
-    "potato_bot.cogs.techadmin",
-    "potato_bot.cogs.unitystation",
+    "pink.cogs.utils.errorhandler",
+    "pink.cogs.utils.responsetracker",
+    "pink.cogs.accents",
+    "pink.cogs.chat",
+    "pink.cogs.fun",
+    "pink.cogs.images",
+    "pink.cogs.meta",
+    "pink.cogs.techadmin",
+    "pink.cogs.unitystation",
 )
 
 
@@ -111,7 +111,7 @@ class Bot(commands.Bot):
             **kwargs,
         )
 
-        self.session = aiohttp.ClientSession(headers={"user-agent": "PotatoBot"})
+        self.session = aiohttp.ClientSession(headers={"user-agent": "PINK bot"})
 
         self._default_prefix_re: Optional[re.Pattern[str]] = None
 

@@ -1,0 +1,25 @@
+[Install]
+WantedBy=multi-user.target
+
+[Unit]
+Description=PINK Discord bot
+
+[Service]
+Type=simple
+Restart=always
+
+WorkingDirectory=/srv/pink
+Environment="IMAGE=fogapod/pink"
+Environment="PWD=/srv/pink"
+
+TimeoutStartSec=600
+
+# i like systemd (no)
+ExecStartPre=/bin/sh -c "podman build -t $IMAGE \
+    --build-arg UID=$(id -u) --build-arg GID=$(id -g) ."
+
+ExecStartPre=-/usr/bin/podman stop %n
+ExecStartPre=-/usr/bin/podman rm %n
+
+ExecStart=/usr/bin/podman run --name %n --rm \
+    -v ${PWD}:/code:Z --hostname pink_prod $IMAGE

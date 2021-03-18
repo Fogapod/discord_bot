@@ -6,7 +6,7 @@ from typing import Any
 
 from discord.ext import commands
 
-from potato_bot.bot import Bot
+from .bot import Bot
 
 
 class Cog(commands.Cog):

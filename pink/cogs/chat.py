@@ -11,12 +11,12 @@ import travitia_talk as tt
 
 from discord.ext import tasks, commands
 
-from potato_bot.bot import Bot
-from potato_bot.cog import Cog
-from potato_bot.context import Context
+from pink.bot import Bot
+from pink.cog import Cog
+from pink.context import Context
 
 try:
-    from potato_bot.cogs.accents import AccentWithSeverity
+    from pink.cogs.accents import AccentWithSeverity
 except ImportError:
     raise Exception("This cog relies on the existance of accents cog")
 
@@ -93,7 +93,7 @@ class Chat(Cog):
 
     @commands.command(aliases=["cb", "talk"])
     async def ask(self, ctx: Context, *, text: str) -> None:
-        """Talk to PotatoBot"""
+        """Talk to bot"""
 
         async with ctx.typing():
             result = await self._query(

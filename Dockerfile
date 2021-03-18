@@ -35,13 +35,13 @@ RUN apk add --no-cache \
     && pip install -U -r requirements.txt \
     && apk del --purge .build-deps
 
-RUN addgroup -g $GID -S potato_bot \
-    && adduser -u $UID -S potato_bot -G potato_bot \
-    && chown -R potato_bot:potato_bot /code
+RUN addgroup -g $GID -S pink \
+    && adduser -u $UID -S pink -G pink \
+    && chown -R pink:pink /code
 
-USER potato_bot
+USER pink
 
-COPY --chown=potato_bot:potato_bot potato_bot potato_bot
-COPY --chown=potato_bot:potato_bot dbschema dbschema
+COPY --chown=pink:pink pink pink
+COPY --chown=pink:pink dbschema dbschema
 
-ENTRYPOINT ["python", "-m", "potato_bot"]
+ENTRYPOINT ["python", "-m", "pink"]

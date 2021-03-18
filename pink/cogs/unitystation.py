@@ -5,19 +5,22 @@ from typing import Any, Dict, List
 
 from discord.ext import commands
 
-from potato_bot.bot import Bot
-from potato_bot.cog import Cog
-from potato_bot.context import Context
+from pink.bot import Bot
+from pink.cog import Cog
+from pink.context import Context
 
 SERVER_FETCH_INTERVAL = 10
 
 
+US_INVITE = "tFcTpBp"
+
+
 class UnityStation(Cog):
-    """
+    f"""
     UnityStation related commands
 
     UnityStation is a SS13 remake in Unity.
-    You can learn more about this game by joining their official server: discord.gg/tFcTpBp
+    You can learn more about this game by joining their official server: discord.gg/{US_INVITE}
     """
 
     def __init__(self, bot: Bot):

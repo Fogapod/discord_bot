@@ -3,16 +3,16 @@ from typing import Any
 
 from discord.ext import commands
 
-from potato_bot.bot import Bot, Prefix
-from potato_bot.cog import Cog
-from potato_bot.context import Context
-from potato_bot.constants import PREFIX
+from pink.bot import Bot, Prefix
+from pink.cog import Cog
+from pink.context import Context
+from pink.constants import PREFIX
 
-POTATO_ART = r"""   ___      _        _
-  / _ \___ | |_ __ _| |_ ___
- / /_)/ _ \| __/ _` | __/ _ \
-/ ___/ (_) | || (_| | || (_) |
-\/    \___/ \__\__,_|\__\___/"""
+PINK_ART = r"""   ___ _____    __
+  / _ \\_   \/\ \ \/\ /\
+ / /_)/ / /\/  \/ / //_/
+/ ___/\/ /_/ /\  / __ \
+\/   \____/\_\ \/\/  \/"""
 
 
 class CustomHelp(commands.DefaultHelpCommand):
@@ -59,14 +59,14 @@ class Meta(Cog):
 
         return await ctx.send(
             f"```\n"
-            f"{POTATO_ART}\n"
+            f"{PINK_ART}\n"
             f"\n"
-            f"Potato art by: patorjk.com/software/taag\n"
+            f"PINK art by: patorjk.com/software/taag\n"
             f"\n"
             f"This bot was originally made for PotatoStation server for UnityStation.\n"
             f"\n"
             f"Prefix: @mention or {PREFIX}\n"
-            f"Source code: github.com/Fogapod/potato_bot\n"
+            f"Source code: github.com/Fogapod/pink\n"
             f"{authors}\n"
             f"Support server: discord.gg/{invite}\n"
             f"```"

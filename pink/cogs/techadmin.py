@@ -14,11 +14,11 @@ import discord
 
 from discord.ext import commands
 
-from potato_bot.bot import Bot
-from potato_bot.cog import Cog
-from potato_bot.utils import run_process_shell
-from potato_bot.checks import is_owner
-from potato_bot.context import Context
+from pink.bot import Bot
+from pink.cog import Cog
+from pink.utils import run_process_shell
+from pink.checks import is_owner
+from pink.context import Context
 
 
 class TechAdmin(Cog):
@@ -34,21 +34,21 @@ class TechAdmin(Cog):
     async def load(self, ctx: Context, module: str) -> None:
         """Load extension"""
 
-        self.bot.load_extension(f"potato_bot.cogs.{module}")
+        self.bot.load_extension(f"pink.cogs.{module}")
         await ctx.ok()
 
     @commands.command()
     async def unload(self, ctx: Context, module: str) -> None:
         """Unload extension"""
 
-        self.bot.unload_extension(f"potato_bot.cogs.{module}")
+        self.bot.unload_extension(f"pink.cogs.{module}")
         await ctx.ok()
 
     @commands.command()
     async def reload(self, ctx: Context, module: str) -> None:
         """Reload extension"""
 
-        self.bot.reload_extension(f"potato_bot.cogs.{module}")
+        self.bot.reload_extension(f"pink.cogs.{module}")
         await ctx.ok()
 
     # https://github.com/Rapptz/RoboDanny/blob/715a5cf8545b94d61823f62db484be4fac1c95b1/cogs/admin.py#L422
