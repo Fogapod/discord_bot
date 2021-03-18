@@ -25,6 +25,8 @@ RUN apk add --no-cache \
     jpeg-dev \
     openjpeg-dev \
     freetype-dev \
+    # webp support
+    libwebp-dev \
     # Font for trocr
     ttf-dejavu \
     && apk add --no-cache --virtual .build-deps \
