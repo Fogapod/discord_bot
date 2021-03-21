@@ -1,8 +1,5 @@
 FROM python:3.9-alpine3.12
 
-ARG UID=1000
-ARG GID=1000
-
 # enables proper stdout flushing
 ENV PYTHONUNBUFFERED yes
 # no .pyc files
@@ -36,6 +33,9 @@ RUN apk add --no-cache \
     && pip install -U pip \
     && pip install -U -r requirements.txt \
     && apk del --purge .build-deps
+
+ARG UID=1000
+ARG GID=1000
 
 RUN addgroup -g $GID -S pink \
     && adduser -u $UID -S pink -G pink \
