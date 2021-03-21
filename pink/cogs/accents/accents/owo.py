@@ -1,8 +1,6 @@
 import math
 import random
 
-from typing import Optional
-
 from .accent import Match, Accent
 
 NYAS = (
@@ -37,7 +35,7 @@ ALL_NYAS = (
 EXTREME_NYA_TRESHOLD = 5
 
 
-def nya(m: Match) -> Optional[str]:
+def nya(m: Match) -> str:
     weights = [1] * len(NYAS)
 
     if m.severity > EXTREME_NYA_TRESHOLD:
@@ -47,7 +45,7 @@ def nya(m: Match) -> Optional[str]:
 
     return " ".join(
         random.choices(ALL_NYAS, weights)[0]
-        for _ in range(random.randint(0, round(m.count_logarithmic() * 5)))
+        for _ in range(random.randint(0, max((1, round(m.count_logarithmic() * 5)))))
     )
 
 
