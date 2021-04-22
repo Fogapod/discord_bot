@@ -299,21 +299,21 @@ class Images(Cog):
         if i is None:
             i = await Image.from_history(ctx)
 
-        await ctx.send(i)
+        await ctx.send(i, accents=[])
 
     @commands.command(hidden=True)
     async def si(self, ctx: Context, i: StaticImage = None) -> None:
         if i is None:
             i = await StaticImage.from_history(ctx)
 
-        await ctx.send(i)
+        await ctx.send(i, accents=[])
 
     @commands.command(hidden=True)
     async def ai(self, ctx: Context, i: AnimatedImage = None) -> None:
         if i is None:
             i = await AnimatedImage.from_history(ctx)
 
-        await ctx.send(i)
+        await ctx.send(i, accents=[])
 
     async def _ocr(self, ctx: Context, image_url: str) -> Dict[str, Any]:
         async with ctx.session.post(
