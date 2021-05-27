@@ -136,12 +136,12 @@ class Bot(commands.Bot):
 
         guild_id = getattr(message.guild, "id", -1)
 
-        if (settings := self.prefixes.get(guild_id)) :
+        if settings := self.prefixes.get(guild_id):
             prefix_re = settings.prefix_re
         else:
             prefix_re = self._default_prefix_re
 
-        if (match := prefix_re.match(message.content)) :
+        if match := prefix_re.match(message.content):
             return match[0]
 
         if message.guild:
