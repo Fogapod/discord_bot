@@ -9,6 +9,7 @@ from typing import Any, List, Optional
 from asyncio import TimeoutError
 
 import PIL
+import discord
 
 from PIL.Image import DecompressionBombWarning
 from discord.ext import commands
@@ -126,7 +127,7 @@ class Image:
             return None
 
         # check if pattern is emote
-        if (emote_match := EMOTE_REGEX.fullmatch(argument)) :
+        if emote_match := EMOTE_REGEX.fullmatch(argument):
             emote_id = emote_match["id"]
             animated = emote_match["animated"]
 
@@ -135,7 +136,7 @@ class Image:
                     "Static images are not allowed, animated emote provided"
                 )
 
-            if (emote := ctx.bot.get_emoji(emote_id)) :
+            if emote := ctx.bot.get_emoji(emote_id):
                 return Image(
                     type=ImageType.EMOTE,
                     url=str(emote.url_as(format=emote_format)),
@@ -222,9 +223,19 @@ class Image:
         #
         # command can be invoked by message edit, but we still want
         # to check messages before created_at
-        history = await ctx.channel.history(
+        history: List[discord.Message] = await ctx.channel.history(
             limit=200, before=ctx.message.created_at
         ).flatten()
+
+        # if there is a referenced message, it is more important than current or
+        # previous messages
+        if (reference := ctx.message.reference) is not None:
+            resolved = reference.resolved
+            if resolved is None:
+                resolved = await ctx.channel.fetch_message(reference.message_id)
+
+            if isinstance(resolved, discord.Message):
+                history = [resolved] + history
 
         for m in [ctx.message] + history:
             # check attachments (files uploaded to discord)

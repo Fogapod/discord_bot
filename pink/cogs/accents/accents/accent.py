@@ -56,7 +56,7 @@ class Match:
 
         return self.match[0]
 
-    # !!!experimental methods!!!
+    # !!!these ,ethods are a bunch of broken nonsense!!!
     def count_linear(self) -> int:
         return self.severity
 
@@ -80,7 +80,7 @@ class Match:
     def probability_exponential(self, base: int = 10) -> bool:
         return random.random() < self.count_exponential(base)
 
-    # !!!experimental methods!!!
+    # !!!these ,ethods are a bunch of broken nonsense!!!
 
     def __repr__(self) -> str:
         return f"<{type(self).__name__} match={self.match} severity={self.severity} context={self.context}>"
@@ -244,6 +244,7 @@ class Accent:
 
     Additional notes:
     In case None is selected, match remains untouched.
+
     If sum of dict probabilities < 1, None is added with probability 1 - SUM.
     Dict probabilities can be dynamic, callables accepting int (severity value).
 
