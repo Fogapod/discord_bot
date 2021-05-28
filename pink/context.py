@@ -16,7 +16,7 @@ class CTXExit(Exception):
     """
 
     def __init__(self, message: Optional[discord.Message] = None):
-        self.message = message
+        self.msg = message
 
 
 class Context(commands.Context, AsyncHookable):
