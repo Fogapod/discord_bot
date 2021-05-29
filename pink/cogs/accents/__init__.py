@@ -203,7 +203,10 @@ class Accents(Cog):
             body += line
 
         await ctx.send(
-            f"**{user}** accents (applied from top to bottom): ```diff\n{body}```"
+            f"**{user}** accents (applied from top to bottom): ```diff\n{body}```",
+            # override applied accents because getting accent list is a very serious
+            # task that should not be obscured
+            accents=[],
         )
 
     async def _add_accents(
