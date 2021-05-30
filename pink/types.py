@@ -99,6 +99,36 @@ class Image:
         return await cls._from_pattern(ctx, argument, allow_animated=True)
 
     @classmethod
+    async def _from_reference(
+        cls,
+        ctx: Context,
+        reference: discord.MessageReference,
+        *,
+        allow_static: bool = True,
+        allow_animated: bool = False,
+    ) -> Image:
+        if (resolved := reference.resolved) is None:
+            resolved = await ctx.channel.fetch_message(reference.message_id)
+
+        if isinstance(resolved, discord.Message):  # and not discord.DeletedMessage
+            if (
+                img := cls.from_message(
+                    cls,
+                    ctx.message,
+                    allow_static=allow_static,
+                    allow_animated=allow_animated,
+                )
+            ) is not None:
+                return img
+
+            raise commands.BadArgument("No images found in referenced message")
+
+        # TODO: better error type
+        raise ValueError(
+            f"Unable to fetch referenced message {ctx.channel.id}-{ctx.message.id}",
+        )
+
+    @classmethod
     async def _from_pattern(
         cls,
         ctx: Context,
@@ -109,6 +139,23 @@ class Image:
     ) -> Image:
         if not (allow_static or allow_animated):
             raise ValueError("Either animated or static image type should be allowed")
+
+        # if there is a referenced message, it is more important than message content
+        # for these reasons:
+        #  - it takes more efdort to reply to message than to attach file/paste url
+        #  - if this was a mistake, it's easier for user to use command again relying on
+        #    from_history to fetch previous message rather than replying to message
+        #    again
+        #
+        # this implementation is a bit of a mess, there is an `argument` parameter, but
+        # we assume that ctx.message is target message in from_history anyway
+        if (reference := ctx.message.reference) is not None:
+            return await cls._from_reference(
+                ctx,
+                reference,
+                allow_static=allow_static,
+                allow_animated=allow_animated,
+            )
 
         def pick_format(target_animated: bool) -> Optional[str]:
             if allow_static and allow_animated:
@@ -199,6 +246,93 @@ class Image:
         return await cls._from_history(ctx, allow_animated=True)
 
     @classmethod
+    def _check_extension(
+        cls,
+        url: str,
+        *,
+        allow_static: bool = True,
+        allow_animated: bool = False,
+    ) -> Optional[str]:
+        extension = url.rpartition(".")[-1].lower()
+        if extension in cls.STATIC_FORMATS and allow_static:
+            return extension
+
+        elif extension in cls.ANIMATED_FORMATS and allow_animated:
+            return extension
+
+        return None
+
+    @classmethod
+    def from_message(
+        cls,
+        ctx: Context,
+        msg: discord.Message,
+        *,
+        allow_static: bool = True,
+        allow_animated: bool = False,
+    ) -> Optional[Image]:
+        # check attachments (files uploaded to discord)
+        for attachment in msg.attachments:
+            if (
+                cls._check_extension(
+                    attachment.filename,
+                    allow_static=allow_static,
+                    allow_animated=allow_animated,
+                )
+                is None
+            ):
+                continue
+
+            return Image(
+                type=ImageType.ATTACHMENT,
+                url=attachment.url,
+            )
+
+        # check embeds (user posted url / bot posted rich embed)
+        for embed in msg.embeds:
+            if embed.image:
+                if (
+                    cls._check_extension(
+                        embed.image.proxy_url,
+                        allow_static=allow_static,
+                        allow_animated=allow_animated,
+                    )
+                    is not None
+                ):
+                    return Image(
+                        type=ImageType.EMBED,
+                        url=embed.image.url,
+                    )
+
+            # bot condition because we do not want image from
+            # rich embed thumbnail
+            if not embed.thumbnail or (msg.author.bot and embed.type == "rich"):
+                continue
+
+            # avoid case when image embed was created from url that is
+            # used as argument or flag
+            if msg.id == ctx.message.id:
+                if embed.thumbnail.url in msg.content:
+                    continue
+
+            if (
+                cls._check_extension(
+                    embed.thumbnail.proxy_url,
+                    allow_static=allow_static,
+                    allow_animated=allow_animated,
+                )
+                is None
+            ):
+                continue
+
+            return Image(
+                type=ImageType.EMBED,
+                url=embed.thumbnail.url,
+            )
+
+        return None
+
+    @classmethod
     async def _from_history(
         cls,
         ctx: Context,
@@ -209,15 +343,16 @@ class Image:
         if not (allow_static or allow_animated):
             raise ValueError("Either animated or static image type should be allowed")
 
-        def check_extension(url: str) -> Optional[str]:
-            extension = url.rpartition(".")[-1].lower()
-            if extension in cls.STATIC_FORMATS and allow_static:
-                return extension
-
-            elif extension in cls.ANIMATED_FORMATS and allow_animated:
-                return extension
-
-            return None
+        # referenced message is checked second time (first in from_pattern), but
+        #  a) it should be in cache by this time
+        #  b) usually it is not checked if user does not provide input
+        if (reference := ctx.message.reference) is not None:
+            return await cls._from_reference(
+                ctx,
+                reference,
+                allow_static=allow_static,
+                allow_animated=allow_animated,
+            )
 
         # check channel history for attachments
         #
@@ -227,54 +362,13 @@ class Image:
             limit=200, before=ctx.message.created_at
         ).flatten()
 
-        # if there is a referenced message, it is more important than current or
-        # previous messages
-        if (reference := ctx.message.reference) is not None:
-            resolved = reference.resolved
-            if resolved is None:
-                resolved = await ctx.channel.fetch_message(reference.message_id)
-
-            if isinstance(resolved, discord.Message):
-                history = [resolved] + history
-
-        for m in [ctx.message] + history:
-            # check attachments (files uploaded to discord)
-            for attachment in m.attachments:
-                if check_extension(attachment.filename) is None:
-                    continue
-
-                return Image(
-                    type=ImageType.ATTACHMENT,
-                    url=attachment.url,
+        for msg in [ctx.message] + history:
+            if (
+                img := cls.from_message(
+                    ctx, msg, allow_static=allow_static, allow_animated=allow_animated
                 )
-
-            # check embeds (user posted url / bot posted rich embed)
-            for embed in m.embeds:
-                if embed.image:
-                    if check_extension(embed.image.proxy_url) is not None:
-                        return Image(
-                            type=ImageType.EMBED,
-                            url=embed.image.url,
-                        )
-
-                # bot condition because we do not want image from
-                # rich embed thumbnail
-                if not embed.thumbnail or (m.author.bot and embed.type == "rich"):
-                    continue
-
-                # avoid case when image embed was created from url that is
-                # used as argument or flag
-                if m.id == ctx.message.id:
-                    if embed.thumbnail.url in m.content:
-                        continue
-
-                if check_extension(embed.thumbnail.proxy_url) is None:
-                    continue
-
-                return Image(
-                    type=ImageType.EMBED,
-                    url=embed.thumbnail.url,
-                )
+            ) is not None:
+                return img
 
         await ctx.send("Nothing found in latest 200 messages", exit=True)
 
