@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import re
-import math
 import random
 import itertools
 
@@ -55,32 +54,6 @@ class Match:
         """Original text that is being replaced"""
 
         return self.match[0]
-
-    # !!!these ,ethods are a bunch of broken nonsense!!!
-    def count_linear(self) -> int:
-        return self.severity
-
-    def count_logarithmic(self, base: int = 10) -> float:
-        return min(
-            (
-                max((0.1, math.log(self.severity, base))),
-                0.99,
-            )
-        )
-
-    def count_exponential(self, base: int = 10) -> float:
-        return 1 / (1 - self.count_logarithmic(base))
-
-    def probability_linear(self, max_severity: int = 10) -> bool:
-        return random.random() < self.severity / max_severity
-
-    def probability_logarithmic(self, base: int = 10) -> bool:
-        return random.random() < self.count_logarithmic(base)
-
-    def probability_exponential(self, base: int = 10) -> bool:
-        return random.random() < self.count_exponential(base)
-
-    # !!!these ,ethods are a bunch of broken nonsense!!!
 
     def __repr__(self) -> str:
         return f"<{type(self).__name__} match={self.match} severity={self.severity} context={self.context}>"
