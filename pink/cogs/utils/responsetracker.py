@@ -82,7 +82,9 @@ class ResponseTracker(Cog):
     @Context.hook()
     async def on_send(
         original, ctx: Context, *args: Any, register: bool = True, **kwargs: Any
-    ) -> None:
+    ) -> discord.Message:
+        message = None
+
         try:
             message = await original(ctx, *args, **kwargs)
         except CTXExit as e:
@@ -90,7 +92,7 @@ class ResponseTracker(Cog):
 
             raise
         finally:
-            if register and message is not None:
+            if message is not None and register:
                 ResponseTracker.register_response(
                     ctx.message.id, MessageResponse(message)
                 )
@@ -104,7 +106,9 @@ class ResponseTracker(Cog):
         emoji: Union[discord.Emoji, str],
         register: bool = True,
         **kwargs: Any,
-    ) -> None:
+    ) -> discord.Message:
+        message = None
+
         try:
             message = await original(ctx, emoji, **kwargs)
         except CTXExit as e:
@@ -112,7 +116,7 @@ class ResponseTracker(Cog):
 
             raise
         finally:
-            if register and message is not None:
+            if message is not None and register:
                 ResponseTracker.register_response(
                     ctx.message.id,
                     ReactionResponse(message, convert_emoji_reaction(emoji)),
