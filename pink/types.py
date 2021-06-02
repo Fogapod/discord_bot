@@ -113,8 +113,8 @@ class Image:
         if isinstance(resolved, discord.Message):  # and not discord.DeletedMessage
             if (
                 img := cls.from_message(
-                    cls,
-                    ctx.message,
+                    ctx,
+                    resolved,
                     allow_static=allow_static,
                     allow_animated=allow_animated,
                 )
@@ -358,7 +358,7 @@ class Image:
         #
         # command can be invoked by message edit, but we still want
         # to check messages before created_at
-        history: List[discord.Message] = await ctx.channel.history(
+        history = await ctx.channel.history(
             limit=200, before=ctx.message.created_at
         ).flatten()
 
