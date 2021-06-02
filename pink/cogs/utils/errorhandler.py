@@ -1,5 +1,6 @@
 import logging
 
+import discord
 import sentry_sdk
 
 from discord.ext import commands
@@ -55,6 +56,8 @@ class ErrorHandler(Cog):
             await ctx.reply(e)
         elif isinstance(e, commands.MaxConcurrencyReached):
             await ctx.reply(e)
+        elif isinstance(e, discord.HTTPException):
+            await ctx.reply(f"HTTP[{e.status}] ({e.code}): **{e.text}**")
         else:
             await ctx.reply(f"Unexpected error: **{type(e).__name__}**: `{e}`")
 
