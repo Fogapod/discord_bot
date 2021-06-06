@@ -1,33 +1,30 @@
 import random
 
+from typing import Generator
+
 from .accent import Match, Accent, ReplacementContext
 
 CURSED_ES = "EĒÊËÈÉ"
 
-# arbitrary number, ideally should be equal to average message length
-CHOICES_STEP = 30
+
+def cursed_e_generator(count: int) -> Generator[str, None, None]:
+    yield from random.choices(CURSED_ES, k=count)
 
 
-# This is my attempt to optimize accent by not calling random.choice(CURSED_ES) for
-# each letter. Instead, I call random.choices at an interval and store result in
-# context
-#
-# state in this case is a list of 2 items where first is pointer and second is an
-# array of es
 def next_cursed_e(ctx: ReplacementContext) -> str:
-    if ctx.state is None or ctx.state[0] == CHOICES_STEP:
-        ctx.state = [0, random.choices(CURSED_ES, k=CHOICES_STEP)]
+    if ctx.state is None:
+        # this is a little hack for knowing the amount of e's we will need ahead of time.
+        # this number will usually be greater than the actual amount of e's used because
+        # not all letters are replaced, but the advantage is using random.choices only
+        # once
+        ctx.state = cursed_e_generator(len(ctx.source))
 
-    letter = ctx.state[1][ctx.state[0]]
-
-    ctx.state[0] += 1
-
-    return letter
+    return next(ctx.state)
 
 
 def e(m: Match) -> str:
     if m.severity < 5:
-        return "e"
+        return "e" if m.original.islower() else "E"
 
     elif m.severity < 10:
         return "E"

@@ -16,16 +16,20 @@ class ReplacementContext:
 
     `state` can be used to store arbitrary accent state. Since every accent get their
     own instance of this context, accent is free to store any information there.
+
+    `source` is original string passed to Accent.apply.
     """
 
     __slots__ = (
         "id",
         "state",
+        "source",
     )
 
-    def __init__(self, id: Any = None):
+    def __init__(self, id: Any, source: str):
         self.id = id
         self.state: Any = None
+        self.source = source
 
     def __repr__(self) -> str:
         return f"<{type(self).__name__} id={self.id} state={self.state}>"
@@ -245,13 +249,13 @@ class Accent:
             cls._registered_accents[str(instance).lower()] = instance
 
     def __init__(self) -> None:
-        self._replacemtns: Sequence[Replacement] = []
+        self._replacements: Sequence[Replacement] = []
 
         for k, v in self.WORD_REPLACEMENTS.items():
-            self._replacemtns.append(Replacement(rf"\b{k}\b", v))
+            self._replacements.append(Replacement(rf"\b{k}\b", v))
 
         for k, v in self.REPLACEMENTS.items():
-            self._replacemtns.append(Replacement(k, v))
+            self._replacements.append(Replacement(k, v))
 
     @classmethod
     def all_accents(cls) -> Sequence[Accent]:
@@ -269,8 +273,9 @@ class Accent:
         limit: int = 2000,
         context_id: Any = None,
     ) -> str:
-        context = ReplacementContext(id=context_id)
-        for replacement in self._replacemtns:
+        context = ReplacementContext(id=context_id, source=text)
+
+        for replacement in self._replacements:
             text = replacement.apply(
                 text,
                 severity=severity,
