@@ -16,7 +16,7 @@ from pink.cog import Cog
 from pink.context import Context
 
 try:
-    from pink.cogs.accents import AccentWithSeverity
+    from pink.cogs.accents import PINKAccent
 except ImportError:
     raise Exception("This cog relies on the existance of accents cog")
 
@@ -104,7 +104,7 @@ class Chat(Cog):
 
     @commands.command()
     async def session(
-        self, ctx: Context, emotion: Emotion, *accents: AccentWithSeverity
+        self, ctx: Context, emotion: Emotion, *accents: PINKAccent
     ) -> None:
         """Start chat session in channel
 

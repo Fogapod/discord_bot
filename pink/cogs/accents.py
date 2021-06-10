@@ -6,19 +6,18 @@ import random
 import importlib
 import contextlib
 
-from typing import Any, Dict, List, Union, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence
 from pathlib import Path
 
 import discord
 
 from discord.ext import commands
+from pink_accents import Accent, load_samples
 
 from pink.bot import Bot
 from pink.cog import Cog
 from pink.utils import LRU
 from pink.context import Context
-
-from .accents.accent import Accent
 
 ACCENT_WEBHOOK_NAME = "PINK bot accent webhook"
 
@@ -26,18 +25,20 @@ REQUIRED_PERMS = discord.Permissions(
     send_messages=True, manage_messages=True, manage_webhooks=True
 )
 
+load_samples()
 
-class AccentWithSeverity:
-    __slots__ = (
-        "accent",
-        "severity",
-    )
+ALL_ACCENTS = {
+    a.name.lower(): a for a in sorted(Accent.get_all_accents(), key=lambda a: a.name)
+}
 
+
+# inherit to make linters sleep well
+class PINKAccent(Accent, register=False):
     MIN_SEVERITY = 1
     MAX_SEVERITY = 10
 
     @classmethod
-    async def convert(cls, ctx: Context, argument: str) -> AccentWithSeverity:
+    async def convert(cls, ctx: Context, argument: str) -> Accent:
         match = re.match(r"(.+?)(:?\[(\d+)\])?$", argument)
         assert match
 
@@ -46,7 +47,7 @@ class AccentWithSeverity:
 
         prepared = name.replace(" ", "_")
         try:
-            accent = Accent.get_by_name(prepared)
+            accent = ALL_ACCENTS[prepared]
         except KeyError:
             raise commands.BadArgument(f'Accent "{name}" does not exist')
 
@@ -55,53 +56,16 @@ class AccentWithSeverity:
                 f"{accent}: severity must be between {cls.MIN_SEVERITY} and {cls.MAX_SEVERITY}"
             )
 
-        return cls(accent, severity=severity)
-
-    def __init__(self, accent: Accent, *, severity: int = 1):
-        self.accent = accent
-        self.severity = severity
-
-    def apply(self, text: str, **kwargs: Any) -> str:
-        return self.accent.apply(text, severity=self.severity, **kwargs)
-
-    @property
-    def name(self) -> str:
-        return str(self.accent)
-
-    def __eq__(self, other: Any) -> bool:
-        if isinstance(other, Accent):
-            return self.accent == other
-
-        if not isinstance(other, type(self)):
-            raise NotImplementedError
-
-        return self.accent == other.accent
-
-    def __ne__(self, other: Any) -> bool:
-        return not (self == other)
-
-    def __hash__(self) -> int:
-        return hash(self.name)
-
-    def __str__(self) -> str:
-        name = self.name
-
-        if self.severity != 1:
-            name += f"[{self.severity}]"
-
-        return name
-
-    def __repr__(self) -> str:
-        return f"<{type(self).__name__} accent={self.accent} severity={self.severity}>"
+        return accent(severity)
 
 
-_UserAccentsType = Sequence[AccentWithSeverity]
+_UserAccentsType = Sequence[Accent]
 
 
 class Accents(Cog):
     """Commands for managing accents."""
 
-    # required for hooks
+    # this is extremely stupid, but required for hooks
     instance: Accents
 
     MAX_ACCENTS_PER_USER = 10
@@ -114,7 +78,8 @@ class Accents(Cog):
         # channel_id -> Webhook
         self._webhooks = LRU(50)
 
-        self._accents: Dict[int, Dict[int, List[AccentWithSeverity]]] = {}
+        # guild_id -> user_id -> [Accent]
+        self._accents: Dict[int, Dict[int, List[Accent]]] = {}
 
     async def setup(self) -> None:
         for accent in await self.bot.edb.query(
@@ -130,8 +95,7 @@ class Accents(Cog):
                 self._accents[accent.guild_id] = {}
 
             self._accents[accent.guild_id][accent.user_id] = [
-                AccentWithSeverity(Accent.get_by_name(a.name), severity=a.severity)
-                for a in accent.accents
+                ALL_ACCENTS[a.name.lower()](a.severity) for a in accent.accents
             ]
 
     def get_user_accents(self, member: discord.Member) -> _UserAccentsType:
@@ -140,7 +104,9 @@ class Accents(Cog):
 
         return self._accents[member.guild.id].get(member.id, [])
 
-    def set_user_accents(self, member: discord.Member, accents: Any) -> None:
+    def set_user_accents(
+        self, member: discord.Member, accents: _UserAccentsType
+    ) -> None:
         if member.guild.id not in self._accents:
             self._accents[member.guild.id] = {}
 
@@ -169,36 +135,22 @@ class Accents(Cog):
             if user.bot and user.id != ctx.me.id:
                 return await ctx.send("Bots cannot have accents")
 
-        accents = self.get_user_accents(user)
-
-        # I have no idea why this is not in stdlib, string has find method
-        def sequence_find(seq: Sequence[Any], item: Any, default: int = -1) -> int:
-            for i, j in enumerate(seq):
-                if j == item:
-                    return i
-
-            return default
-
-        # accent objects are used for comparison
-        accent_map = {a.accent: a for a in accents}
-
-        all_accents = Accent.all_accents()
+        user_accent_map = {a.name: a for a in self.get_user_accents(user)}
 
         body = ""
 
+        longest_name = max(len(k) for k in ALL_ACCENTS.keys())
+
         for accent in sorted(
-            all_accents,
-            key=lambda a: (
-                # sort by position in global accent list, leave missing at the end
-                sequence_find(accents, a, len(all_accents)),
-                # sort the rest by names
-                str(a).lower(),
-            ),
+            Accent.get_all_accents(),
+            key=lambda a: (a.name not in user_accent_map, a.name),
         ):
-            if accent in accent_map:
-                line = f"+ {accent_map[accent]}\n"
+            if instance := user_accent_map.get(accent.name):
+                line = (
+                    f"+ {instance.full_name:>{longest_name}} : {accent.description}\n"
+                )
             else:
-                line = f"- {accent}\n"
+                line = f"- {accent.name:>{longest_name}} : {accent.description}\n"
 
             body += line
 
@@ -212,29 +164,28 @@ class Accents(Cog):
     async def _add_accents(
         self, ctx: Context, member: discord.Member, accents: _UserAccentsType
     ) -> None:
-        # deduplicate using names
-        accents = list(dict.fromkeys(accents))
+        user_accent_map = {a.name: a for a in self.get_user_accents(member)}
 
-        all_accents = {a: a for a in self.get_user_accents(member)}
+        something_changed = False
 
-        something_updated = False
+        for accent_to_add in set(accents):
+            existing = user_accent_map.get(accent_to_add.name)
 
-        for accent_to_add in accents:
-            existing = all_accents.get(accent_to_add)
             if existing is None or existing.severity != accent_to_add.severity:
-                something_updated = True
-                all_accents[accent_to_add] = accent_to_add
+                user_accent_map[accent_to_add.name] = accent_to_add
 
-        if not something_updated:
+                something_changed = True
+
+        if not something_changed:
             await ctx.send("Nothing to do", exit=True)
 
-        if len(all_accents) > self.MAX_ACCENTS_PER_USER:
+        if len(user_accent_map) > self.MAX_ACCENTS_PER_USER:
             await ctx.send(
                 f"Cannot have more than **{self.MAX_ACCENTS_PER_USER}** enabled at once",
                 exit=True,
             )
 
-        all_accents = list(all_accents)  # type: ignore
+        all_accents = list(user_accent_map.values())
 
         self.set_user_accents(member, all_accents)
 
@@ -263,28 +214,24 @@ class Accents(Cog):
         self, ctx: Context, member: discord.Member, accents: _UserAccentsType
     ) -> None:
         if not accents:
-            all_accents: Union[
-                Dict[AccentWithSeverity, AccentWithSeverity], List[AccentWithSeverity]
-            ] = []
+            updated = []
         else:
-            # deduplicate using names
-            accents = list(dict.fromkeys(accents))
+            user_accent_map = {a.name: a for a in self.get_user_accents(member)}
 
-            all_accents = {a: a for a in self.get_user_accents(member)}
+            something_changed = False
 
-            something_updated = False
+            for accent_to_remove in set(accents):
+                if accent_to_remove.name in user_accent_map:
+                    del user_accent_map[accent_to_remove.name]
 
-            for accent_to_remove in accents:
-                if accent_to_remove in all_accents:
-                    something_updated = True
-                    del all_accents[accent_to_remove]
+                    something_changed = True
 
-            if not something_updated:
+            if not something_changed:
                 await ctx.send("Nothing to do", exit=True)
 
-            all_accents = list(all_accents)
+            updated = list(user_accent_map.values())
 
-        self.set_user_accents(member, all_accents)
+        self.set_user_accents(member, updated)
 
         # json cast because tuples are not supported
         # https://github.com/edgedb/edgedb/issues/2334#issuecomment-793041555
@@ -298,7 +245,7 @@ class Accents(Cog):
             """,
             guild_id=ctx.guild.id,
             user_id=member.id,
-            accents=json.dumps([(a.name, a.severity) for a in all_accents]),
+            accents=json.dumps([(a.name, a.severity) for a in updated]),
         )
 
     async def _update_nick(self, ctx: Context) -> None:
@@ -318,7 +265,7 @@ class Accents(Cog):
 
     @_bot_accent.command(name="add", aliases=["enable", "on"])
     @commands.has_permissions(manage_guild=True)
-    async def add_bot_accent(self, ctx: Context, *accents: AccentWithSeverity) -> None:
+    async def add_bot_accent(self, ctx: Context, *accents: PINKAccent) -> None:
         """Add bot accents"""
 
         if not accents:
@@ -330,11 +277,9 @@ class Accents(Cog):
 
         await ctx.send("Added bot accents")
 
-    @_bot_accent.command(name="remove", aliases=["disable", "off"])
+    @_bot_accent.command(name="remove", aliases=["disable", "off", "del"])
     @commands.has_permissions(manage_guild=True)
-    async def remove_bot_accent(
-        self, ctx: Context, *accents: AccentWithSeverity
-    ) -> None:
+    async def remove_bot_accent(self, ctx: Context, *accents: PINKAccent) -> None:
         """
         Remove bot accents
 
@@ -349,7 +294,7 @@ class Accents(Cog):
 
     @accent.command(name="add", aliases=["enable", "on"])
     @commands.bot_has_permissions(manage_messages=True, manage_webhooks=True)
-    async def add_accent(self, ctx: Context, *accents: AccentWithSeverity) -> None:
+    async def add_accent(self, ctx: Context, *accents: PINKAccent) -> None:
         """Add personal accents"""
 
         if not accents:
@@ -361,7 +306,7 @@ class Accents(Cog):
 
     @accent.command(name="remove", aliases=["disable", "off"])
     @commands.guild_only()
-    async def remove_accent(self, ctx: Context, *accents: AccentWithSeverity) -> None:
+    async def remove_accent(self, ctx: Context, *accents: PINKAccent) -> None:
         """
         Remove personal accents
 
@@ -373,9 +318,7 @@ class Accents(Cog):
         await ctx.send("Removed personal accents")
 
     @accent.command(name="use")
-    async def accent_use(
-        self, ctx: Context, accent: AccentWithSeverity, *, text: str
-    ) -> None:
+    async def accent_use(self, ctx: Context, accent: PINKAccent, *, text: str) -> None:
         """Apply specified accent to text"""
 
         await ctx.send(text, accents=[accent])
@@ -409,15 +352,13 @@ class Accents(Cog):
     async def owo(self, ctx: Context) -> None:
         """OwO what's this"""
 
-        owo = Accent.get_by_name("OwO")
+        owo = ALL_ACCENTS["owo"]
         my_accents = self.get_user_accents(ctx.me)
 
         if owo in my_accents:
-            await self._remove_accents(ctx, ctx.me, [AccentWithSeverity(owo)])
+            await self._remove_accents(ctx, ctx.me, [Accent(owo)])
         else:
-            await self._add_accents(
-                ctx, ctx.me, [AccentWithSeverity(owo, severity=random.randint(1, 3))]
-            )
+            await self._add_accents(ctx, ctx.me, [owo(severity=random.randint(1, 3))])
 
         await self._update_nick(ctx)
 
@@ -426,17 +367,15 @@ class Accents(Cog):
     @commands.command(aliases=["clown"])
     @commands.guild_only()
     async def honk(self, ctx: Context) -> None:
-        """Loud == funny"""
+        """LOUD == FUNNY HONK!"""
 
-        honk = Accent.get_by_name("Clown")
+        honk = ALL_ACCENTS["clown"]
         my_accents = self.get_user_accents(ctx.me)
 
         if honk in my_accents:
-            await self._remove_accents(ctx, ctx.me, [AccentWithSeverity(honk)])
+            await self._remove_accents(ctx, ctx.me, [Accent(honk)])
         else:
-            await self._add_accents(
-                ctx, ctx.me, [AccentWithSeverity(honk, severity=random.choice((1, 2)))]
-            )
+            await self._add_accents(ctx, ctx.me, [honk(severity=random.choice((1, 2)))])
 
         await self._update_nick(ctx)
 
@@ -532,11 +471,22 @@ class Accents(Cog):
         await message.delete()
         try:
             await self._send_new_message(ctx, content, message)
-        except discord.NotFound:
+        except (discord.NotFound, discord.InvalidArgument):
+            # InvalidArgument appears in some rare cases when webhooks is deleted or is
+            # owned by other bot
+            #
             # cached webhook is missing, should invalidate cache
             del self._webhooks[message.channel.id]
 
-            await self._send_new_message(ctx, content, message)
+            try:
+                await self._send_new_message(ctx, content, message)
+            except Exception as e:
+                await ctx.send(
+                    f"Unable to deliver message after invalidating cache: **{e}**\n"
+                    f"Try deleting webhook **{ACCENT_WEBHOOK_NAME}** manually."
+                )
+
+                raise
 
     async def _get_cached_webhook(
         self,
@@ -604,6 +554,4 @@ def load_accents() -> None:
 
 
 def setup(bot: Bot) -> None:
-    load_accents()
-
     bot.add_cog(Accents(bot))
