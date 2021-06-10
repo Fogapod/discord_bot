@@ -353,10 +353,10 @@ class Accents(Cog):
         """OwO what's this"""
 
         owo = ALL_ACCENTS["owo"]
-        my_accents = self.get_user_accents(ctx.me)
+        my_accents = [a.name for a in self.get_user_accents(ctx.me)]
 
-        if owo in my_accents:
-            await self._remove_accents(ctx, ctx.me, [Accent(owo)])
+        if owo.name in my_accents:
+            await self._remove_accents(ctx, ctx.me, [owo(1)])
         else:
             await self._add_accents(ctx, ctx.me, [owo(severity=random.randint(1, 3))])
 
@@ -370,10 +370,10 @@ class Accents(Cog):
         """LOUD == FUNNY HONK!"""
 
         honk = ALL_ACCENTS["clown"]
-        my_accents = self.get_user_accents(ctx.me)
+        my_accents = [a.name for a in self.get_user_accents(ctx.me)]
 
-        if honk in my_accents:
-            await self._remove_accents(ctx, ctx.me, [Accent(honk)])
+        if honk.name in my_accents:
+            await self._remove_accents(ctx, ctx.me, [honk(1)])
         else:
             await self._add_accents(ctx, ctx.me, [honk(severity=random.choice((1, 2)))])
 
