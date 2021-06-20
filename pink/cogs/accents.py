@@ -12,7 +12,7 @@ from pathlib import Path
 import discord
 
 from discord.ext import commands
-from pink_accents import Accent, load_samples
+from pink_accents import Accent, load_from
 
 from pink.bot import Bot
 from pink.cog import Cog
@@ -25,7 +25,7 @@ REQUIRED_PERMS = discord.Permissions(
     send_messages=True, manage_messages=True, manage_webhooks=True
 )
 
-load_samples()
+load_from(Path("accents"))
 
 ALL_ACCENTS = {
     a.name.lower(): a for a in sorted(Accent.get_all_accents(), key=lambda a: a.name)
