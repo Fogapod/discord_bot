@@ -48,7 +48,7 @@ class PINKAccent(Accent, register=False):
         name = match[1]
         severity = 1 if match[3] is None else int(match[3])
 
-        prepared = name.replace(" ", "_")
+        prepared = name.replace(" ", "_").lower()
         try:
             accent = ALL_ACCENTS[prepared]
         except KeyError:
