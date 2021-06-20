@@ -14,6 +14,8 @@ Environment="PWD=/srv/pink"
 
 TimeoutStartSec=600
 
+# not sure if this is required, but build is inconsistent with pulling all the time
+ExecStartPre=-/usr/bin/podman pull $IMAGE
 # i like systemd (no)
 ExecStartPre=/bin/sh -c "podman build -t $IMAGE \
     --build-arg UID=$(id -u) --build-arg GID=$(id -g) ."
