@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 import json
 import random
+import logging
 import importlib
 import contextlib
 
@@ -30,6 +31,8 @@ load_from(Path("accents"))
 ALL_ACCENTS = {
     a.name.lower(): a for a in sorted(Accent.get_all_accents(), key=lambda a: a.name)
 }
+
+log = logging.getLogger(__name__)
 
 
 # inherit to make linters sleep well
@@ -82,7 +85,7 @@ class Accents(Cog):
         self._accents: Dict[int, Dict[int, List[Accent]]] = {}
 
     async def setup(self) -> None:
-        for accent in await self.bot.edb.query(
+        for settings in await self.bot.edb.query(
             """
             SELECT AccentSettings {
                 guild_id,
@@ -91,12 +94,22 @@ class Accents(Cog):
             }
             """
         ):
-            if accent.guild_id not in self._accents:
-                self._accents[accent.guild_id] = {}
+            accents = []
+            for accent in settings.accents:
+                if (accent_cls := ALL_ACCENTS.get(accent.name.lower())) is None:
+                    log.error(
+                        f"unknown accent: "
+                        f"guild={settings.guild_id} user={settings.user_id} {accent}"
+                    )
 
-            self._accents[accent.guild_id][accent.user_id] = [
-                ALL_ACCENTS[a.name.lower()](a.severity) for a in accent.accents
-            ]
+                    continue
+
+                accents.append(accent_cls(accent.severity))
+
+            if settings.guild_id not in self._accents:
+                self._accents[settings.guild_id] = {}
+
+            self._accents[settings.guild_id][settings.user_id] = accents
 
     def get_user_accents(self, member: discord.Member) -> _UserAccentsType:
         if member.guild.id not in self._accents:
