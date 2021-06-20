@@ -72,18 +72,13 @@ class Meta(Cog):
             f"```"
         )
 
-    @commands.group()
+    @commands.group(
+        invoke_without_command=True,
+        ignore_extra=False,
+    )
     @commands.guild_only()
     async def prefix(self, ctx: Context) -> None:
-        """
-        Get local prefix (if any)
-        """
-
-        if ctx.subcommand_passed:
-            if ctx.invoked_subcommand:
-                return
-            else:
-                return await ctx.send_help(ctx.command)
+        """Get local prefix (if any)."""
 
         if ctx.guild.id not in ctx.bot.prefixes:
             return await ctx.send(
