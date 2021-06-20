@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import math
 import functools
@@ -16,12 +18,46 @@ from googletrans import LANGCODES, LANGUAGES, Translator
 from pink.bot import Bot
 from pink.cog import Cog
 from pink.types import Image, StaticImage, AnimatedImage
+from pink.errors import UserFacingError
 from pink.context import Context
 
 _VertexType = Dict[str, int]
 _VerticesType = Tuple[_VertexType, _VertexType, _VertexType, _VertexType]
 
 OCR_API_URL = "https://content-vision.googleapis.com/v1/images:annotate"
+
+
+class GoogleOCRError(UserFacingError):
+    KNOWN_HINTS = {
+        None: "The world is on fire, something really bad happened. I have no idea.",
+        14: "This means Google cannot access image URL. Try using a different one.",
+    }
+
+    def __init__(self, code: Optional[int], message: str):
+        self.code = code
+        self.message = message
+
+    @classmethod
+    def from_response(cls, response: Dict[str, Any]) -> GoogleOCRError:
+        error = response.get("error", {})
+
+        code = error.get("code")
+        message = error.get("message", "unknown")
+
+        return cls(code, message)
+
+    def __str__(self) -> str:
+        base = f"**{type(self).__name__}**[{self.code}]: {self.message}"
+
+        if (hint := self.KNOWN_HINTS.get(self.code)) is not None:
+            base += f"\n\nHint: {hint}"
+
+        return base
+
+
+class NoTextDetected(UserFacingError):
+    def __str__(self) -> str:
+        return "No text detected"
 
 
 class TROCRException(Exception):
@@ -362,7 +398,15 @@ class Images(Cog):
         if len((responses := json["responses"])) == 0:
             return {}
 
-        return responses[0]
+        maybe_annotations = responses[0]
+
+        if "textAnnotations" not in maybe_annotations:
+            if "error" in maybe_annotations:
+                raise GoogleOCRError.from_response(maybe_annotations)
+            else:
+                raise NoTextDetected()
+
+        return maybe_annotations
 
     @commands.command()
     async def ocr(self, ctx: Context, image: Image = None) -> None:
@@ -372,9 +416,6 @@ class Images(Cog):
             image = await Image.from_history(ctx)
 
         annotations = await self._ocr(ctx, image.url)
-
-        if not (annotations.get("textAnnotations")):
-            return await ctx.reply("No text detected")
 
         await ctx.send(f"```\n{annotations['fullTextAnnotation']['text']}```")
 
@@ -409,9 +450,6 @@ class Images(Cog):
         src = await image.to_pil_image(ctx)
 
         annotations = await self._ocr(ctx, image.url)
-
-        if not (annotations.get("textAnnotations")):
-            return await ctx.reply("No text detected")
 
         word_annotations = annotations["textAnnotations"][1:]
         block_annotations = annotations["fullTextAnnotation"]["pages"][0]["blocks"]

@@ -7,6 +7,7 @@ from discord.ext import commands
 
 from pink.bot import Bot
 from pink.cog import Cog
+from pink.errors import UserFacingError
 from pink.context import Context, CTXExit
 
 log = logging.getLogger(__name__)
@@ -58,6 +59,8 @@ class ErrorHandler(Cog):
             await ctx.reply(e)
         elif isinstance(e, discord.HTTPException):
             await ctx.reply(f"HTTP[{e.status}] ({e.code}): **{e.text}**")
+        elif isinstance(e, UserFacingError):
+            await ctx.reply(str(e))
         else:
             await ctx.reply(f"Unexpected error: **{type(e).__name__}**: `{e}`")
 
