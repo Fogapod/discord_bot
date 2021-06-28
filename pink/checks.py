@@ -5,7 +5,7 @@ from discord.ext import commands
 from .context import Context
 
 
-def is_owner():
+def is_owner() -> bool:
     async def predicate(ctx: Context) -> bool:
         if ctx.author.id not in ctx.bot.owner_ids:
             raise commands.NotOwner("Must be a bot owner to use this")
@@ -17,11 +17,11 @@ def is_owner():
 
 def owner_bypass(check):
     @functools.wraps(check)
-    def inner(*args, **kwargs):
+    def inner(*args, **kwargs) -> bool:
         owner_pred = is_owner().predicate
         original_pred = check(*args, **kwargs).predicate
 
-        async def predicate(ctx: Context):
+        async def predicate(ctx: Context) -> bool:
             try:
                 return await owner_pred(ctx)
             except commands.NotOwner:

@@ -47,12 +47,13 @@ class SessionSettings:
         *,
         channel_id: int,
         emotion: tt.Emotion = tt.Emotion.neutral,
-        accents: Sequence[AccentWithSeverity] = [],  # noqa
+        accents: Sequence[PINKAccent] = None,
     ):
         self.session_id = session_id
         self.channel_id = channel_id
         self.emotion = emotion
-        self.accents = accents
+
+        self.accents = [] if accents is None else accents
 
         self.last_reply = time.time()
         self.lock = asyncio.Lock()

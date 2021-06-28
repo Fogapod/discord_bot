@@ -48,7 +48,7 @@ class Prefix:
         "prefix_re",
     )
 
-    def __init__(self, bot: Bot, *, prefix: Optional[str]):
+    def __init__(self, bot: Bot, *, prefix: str):
         self.prefix = prefix
 
         # custom prefix or mention

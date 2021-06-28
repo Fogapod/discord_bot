@@ -7,7 +7,7 @@ import logging
 import importlib
 import contextlib
 
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Iterable, Optional
 from pathlib import Path
 
 import discord
@@ -28,8 +28,11 @@ REQUIRED_PERMS = discord.Permissions(
 
 load_from(Path("accents"))
 
+# probably related:
+# https://github.com/python/typing/issues/760
+# for some reason mypy does not understand that str can be compared
 ALL_ACCENTS = {
-    a.name.lower(): a for a in sorted(Accent.get_all_accents(), key=lambda a: a.name)
+    a.name.lower(): a for a in sorted(Accent.get_all_accents(), key=lambda a: a.name)  # type: ignore
 }
 
 log = logging.getLogger(__name__)
@@ -62,7 +65,7 @@ class PINKAccent(Accent, register=False):
         return accent(severity)
 
 
-_UserAccentsType = Sequence[Accent]
+_UserAccentsType = Iterable[Accent]
 
 
 class Accents(Cog):
@@ -123,11 +126,9 @@ class Accents(Cog):
         if member.guild.id not in self._accents:
             self._accents[member.guild.id] = {}
 
-        self._accents[member.guild.id][member.id] = accents
+        self._accents[member.guild.id][member.id] = list(accents)
 
-    @commands.group(
-        invoke_without_command=True, ignore_extra=False, aliases=["accents"]
-    )
+    @commands.group(invoke_without_command=True, ignore_extra=False)
     async def accent(self, ctx: Context) -> None:
         """
         Accent management.
@@ -136,6 +137,12 @@ class Accents(Cog):
         """
 
         await ctx.send_help(ctx.command)
+
+    @commands.command()
+    async def accents(self, ctx: Context, user: discord.Member = None) -> None:
+        """Alias for accent list"""
+
+        await ctx.invoke(self.list, user=user)
 
     @accent.command()
     @commands.guild_only()
@@ -158,7 +165,8 @@ class Accents(Cog):
             Accent.get_all_accents(),
             key=lambda a: (a.name not in user_accent_map, a.name),
         ):
-            if instance := user_accent_map.get(accent.name):
+            # mypy is unable to understand class properties
+            if instance := user_accent_map.get(accent.name):  # type: ignore
                 line = (
                     f"+ {instance.full_name:>{longest_name}} : {accent.description}\n"
                 )
