@@ -24,7 +24,7 @@ from pink.context import Context
 class TechAdmin(Cog):
     """Commands for bot administrators"""
 
-    SQL_VALUE_LEN_CAP = 30
+    EDB_VALUE_LEN_CAP = 30
     PAGINATOR_PAGES_CAP = 5
 
     async def cog_check(self, ctx: Context) -> None:
@@ -234,7 +234,7 @@ class TechAdmin(Cog):
                 col_widths[i] = min(
                     (
                         max((col_widths[i], len(str(row[column])))),
-                        self.SQL_VALUE_LEN_CAP,
+                        self.EDB_VALUE_LEN_CAP,
                     )
                 )
 
@@ -246,8 +246,8 @@ class TechAdmin(Cog):
         def sanitize_value(value: Any) -> str:
             value = str(value).replace("\n", "\\n")
 
-            if len(value) > self.SQL_VALUE_LEN_CAP:
-                value = f"{value[:self.SQL_VALUE_LEN_CAP - 2]}.."
+            if len(value) > self.EDB_VALUE_LEN_CAP:
+                value = f"{value[:self.EDB_VALUE_LEN_CAP - 2]}.."
 
             return value
 
