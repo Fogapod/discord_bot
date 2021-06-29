@@ -88,7 +88,7 @@ class TechAdmin(Cog):
                     line_len += 1
 
             if line_len != 0:
-                yield text[-line_len - 1 :]
+                yield text[-line_len:]
 
         for line in wrap_with_limit(text, max_page_size):
             paginator.add_line(line)
