@@ -119,6 +119,12 @@ def nya_message_end(m: Match) -> Optional[str]:
     return None
 
 
+# TODO: add 2-8 severities
+#
+# this is free real estate:
+# https://github.com/goonstation/goonstation/blob/master/code/modules/medical/genetics/bioEffects/speech.dm
+# also has ideas for other accents
+
 PATTERNS: PatternMapType = {
     r"[rlv]": "w",
     r"ove": "uv",
