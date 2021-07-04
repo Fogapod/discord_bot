@@ -5,10 +5,10 @@ from typing import Optional
 from pink_accents import Match, Accent
 
 HICCBURPS = (
-    "- burp... ",
-    "- hic -",
-    "- hic! ",
-    "- buuuurp... ",
+    "-burp... ",
+    "-hic-",
+    "-hic! ",
+    "-buuuurp... ",
 )
 
 
@@ -32,5 +32,5 @@ class Drunk(Accent):
 
     PATTERNS = {
         r" +": hiccburp,
-        r"[aeiouslnmr]": duplicate_char,
+        r"\B[aeiouslnmr]\B": duplicate_char,
     }
