@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 import inspect
+import logging
+import traceback
 
 from typing import Any
 
 from discord.ext import commands
 
 from .bot import Bot
+
+log = logging.getLogger(__name__)
 
 
 class Cog(commands.Cog):
@@ -33,7 +37,13 @@ class Cog(commands.Cog):
     async def _setup(self) -> None:
         await self.bot.wait_until_ready()
 
-        await self.setup()
+        try:
+            await self.setup()
+        except Exception as e:
+            log.error(f"Error setting up {self.__module__}: {type(e).__name__} - {e}")
+            traceback.print_exc()
+
+            self.bot.unload_extension(self.__module__)
 
     async def setup(self) -> None:
         pass
