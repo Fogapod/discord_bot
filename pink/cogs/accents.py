@@ -545,7 +545,8 @@ class Accents(Cog):
                 # return
                 raise
 
-        await message.delete()
+        with contextlib.suppress(discord.NotFound):
+            await message.delete()
 
     async def _get_cached_webhook(
         self,

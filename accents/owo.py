@@ -75,6 +75,7 @@ NYAS = (
 
 FORBIDDEN_NYAS = (
     ";)",
+    ";3",
     "uwu",
     "UwU",
 )

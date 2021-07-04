@@ -1,3 +1,5 @@
+import contextlib
+
 from typing import Any, Union
 
 import discord
@@ -31,12 +33,12 @@ def convert_emoji_reaction(emoji: _EmojiType) -> str:
     )
 
 
-class Response:
+class RemovableResponse:
     async def remove(self, bot: Bot) -> None:
         raise NotImplementedError
 
 
-class MessageResponse(Response):
+class MessageResponse(RemovableResponse):
     __slots__ = (
         "channel_id",
         "message_id",
@@ -47,13 +49,14 @@ class MessageResponse(Response):
         self.message_id = message.id
 
     async def remove(self, bot: Bot) -> None:
-        await bot.http.delete_message(self.channel_id, self.message_id)
+        with contextlib.suppress(discord.NotFound):
+            await bot.http.delete_message(self.channel_id, self.message_id)
 
     def __repr__(self) -> str:
-        return f"<{self.__class__.__name__} channel={self.channel_id} message={self.message_id}>"
+        return f"<{type(self).__name__} channel={self.channel_id} message={self.message_id}>"
 
 
-class ReactionResponse(Response):
+class ReactionResponse(RemovableResponse):
     __slots__ = (
         "channel_id",
         "message_id",
@@ -70,10 +73,13 @@ class ReactionResponse(Response):
         self.emoji = emoji
 
     async def remove(self, bot: Bot) -> None:
-        await bot.http.remove_own_reaction(self.channel_id, self.message_id, self.emoji)
+        with contextlib.suppress(discord.NotFound):
+            await bot.http.remove_own_reaction(
+                self.channel_id, self.message_id, self.emoji
+            )
 
     def __repr__(self) -> str:
-        return f"<{self.__class__.__name__} channel={self.channel_id} message={self.message_id} emoji={self.emoji}>"
+        return f"<{type(self).__name__} channel={self.channel_id} message={self.message_id} emoji={self.emoji}>"
 
 
 class ResponseTracker(Cog):
@@ -145,7 +151,7 @@ class ResponseTracker(Cog):
         await self.remove_responses(message.id, self.bot)
 
     @classmethod
-    def register_response(cls, message_id: int, response: Response) -> None:
+    def register_response(cls, message_id: int, response: RemovableResponse) -> None:
         existing = cls.responses.get(message_id, [])
         existing.append(response)
 
