@@ -20,8 +20,6 @@ from pink.cog import Cog
 from pink.utils import LRU
 from pink.context import Context
 
-ACCENT_WEBHOOK_NAME = "PINK bot accent webhook"
-
 REQUIRED_PERMS = discord.Permissions(
     send_messages=True, manage_messages=True, manage_webhooks=True
 )
@@ -88,6 +86,10 @@ class Accents(Cog):
         self._accents: Dict[int, Dict[int, List[Accent]]] = {}
 
     async def setup(self) -> None:
+        # TODO: perform cleanup in case name format or bot name ever changes?
+        # current name: PINK
+        self.accent_wh_name = f"{self.bot.user.name} bot accent webhook"
+
         for settings in await self.bot.edb.query(
             """
             SELECT AccentSettings {
@@ -536,7 +538,7 @@ class Accents(Cog):
             except Exception as e:
                 await ctx.reply(
                     f"Accents error: unable to deliver message after invalidating cache: **{e}**.\n"
-                    f"Try deleting webhook **{ACCENT_WEBHOOK_NAME}** manually."
+                    f"Try deleting webhook **{self.accent_wh_name}** manually."
                 )
 
                 # NOTE: is it really needed? what else could trigger this?
@@ -552,13 +554,13 @@ class Accents(Cog):
     ) -> Optional[discord.Webhook]:
         if (wh := self._webhooks.get(channel.id)) is None:
             for wh in await channel.webhooks():
-                if wh.name == ACCENT_WEBHOOK_NAME:
+                if wh.name == self.accent_wh_name:
                     break
             else:
                 if not create:
                     return None
 
-                wh = await channel.create_webhook(name=ACCENT_WEBHOOK_NAME)
+                wh = await channel.create_webhook(name=self.accent_wh_name)
 
             self._webhooks[channel.id] = wh
 
