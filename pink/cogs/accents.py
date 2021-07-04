@@ -347,8 +347,8 @@ class Accents(Cog):
     @accent.command(aliases=["purge"])
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_messages=True, manage_webhooks=True)
-    async def clean(self, ctx: Context, limit: int = 100) -> None:
-        """Removes webhook messages from channel, checking up to `limit` messages"""
+    async def clean(self, ctx: Context, limit: int = 50) -> None:
+        """Remove accent webhook messages in case of spam"""
 
         upper_limit = 1000
         if limit > upper_limit:
@@ -361,12 +361,29 @@ class Accents(Cog):
                 "There is no accent webhook in this channel. Nothing to delete"
             )
 
+        message_counts = {}
+
         def is_accent_webhook(m: discord.Message) -> bool:
-            return m.webhook_id == accent_webhook.id  # type: ignore
+            if m.webhook_id != accent_webhook.id:
+                return False
+
+            user_name = m.author.name
+
+            message_counts[user_name] = message_counts.get(user_name, 0) + 1
+
+            return True
 
         async with ctx.typing():
             deleted = await ctx.channel.purge(limit=limit, check=is_accent_webhook)
-            await ctx.send(f"Deleted **{len(deleted)}** out of **{limit}** message(s)")
+
+            message_counts_table = "\n".join(
+                f"{name}: {count}" for name, count in message_counts.items()
+            )
+
+            await ctx.send(
+                f"Deleted **{len(deleted)}** out of **{limit}** message(s) from:"
+                f"```\n{message_counts_table}```"
+            )
 
     @commands.command()
     @commands.guild_only()
@@ -489,7 +506,6 @@ class Accents(Cog):
         ) == message.content:
             return
 
-        await message.delete()
         try:
             await self._send_new_message(ctx, content, message)
         except (discord.NotFound, discord.InvalidArgument):
@@ -502,12 +518,16 @@ class Accents(Cog):
             try:
                 await self._send_new_message(ctx, content, message)
             except Exception as e:
-                await ctx.send(
-                    f"Unable to deliver message after invalidating cache: **{e}**\n"
+                await ctx.reply(
+                    f"Accents error: unable to deliver message after invalidating cache: **{e}**.\n"
                     f"Try deleting webhook **{ACCENT_WEBHOOK_NAME}** manually."
                 )
 
+                # NOTE: is it really needed? what else could trigger this?
+                # return
                 raise
+
+        await message.delete()
 
     async def _get_cached_webhook(
         self,
