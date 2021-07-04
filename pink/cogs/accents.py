@@ -490,12 +490,19 @@ class Accents(Cog):
         if message.reference is not None:
             return
 
+        # TODO: some other way to prevent accent trigger that is not a missing feature?
+
         if not (accents := self.get_user_accents(message.author)):
             return
 
         if not message.channel.permissions_for(message.guild.me).is_superset(
             REQUIRED_PERMS
         ):
+            # NOTE: the decision has been made for this to fail silently.
+            # this adds some overhead, but makes bot setup much simplier.
+            #
+            # TODO: find the other way to tell this to users so that they don't think
+            # bot is broken. maybe help text?
             return
 
         if (ctx := await self.bot.get_context(message)).valid:
