@@ -344,15 +344,19 @@ class Accents(Cog):
 
         await ctx.send(text, accents=[accent])
 
-    @accent.command(aliases=["purge"])
+    @accent.command()
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_messages=True, manage_webhooks=True)
-    async def clean(self, ctx: Context, limit: int = 50) -> None:
+    async def purge(self, ctx: Context, limit: int = 50) -> None:
         """Remove accent webhook messages in case of spam"""
 
+        lower_limit = 1
         upper_limit = 1000
-        if limit > upper_limit:
-            return await ctx.send(f"Limit should be between 1 and {upper_limit}")
+
+        if not lower_limit <= limit <= upper_limit:
+            return await ctx.send(
+                f"Limit should be between **{lower_limit}** and **{upper_limit}**"
+            )
 
         if (
             accent_webhook := await self._get_cached_webhook(ctx.channel, create=False)
@@ -374,7 +378,12 @@ class Accents(Cog):
             return True
 
         async with ctx.typing():
-            deleted = await ctx.channel.purge(limit=limit, check=is_accent_webhook)
+            deleted = await ctx.channel.purge(
+                limit=limit, check=is_accent_webhook, before=ctx.message.created_at
+            )
+
+            if not deleted:
+                return await ctx.send("No accent messages found")
 
             message_counts_table = "\n".join(
                 f"{name}: {count}" for name, count in message_counts.items()
