@@ -31,6 +31,6 @@ class Drunk(Accent):
     """Drunk accent."""
 
     PATTERNS = {
-        r"\b +\b": hiccburp,
         r"\B[aeiouslnmr]\B": duplicate_char,
+        r"\b +\b": hiccburp,
     }
