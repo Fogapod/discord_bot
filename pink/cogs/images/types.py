@@ -480,7 +480,7 @@ class Image:
         return await fetched.to_pil_image(ctx)
 
     def __repr__(self) -> str:
-        return f"<{type(self).__name__} type={self.type.name} url={self.url}>"
+        return f"<{type(self).__name__} url={self.url} type={self.type.name}>"
 
 
 class StaticImage(Image):
