@@ -158,6 +158,9 @@ class Image:
                 allow_animated=allow_animated,
             )
 
+        if argument == "~":
+            return await cls.from_history(ctx)
+
         # match up to 50 previous messages using one or multiple ^'s
         if re.fullmatch(r"\^{1,50}", argument):
             msgs = await ctx.channel.history(
@@ -409,9 +412,7 @@ class Image:
             ) is not None:
                 return img
 
-        await ctx.send("Nothing found in latest 200 messages", exit=True)
-
-        assert False  # noqa
+        raise commands.BadArgument("Nothing found in latest 200 messages")
 
     async def fetch(
         self,

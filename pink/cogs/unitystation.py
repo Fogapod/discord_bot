@@ -16,7 +16,8 @@ US_INVITE = "tFcTpBp"
 
 
 class UnityStation(Cog):
-    f"""
+    # f-strings and .format do not count as docstring
+    __doc__ = f"""
     UnityStation related commands
 
     UnityStation is a SS13 remake in Unity.

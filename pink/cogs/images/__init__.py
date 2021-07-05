@@ -21,7 +21,29 @@ except ImportError:
 
 
 class Images(Cog):
-    """Image manipulation"""
+    """
+    Image manipulation
+
+    There are multiple ways to provide image arguments.
+
+    If you don't provide text, image is searched in:
+      - referenced message attachements/embeds
+      - current message atatchments/embeds
+      - attachments/embeds in up to 200 messages in history
+
+    If you provide argument, it is checked in the following order:
+      - referenced message is checked for attachements/embeds
+      - special values (see below)
+      - emote/emote id
+      - emoji
+      - user (id/mention/name/name#discriminator)
+      - image URL
+
+    Special values:
+      ~ checks history. useful in rare cases when you must provide text
+      ^ checks previous message for attachements/embeds. multiple symbols can
+        be stacked. each ^ means go 1 message back in history
+    """
 
     @commands.command(hidden=True)
     async def i(self, ctx: Context, i: Image = None) -> None:
