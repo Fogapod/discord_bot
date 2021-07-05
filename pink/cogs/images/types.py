@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import enum
 import asyncio
 import warnings
@@ -156,6 +157,28 @@ class Image:
                 allow_static=allow_static,
                 allow_animated=allow_animated,
             )
+
+        # match up to 50 previous messages using one or multiple ^'s
+        if re.fullmatch(r"\^{1,50}", argument):
+            msgs = await ctx.channel.history(
+                before=ctx.message.created_at, limit=50
+            ).flatten()
+
+            message = msgs[len(argument) - 1]
+
+            if not (
+                image := cls.from_message(
+                    ctx,
+                    message,
+                    allow_static=allow_static,
+                    allow_animated=allow_animated,
+                )
+            ):
+                raise commands.BadArgument(
+                    f"Nothing found in message <{message.jump_url}>"
+                )
+
+            return image
 
         def pick_format(target_animated: bool) -> Optional[str]:
             if allow_static and allow_animated:
