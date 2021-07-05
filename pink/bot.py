@@ -27,6 +27,7 @@ initial_extensions = (
     "pink.cogs.chat",
     "pink.cogs.fun",
     "pink.cogs.images",
+    "pink.cogs.translator",
     "pink.cogs.meta",
     "pink.cogs.techadmin",
     "pink.cogs.unitystation",

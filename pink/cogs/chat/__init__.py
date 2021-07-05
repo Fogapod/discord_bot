@@ -15,20 +15,12 @@ from pink.bot import Bot
 from pink.cog import Cog
 from pink.context import Context
 
+from .types import Emotion
+
 try:
-    from pink.cogs.accents import PINKAccent
+    from pink.cogs.accents.types import PINKAccent
 except ImportError:
     raise Exception("This cog relies on the existance of accents cog")
-
-
-class Emotion(commands.Converter):
-    async def convert(self, ctx: Context, argument: str) -> tt.Emotion:
-        try:
-            return tt.Emotion(argument)
-        except ValueError:
-            raise commands.BadArgument(
-                f"Must be one of {', '.join(e.value for e in tt.Emotion)}"
-            )
 
 
 class SessionSettings:

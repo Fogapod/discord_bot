@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 import json
 import random
 import logging
@@ -26,41 +25,10 @@ REQUIRED_PERMS = discord.Permissions(
 
 load_from(Path("accents"))
 
-# probably related:
-# https://github.com/python/typing/issues/760
-# for some reason mypy does not understand that str can be compared
-ALL_ACCENTS = {
-    a.name.lower(): a for a in sorted(Accent.get_all_accents(), key=lambda a: a.name)  # type: ignore
-}
+from .types import PINKAccent  # noqa
+from .constants import ALL_ACCENTS  # noqa
 
 log = logging.getLogger(__name__)
-
-
-# inherit to make linters sleep well
-class PINKAccent(Accent, register=False):
-    MIN_SEVERITY = 1
-    MAX_SEVERITY = 10
-
-    @classmethod
-    async def convert(cls, ctx: Context, argument: str) -> Accent:
-        match = re.match(r"(.+?)(:?\[(\d+)\])?$", argument)
-        assert match
-
-        name = match[1]
-        severity = 1 if match[3] is None else int(match[3])
-
-        prepared = name.replace(" ", "_").lower()
-        try:
-            accent = ALL_ACCENTS[prepared]
-        except KeyError:
-            raise commands.BadArgument(f'Accent "{name}" does not exist')
-
-        if not (cls.MIN_SEVERITY <= severity <= cls.MAX_SEVERITY):
-            raise commands.BadArgument(
-                f"{accent}: severity must be between {cls.MIN_SEVERITY} and {cls.MAX_SEVERITY}"
-            )
-
-        return accent(severity)
 
 
 _UserAccentsType = Iterable[Accent]
