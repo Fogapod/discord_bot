@@ -124,7 +124,7 @@ class Images(Cog):
         max_amount = 10
 
         if not min_amount <= amount <= max_amount:
-            await ctx.reply(
+            return await ctx.reply(
                 f"Fly amount should be between **{min_amount}** and **{max_amount}**"
             )
 
