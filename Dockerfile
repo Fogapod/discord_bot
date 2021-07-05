@@ -22,6 +22,8 @@ RUN apk add --no-cache \
     jpeg-dev \
     openjpeg-dev \
     freetype-dev \
+    # gif optimizer
+    gifsicle \
     # webp support
     libwebp-dev \
     # Font for trocr
@@ -43,7 +45,9 @@ RUN addgroup -g $GID -S pink \
 
 USER pink
 
+# at this point .dockerignore might be more appropriate
 COPY --chown=pink:pink pink pink
 COPY --chown=pink:pink dbschema dbschema
+COPY --chown=pink:pink templates templates
 
 ENTRYPOINT ["python", "-m", "pink"]

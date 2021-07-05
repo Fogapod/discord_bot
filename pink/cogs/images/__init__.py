@@ -1,13 +1,18 @@
+import os
+
 import discord
 
 from discord.ext import commands
 
 from pink.bot import Bot
 from pink.cog import Cog
+from pink.utils import run_process
 from pink.context import Context
 
 from .ocr import ocr, trocr
+from .flies import draw_flies
 from .types import Image, StaticImage, AnimatedImage
+from .constants import GIFSICLE_ARGUMENTS
 
 try:
     from pink.cogs.translator.types import Language
@@ -71,6 +76,51 @@ class Images(Cog):
         result, stats = await trocr(ctx, image, language)
 
         await ctx.send(stats, file=discord.File(result, filename="trocr.png"))
+
+    @commands.command(aliases=["flies"])
+    @commands.cooldown(1, 10, type=commands.BucketType.channel)
+    async def fly(
+        self,
+        ctx: Context,
+        image: StaticImage = None,
+        amount: int = 1,
+        fly_image: StaticImage = None,
+    ):
+        """Animates flies on image"""
+
+        if image is None:
+            image = await StaticImage.from_history(ctx)
+
+        src = await image.to_pil_image(ctx)
+
+        if fly_image is not None:
+            fly_src = await fly_image.to_pil_image(ctx)
+        else:
+            fly_src = None
+
+        min_amount = 1
+        max_amount = 10
+
+        if not min_amount <= amount <= max_amount:
+            await ctx.reply(
+                f"Fly amount should be between **{min_amount}** and **{max_amount}**"
+            )
+
+        # TODO: make configurable
+        steps = 100
+        velocity = 10
+
+        async with ctx.channel.typing():
+            filename = await self.bot.loop.run_in_executor(
+                None, draw_flies, src, fly_src, steps, velocity, amount
+            )
+
+            # optimize gif using gifsicle
+            await run_process("gifsicle", *GIFSICLE_ARGUMENTS + [filename])
+
+        await ctx.send(file=discord.File(filename, filename="fly.gif"))
+
+        os.remove(filename)
 
 
 def setup(bot: Bot) -> None:

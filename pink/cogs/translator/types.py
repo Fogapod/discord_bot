@@ -11,8 +11,6 @@ class Language(str):
 
         language = LANGCODES.get(language, language)
         if language not in LANGUAGES:
-            ctx.command.reset_cooldown(ctx)
-
             raise commands.BadArgument(
                 "Invalid language. Use `tr list` to get list of supported languages"
             )

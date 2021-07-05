@@ -48,6 +48,8 @@ class ErrorHandler(Cog):
                 commands.NoPrivateMessage,
             ),
         ):
+            ctx.command.reset_cooldown(ctx)
+
             await ctx.reply(f"Error: **{e}**")
         elif isinstance(e, commands.TooManyArguments):
             await ctx.send_help(ctx.command)
