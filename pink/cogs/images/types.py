@@ -15,7 +15,7 @@ from PIL.Image import DecompressionBombWarning
 from discord.ext import commands
 
 from pink.context import Context
-from pink.regexes import EMOTE_REGEX, CLEAN_URL_REGEX
+from pink.regexes import ID_REGEX, EMOTE_REGEX, CLEAN_URL_REGEX
 
 warnings.simplefilter("error", DecompressionBombWarning)
 
@@ -171,16 +171,17 @@ class Image:
             if allow_static:
                 return cls.DEFAULT_STATIC_FORMAT
 
+            # only static allowed, target is animated
             return None
 
         # check if pattern is emote
         if emote_match := EMOTE_REGEX.fullmatch(argument):
-            emote_id = emote_match["id"]
-            animated = emote_match["animated"]
+            emote_id = int(emote_match["id"])
+            is_animated = emote_match["animated"] != ""
 
-            if (emote_format := pick_format(animated)) is None:
+            if (emote_format := pick_format(is_animated)) is None:
                 raise commands.BadArgument(
-                    "Static images are not allowed, animated emote provided"
+                    "Static images are not allowed, static emote provided"
                 )
 
             if emote := ctx.bot.get_emoji(emote_id):
@@ -193,6 +194,19 @@ class Image:
                 type=ImageType.EMOTE,
                 url=f"https://cdn.discordapp.com/emojis/{emote_id}.{emote_format}",
             )
+
+        # check if pattern is id that points to emote
+        if id_match := ID_REGEX.fullmatch(argument):
+            if emote := ctx.bot.get_emoji(int(id_match.string)):
+                if (emote_format := pick_format(emote.animated)) is None:
+                    raise commands.BadArgument(
+                        "Static images are not allowed, static emote provided"
+                    )
+
+                return Image(
+                    type=ImageType.EMOTE,
+                    url=str(emote.url_as(format=emote_format)),
+                )
 
         # check if pattern is emoji
         # thanks NotSoSuper#0001 for the API
