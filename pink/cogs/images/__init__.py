@@ -100,7 +100,7 @@ class Images(Cog):
         await ctx.send(stats, file=discord.File(result, filename="trocr.png"))
 
     @commands.command(aliases=["flies"])
-    @commands.cooldown(1, 10, type=commands.BucketType.channel)
+    @commands.cooldown(1, 12, type=commands.BucketType.channel)
     async def fly(
         self,
         ctx: Context,
@@ -121,10 +121,10 @@ class Images(Cog):
             fly_src = None
 
         min_amount = 1
-        max_amount = 10
+        max_amount = 50
 
         if not min_amount <= amount <= max_amount:
-            return await ctx.reply(
+            raise commands.BadArgument(
                 f"Fly amount should be between **{min_amount}** and **{max_amount}**"
             )
 
