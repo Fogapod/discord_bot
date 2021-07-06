@@ -1,5 +1,6 @@
 import copy
 import time
+import asyncio
 
 from typing import Any, Dict, List
 
@@ -78,6 +79,19 @@ class UnityStation(Cog):
             "LinuxDownload": "linux",
             "OSXDownload": "osx",
         }
+
+        async def check_url(url: str) -> int:
+            async with ctx.session.head(url) as r:
+                return r.status
+
+        # TODO: cache this like servers?
+        status_codes = await asyncio.gather(
+            *[check_url(server.get(name)) for name in download_aliases.keys()]
+        )
+
+        for status, key in zip(status_codes, download_aliases.keys()):
+            if status != 200:
+                server[key] = f"[{status}] {server[key]}"
 
         longest_download_name = len(
             max(download_aliases.values(), key=lambda v: len(v))
