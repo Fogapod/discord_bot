@@ -125,7 +125,7 @@ class Images(Cog):
 
         if not min_amount <= amount <= max_amount:
             raise commands.BadArgument(
-                f"Fly amount should be between **{min_amount}** and **{max_amount}**"
+                f"fly amount should be between **{min_amount}** and **{max_amount}**"
             )
 
         # TODO: make configurable

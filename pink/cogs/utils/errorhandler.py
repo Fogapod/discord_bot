@@ -50,7 +50,7 @@ class ErrorHandler(Cog):
         ):
             ctx.command.reset_cooldown(ctx)
 
-            await ctx.reply(f"Error: **{e}**")
+            await ctx.reply(f"Error: {e}")
         elif isinstance(e, commands.TooManyArguments):
             await ctx.send_help(ctx.command)
         elif isinstance(e, (commands.ArgumentParsingError, commands.BadUnionArgument)):
