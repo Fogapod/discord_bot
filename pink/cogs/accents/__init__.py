@@ -6,7 +6,7 @@ import logging
 import importlib
 import contextlib
 
-from typing import Any, Dict, List, Iterable, Optional
+from typing import Any, Dict, List, Iterable, Optional, Sequence
 from pathlib import Path
 
 import discord
@@ -129,11 +129,23 @@ class Accents(Cog):
 
         body = ""
 
+        # I have no idea why this is not in stdlib, string has find method
+        def sequence_find(seq: Sequence[Any], item: Any, default: int = -1) -> int:
+            for i, j in enumerate(seq):
+                if j == item:
+                    return i
+
+            return default
+
         longest_name = max(len(k) for k in ALL_ACCENTS.keys())
 
         for accent in sorted(
-            Accent.get_all_accents(),
-            key=lambda a: (a.name not in user_accent_map, a.name),
+            ALL_ACCENTS.values(),
+            key=lambda a: (
+                # sort by position in global accent list, leave missing at the end
+                -sequence_find(user_accent_map.keys(), a.name),
+                a.name,
+            ),
         ):
             # mypy is unable to understand class properties
             if instance := user_accent_map.get(accent.name):  # type: ignore
@@ -146,7 +158,7 @@ class Accents(Cog):
             body += line
 
         await ctx.send(
-            f"**{user}** accents (applied from top to bottom): ```diff\n{body}```",
+            f"**{user}** accents (applied from bottom to top): ```diff\n{body}```",
             # override applied accents because getting accent list is a very serious
             # task that should not be obscured
             accents=[],
@@ -159,7 +171,10 @@ class Accents(Cog):
 
         something_changed = False
 
-        for accent_to_add in set(accents):
+        # remove duplicates preserving order
+        accents = list(dict.fromkeys(accents))
+
+        for accent_to_add in accents:
             existing = user_accent_map.get(accent_to_add.name)
 
             if existing is None or existing.severity != accent_to_add.severity:

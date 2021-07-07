@@ -379,13 +379,11 @@ if __name__ == "__main__":
             else:
                 inverted_words_map[v] = [k]
 
-    updated_words = {}
-    for replacement, words in inverted_words_map.items():
-        key = f'({"|".join(words)})' if len(words) > 1 else words[0]
+    words = {}
+    for replacement, w in inverted_words_map.items():
+        key = f'({"|".join(w)})' if len(w) > 1 else w[0]
 
-        push(key, replacement, updated_words)
-
-    words = updated_words
+        push(key, replacement, words)
 
     print("WORDS = {")
     for k, v in words.items():
