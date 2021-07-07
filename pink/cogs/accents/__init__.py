@@ -413,6 +413,23 @@ class Accents(Cog):
 
         await ctx.send("honk toggled")
 
+    @commands.command()
+    @commands.guild_only()
+    async def kek(self, ctx: Context) -> None:
+        """Embrace Da Orks"""
+
+        ork = ALL_ACCENTS["ork"]
+        my_accents = [a.name for a in self.get_user_accents(ctx.me)]
+
+        if ork.name in my_accents:
+            await self._remove_accents(ctx, ctx.me, [ork(1)])
+        else:
+            await self._add_accents(ctx, ctx.me, [ork(1)])
+
+        await self._update_nick(ctx)
+
+        await ctx.send("kek toggled")
+
     @staticmethod
     def _apply_accents(content: str, accents: _UserAccentsType) -> str:
         for accent in accents:
