@@ -13,14 +13,23 @@ class Ork(Accent):
         r"have to": "hafta",
         r"(mech suits|mechs)": "mekks",
         r"again": "agin",
-        r"(and|and)": "an'",
-        r"and": "an’",
-        r"another": "annuver",
+        r"and": (
+            "an'",
+            "an",
+            "an’",
+        ),
+        r"another": (
+            "anuvva",
+            "annuver",
+        ),
         r"best": "bestest",
         r"bolts": "bits",
-        r"boys": "Boyz",
+        r"boys": "boyz",
         r"(bunch|group)": "lot",
-        r"can": "kan",
+        r"can": (
+            "kin",
+            "kan",
+        ),
         r"captain": "kap'n",
         r"catch": "ketch",
         r"(chopper|helicopter)": "kopta",
@@ -28,7 +37,10 @@ class Ork(Accent):
         r"company": "comp'ny",
         r"containers": "boxez",
         r"(correct|proper)": "proppa",
-        r"cunning": "kunnin'",
+        r"cunning": (
+            "kunn'n'",
+            "kunnin'",
+        ),
         r"for": "fer",
         r"fuck": "fokk",
         r"galaxy": "galuxy",
@@ -36,20 +48,39 @@ class Ork(Accent):
         r"(get|guy|girl)": "git",
         r"got": "gots",
         r"guns": "shootaz",
-        r"half": "‘af",
-        r"(he|he)": "'e",
-        r"he": "‘e",
+        r"half": (
+            "'aff",
+            "'af",
+            "af",
+            "‘af",
+        ),
+        r"he": (
+            "'e",
+            "‘e",
+        ),
         r"(head|mind)": "'ead",
         r"heads": "'eadz",
         r"(hey|hi)": "oy",
         r"(him|them)": "'im",
-        r"him": "‘em",
+        r"him": (
+            "'em",
+            "‘em",
+        ),
         r"how": "'ow",
         r"(humans|people|mankind)": "'umies",
-        r"humans": "‘umiez",
-        r"i'm": "Iz",
-        r"(in|in)": "'n",
-        r"in": "‘n",
+        r"humans": (
+            "'umiez",
+            "ummiez",
+            "‘umiez",
+        ),
+        r"i'm": (
+            "i'z",
+            "Iz",
+        ),
+        r"in": (
+            "'n",
+            "‘n",
+        ),
         r"junk": "skrap",
         r"lieutenant": "lootenant",
         r"liquor": "likker",
@@ -58,12 +89,17 @@ class Ork(Accent):
         r"mechs": "meks",
         r"money": "munny",
         r"(money|teeth|cash|coin|payment|pay|dollars|dollar|pesos|peso|yen|euros|euro|pence)": "teef",
-        r"my": "ma",
+        r"my": (
+            "mah",
+            "ma",
+        ),
         r"never": "neva",
-        r"(of|of)": "uv",
-        r"(old|old)": "ol'",
-        r"old": "ol",
-        r"(one|one)": "wun",
+        r"of": "uv",
+        r"old": (
+            "ol'",
+            "ol",
+        ),
+        r"one": "wun",
         r"other": "uvva",
         r"pretty": "purty",
         r"(say|says)": "sez",
@@ -73,34 +109,70 @@ class Ork(Accent):
         r"swords": "choppaz",
         r"technology": "gubbinz",
         r"(technology|tech)": "teknologee",
-        r"(that|what|what)": "wot",
-        r"that": "‘dat",
-        r"(the|the)": "da",
-        r"the": "‘da",
-        r"things": "fings",
-        r"(to|to)": "ta",
-        r"(truck|truck)": "trukk",
+        r"(that|what)": "wot",
+        r"that": (
+            "dat",
+            "'dat",
+            "‘dat",
+        ),
+        r"the": (
+            "da",
+            "'da",
+            "‘da",
+        ),
+        r"things": (
+            "stuff",
+            "fings",
+        ),
+        r"to": "ta",
+        r"truck": "trukk",
         r"war": "waugh",
         r"(war|waagh|waa)": "WAAAGH!",
         r"was": "wuz",
-        r"with": "wit'",
+        r"with": (
+            "wit",
+            "wiv ",
+            "wit'",
+        ),
         r"women": "wimmen",
-        r"(you|you)": "ya",
-        r"(you|your|your)": "yer",
+        r"you": "ya",
+        r"(you|your)": "yer",
         r"human race": "puny 'umies",
         r"couple of": "coupla",
         r"(i ran away|i had to escape|i ran from them|i got away from him|i got away from her|i go away from them)": "I ran, but Orks are never beaten in battle… we can always come back for annuver go,",
         r"(we ran away|we had to run away|we had to escape|we ran from them|we got away from them)": "we ran, but Orks are never beaten in battle… we can always come back for annuver go,",
         r"out of": "outta",
-        r"going to": "Gunna",
+        r"going to": "gunna",
         r"to the head": "to the drops",
         r"(mens room|men's room|womens room|women's room|ladies room|lady's room|boy's room|boys room|bathroom|restroom|lavatory|potty)": "drops",
-        r"her": "‘er",
-        r"that's": "‘dats",
-        r"there": "‘der",
-        r"their": "‘dere",
-        r"human": "‘umie",
-        r"bang": "dakka",
+        r"her": (
+            "'er",
+            "‘er",
+        ),
+        r"that's": (
+            "dats",
+            "'dats",
+            "‘dats",
+        ),
+        r"there": (
+            "der",
+            "'der",
+            "‘der",
+        ),
+        r"their": (
+            "dere",
+            "'dere",
+            "‘dere",
+        ),
+        r"human": (
+            "umie",
+            "'umie",
+            "‘umie",
+        ),
+        r"bang": (
+            "daka daka daka!",
+            "dakka",
+        ),
         r"(bang|shots)": "daka",
         r"particular": "partic’lar",
         r"thing": "fing",
@@ -109,8 +181,15 @@ class Ork(Accent):
         r"truckers": "mek boyz",
         r"lover": "luvva",
         r"lovers": "luvvas",
-        r"just": "jus’",
-        r"has": "‘as",
+        r"just": (
+            "jus' ",
+            "jus",
+            "jus’",
+        ),
+        r"has": (
+            "'as",
+            "‘as",
+        ),
         r"fight": "fight",
         r"fighting": "fight'n'",
         r"battle": "WAAGH!",
@@ -119,7 +198,6 @@ class Ork(Accent):
         r"defeat": "stompn",
         r"defeating": "stomp'n",
         r"defeated": "stomped",
-        r"rout": "Smash",
         r"killing": "stomp'n'",
         r"(flashy|wealth)": "flash",
         r"rich": "snobby ",
@@ -128,7 +206,11 @@ class Ork(Accent):
         r"them": "im",
         r"three": "tree",
         r"killed": "kilt",
-        r"this": "‘dis",
+        r"this": (
+            "'dis",
+            "dis",
+            "‘dis",
+        ),
         r"mech": "mek",
         r"claw": "klaw",
         r"claws": "klaws",
@@ -141,7 +223,11 @@ class Ork(Accent):
         r"good": "gud",
         r"because": "'cos",
         r"who": "'oo",
-        r"here": "‘ere",
+        r"here": (
+            "'ere",
+            "ere",
+            "‘ere",
+        ),
         r"cool": "kool",
         r"death": "deth",
         r"engine": "enjin",
@@ -150,7 +236,11 @@ class Ork(Accent):
         r"is": "iz",
         r"except": "'sept",
         r"does": "duz",
-        r"honest": "‘onest",
+        r"honest": (
+            "'onest",
+            "onest",
+            "‘onest",
+        ),
         r"thought": "thought",
         r"thoughts": "thoughtz",
         r"suns": "sunz",
@@ -231,10 +321,8 @@ if __name__ == "__main__":
         key = key.lower()
         lower_value = value.lower()
 
-        if (existing := collection.get(key)) is None:
-            collection[key] = value
-        elif isinstance(existing, str):
-            collection[key] = [existing, value]
+        if key not in collection:
+            collection[key] = [value]
         else:
             # avoid adding replacements for different letter cases, a few of these are
             # present in input data
@@ -291,23 +379,26 @@ if __name__ == "__main__":
             else:
                 inverted_words_map[v] = [k]
 
-    words = {
-        f'({"|".join(words)})' if len(words) > 1 else words[0]: replacement
-        for replacement, words in inverted_words_map.items()
-    }
+    updated_words = {}
+    for replacement, words in inverted_words_map.items():
+        key = f'({"|".join(words)})' if len(words) > 1 else words[0]
+
+        push(key, replacement, updated_words)
+
+    words = updated_words
 
     print("WORDS = {")
     for k, v in words.items():
-        if isinstance(v, str):
-            print(f'r"{k}": "{v}",')
+        if len(v) == 1:
+            print(f'r"{k}": "{v[0]}",')
         else:
             print(f"""r"{k}": ({",".join(f'"{i}"' for i in v)},),""")
     print("}")
 
     print("PATTERNS = {")
     for k, v in patterns.items():
-        if isinstance(v, str):
-            print(f'r"{k}": "{v}",')
+        if len(v) == 1:
+            print(f'r"{k}": "{v[0]}",')
         else:
             print(f"""r"{k}": ({", ".join(f'"{i}"' for i in v)},),""")
     print("}")
