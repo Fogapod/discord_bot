@@ -484,6 +484,11 @@ class Accents(Cog):
         return await original(ctx, message, content=content, **kwargs)
 
     async def _replace_message(self, message: discord.Message) -> None:
+        # note about embeds:
+        # embeds are added with a special edit event, they are not visible now.
+        # by the time message is actually sent, there is a chance that event fired and
+        # embeds are captured. embed quality is usually poor for some reason though
+
         if message.author.bot:
             return
 
@@ -495,11 +500,6 @@ class Accents(Cog):
 
         # there is no easy and reliable way to preserve attachments
         if message.attachments:
-            return
-
-        # this usually breaks image embeds. disabling until there is a reliable way to
-        # copy them
-        if message.embeds:
             return
 
         # webhooks do not support references
@@ -591,7 +591,7 @@ class Accents(Cog):
             # webhook data
             username=original.author.display_name,
             avatar_url=original.author.avatar_url,
-            # embeds=original.embeds,
+            embeds=original.embeds,
         )
 
     @Cog.listener()
