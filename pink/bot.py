@@ -123,13 +123,6 @@ class Bot(commands.Bot):
         self.loop.run_until_complete(self.critical_setup())
         self.loop.create_task(self._setup())
 
-        for extension in initial_extensions:
-            try:
-                self.load_extension(extension)
-            except Exception as e:
-                log.error(f"Error loading {extension}: {type(e).__name__} - {e}")
-                traceback.print_exc()
-
     async def get_prefix(self, message: discord.Message) -> Union[List[str], str]:
         if self._default_prefix_re is None:
             # prefixes are not initialized
@@ -183,6 +176,13 @@ class Bot(commands.Bot):
     async def setup(self) -> None:
         await self._get_prefixes()
         await self._fetch_owners()
+
+        for extension in initial_extensions:
+            try:
+                self.load_extension(extension)
+            except Exception as e:
+                log.error(f"Error loading {extension}: {type(e).__name__} - {e}")
+                traceback.print_exc()
 
     async def _setup(self) -> None:
         await self.wait_until_ready()
