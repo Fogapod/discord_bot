@@ -497,6 +497,11 @@ class Accents(Cog):
         if message.attachments:
             return
 
+        # this usually breaks image embeds. disabling until there is a reliable way to
+        # copy them
+        if message.embeds:
+            return
+
         # webhooks do not support references
         if message.reference is not None:
             return
@@ -586,7 +591,7 @@ class Accents(Cog):
             # webhook data
             username=original.author.display_name,
             avatar_url=original.author.avatar_url,
-            embeds=original.embeds,
+            # embeds=original.embeds,
         )
 
     @Cog.listener()
