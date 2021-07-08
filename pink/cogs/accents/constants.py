@@ -1,8 +1,10 @@
-from pink_accents import Accent
+from pathlib import Path
 
-# probably related:
-# https://github.com/python/typing/issues/760
-# for some reason mypy does not understand that str can be compared
+from pink_accents import Accent, load_from
+
+load_from(Path("accents"))
+
+
 ALL_ACCENTS = {
-    a.name.lower(): a for a in sorted(Accent.get_all_accents(), key=lambda a: a.name)  # type: ignore
+    a.name.lower(): a for a in sorted(Accent.get_all_accents(), key=lambda a: a.name)
 }

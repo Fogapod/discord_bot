@@ -3,30 +3,27 @@ from __future__ import annotations
 import json
 import random
 import logging
-import importlib
 import contextlib
 
-from typing import Any, Dict, List, Iterable, Optional, Sequence
-from pathlib import Path
+from typing import Any, Dict, List, Type, Iterable, Optional
 
 import discord
 
 from discord.ext import commands
-from pink_accents import Accent, load_from
+from pink_accents import Accent
 
 from pink.bot import Bot
 from pink.cog import Cog
 from pink.utils import LRU
 from pink.context import Context
 
+from .types import PINKAccent
+from .constants import ALL_ACCENTS
+
 REQUIRED_PERMS = discord.Permissions(
     send_messages=True, manage_messages=True, manage_webhooks=True
 )
 
-load_from(Path("accents"))
-
-from .types import PINKAccent  # noqa
-from .constants import ALL_ACCENTS  # noqa
 
 log = logging.getLogger(__name__)
 
@@ -130,7 +127,7 @@ class Accents(Cog):
         body = ""
 
         # I have no idea why this is not in stdlib, string has find method
-        def sequence_find(seq: Sequence[Any], item: Any, default: int = -1) -> int:
+        def iterable_find(seq: Iterable[Any], item: Any, default: int = -1) -> int:
             for i, j in enumerate(seq):
                 if j == item:
                     return i
@@ -143,12 +140,11 @@ class Accents(Cog):
             ALL_ACCENTS.values(),
             key=lambda a: (
                 # sort by position in global accent list, leave missing at the end
-                -sequence_find(user_accent_map.keys(), a.name),
+                -iterable_find(user_accent_map.keys(), a.name),
                 a.name,
             ),
         ):
-            # mypy is unable to understand class properties
-            if instance := user_accent_map.get(accent.name):  # type: ignore
+            if instance := user_accent_map.get(accent.name):
                 line = (
                     f"+ {instance.full_name:>{longest_name}} : {accent.description}\n"
                 )
@@ -350,10 +346,11 @@ class Accents(Cog):
                 "There is no accent webhook in this channel. Nothing to delete"
             )
 
-        message_counts = {}
+        message_counts: Dict[str, int] = {}
 
         def is_accent_webhook(m: discord.Message) -> bool:
-            if m.webhook_id != accent_webhook.id:
+            # mypy does not understand that None was just checked above
+            if m.webhook_id != accent_webhook.id:  # type: ignore
                 return False
 
             user_name = m.author.name
@@ -379,56 +376,50 @@ class Accents(Cog):
                 f"```\n{message_counts_table}```"
             )
 
+    async def _toggle_bot_accent(
+        self,
+        ctx: Context,
+        accent: Type[Accent],
+        *,
+        min_severity: int = 1,
+        max_severity: int = 1,
+    ) -> None:
+        my_accents = [a.name for a in self.get_user_accents(ctx.me)]
+
+        if accent.name in my_accents:
+            await self._remove_accents(ctx, ctx.me, [accent(1)])
+        else:
+            if min_severity == max_severity:
+                severity = min_severity
+            else:
+                severity = random.randint(min_severity, max_severity)
+
+            await self._add_accents(ctx, ctx.me, [accent(severity)])
+
+        await self._update_nick(ctx)
+
+        await ctx.send(f"{accent.name} toggled")
+
     @commands.command()
     @commands.guild_only()
     async def owo(self, ctx: Context) -> None:
         """OwO what's this"""
 
-        owo = ALL_ACCENTS["owo"]
-        my_accents = [a.name for a in self.get_user_accents(ctx.me)]
-
-        if owo.name in my_accents:
-            await self._remove_accents(ctx, ctx.me, [owo(1)])
-        else:
-            await self._add_accents(ctx, ctx.me, [owo(severity=random.randint(1, 3))])
-
-        await self._update_nick(ctx)
-
-        await ctx.send("owo toggled")
+        await self._toggle_bot_accent(ctx, ALL_ACCENTS["owo"], max_severity=3)
 
     @commands.command(aliases=["clown"])
     @commands.guild_only()
     async def honk(self, ctx: Context) -> None:
         """LOUD == FUNNY HONK!"""
 
-        honk = ALL_ACCENTS["clown"]
-        my_accents = [a.name for a in self.get_user_accents(ctx.me)]
-
-        if honk.name in my_accents:
-            await self._remove_accents(ctx, ctx.me, [honk(1)])
-        else:
-            await self._add_accents(ctx, ctx.me, [honk(severity=random.choice((1, 2)))])
-
-        await self._update_nick(ctx)
-
-        await ctx.send("honk toggled")
+        await self._toggle_bot_accent(ctx, ALL_ACCENTS["clown"])
 
     @commands.command()
     @commands.guild_only()
     async def kek(self, ctx: Context) -> None:
         """Embrace Da Orks"""
 
-        ork = ALL_ACCENTS["ork"]
-        my_accents = [a.name for a in self.get_user_accents(ctx.me)]
-
-        if ork.name in my_accents:
-            await self._remove_accents(ctx, ctx.me, [ork(1)])
-        else:
-            await self._add_accents(ctx, ctx.me, [ork(1)])
-
-        await self._update_nick(ctx)
-
-        await ctx.send("kek toggled")
+        await self._toggle_bot_accent(ctx, ALL_ACCENTS["ork"])
 
     @staticmethod
     def _apply_accents(content: str, accents: _UserAccentsType) -> str:
@@ -572,6 +563,17 @@ class Accents(Cog):
 
         return wh
 
+    def _copy_embed(self, original: discord.Embed) -> discord.Embed:
+        e = original.copy()
+
+        # this results in full sized, but still static image
+        #
+        # if e.thumbnail:
+        #     e.set_image(url=e.thumbnail.url)
+        #     e.set_thumbnail(url=e.Empty)
+
+        return e
+
     async def _send_new_message(
         self,
         ctx: Context,
@@ -591,7 +593,7 @@ class Accents(Cog):
             # webhook data
             username=original.author.display_name,
             avatar_url=original.author.avatar_url,
-            embeds=original.embeds,
+            embeds=list(map(self._copy_embed, original.embeds)),
         )
 
     @Cog.listener()
@@ -602,20 +604,6 @@ class Accents(Cog):
     @Cog.listener()
     async def on_message_edit(self, old: discord.Message, new: discord.Message) -> None:
         await self._replace_message(new)
-
-
-def load_accents() -> None:
-    for child in (Path(__file__).parent / "accents").iterdir():
-        if child.suffix != ".py":
-            continue
-
-        if child.name.startswith("__"):
-            continue
-
-        if child.name == "accent.py":
-            continue
-
-        importlib.import_module(f"{__name__}.accents.{child.stem}")
 
 
 def setup(bot: Bot) -> None:
