@@ -106,6 +106,7 @@ class Accents(Cog):
         await ctx.send_help(ctx.command)
 
     @commands.command()
+    @commands.guild_only()
     async def accents(self, ctx: Context, user: discord.Member = None) -> None:
         """Alias for accent list"""
 
