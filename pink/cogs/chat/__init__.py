@@ -4,7 +4,7 @@ import os
 import time
 import asyncio
 
-from typing import Dict, Sequence
+from typing import Dict, Optional, Sequence
 
 import discord
 import travitia_talk as tt
@@ -39,7 +39,7 @@ class SessionSettings:
         *,
         channel_id: int,
         emotion: tt.Emotion = tt.Emotion.neutral,
-        accents: Sequence[PINKAccent] = None,
+        accents: Optional[Sequence[PINKAccent]] = None,
     ):
         self.session_id = session_id
         self.channel_id = channel_id
@@ -74,7 +74,7 @@ class Chat(Cog):
         self.cleanup_sessions.stop()
 
     @commands.command()
-    async def emotion(self, ctx: Context, emotion: Emotion = None) -> None:
+    async def emotion(self, ctx: Context, emotion: Optional[Emotion] = None) -> None:
         """Manage chatbot emotion globally"""
 
         if emotion is None:

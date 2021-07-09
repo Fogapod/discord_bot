@@ -1,5 +1,7 @@
 import os
 
+from typing import Optional
+
 import discord
 
 from discord.ext import commands
@@ -46,28 +48,28 @@ class Images(Cog):
     """
 
     @commands.command(hidden=True)
-    async def i(self, ctx: Context, i: Image = None) -> None:
+    async def i(self, ctx: Context, i: Optional[Image] = None) -> None:
         if i is None:
             i = await Image.from_history(ctx)
 
         await ctx.send(i, accents=[])
 
     @commands.command(hidden=True)
-    async def si(self, ctx: Context, i: StaticImage = None) -> None:
+    async def si(self, ctx: Context, i: Optional[StaticImage] = None) -> None:
         if i is None:
             i = await StaticImage.from_history(ctx)  # type: ignore
 
         await ctx.send(i, accents=[])
 
     @commands.command(hidden=True)
-    async def ai(self, ctx: Context, i: AnimatedImage = None) -> None:
+    async def ai(self, ctx: Context, i: Optional[AnimatedImage] = None) -> None:
         if i is None:
             i = await AnimatedImage.from_history(ctx)  # type: ignore
 
         await ctx.send(i, accents=[])
 
     @commands.command()
-    async def ocr(self, ctx: Context, image: Image = None) -> None:
+    async def ocr(self, ctx: Context, image: Optional[Image] = None) -> None:
         """Read text on image"""
 
         if image is None:
@@ -80,7 +82,7 @@ class Images(Cog):
     @commands.group(invoke_without_command=True)
     @commands.cooldown(1, 5, type=commands.BucketType.channel)
     async def trocr(
-        self, ctx: Context, language: Language, image: StaticImage = None
+        self, ctx: Context, language: Language, image: Optional[StaticImage] = None
     ) -> None:
         """
         Translate text on image
@@ -104,9 +106,9 @@ class Images(Cog):
     async def fly(
         self,
         ctx: Context,
-        image: StaticImage = None,
+        image: Optional[StaticImage] = None,
         amount: int = 1,
-        fly_image: StaticImage = None,
+        fly_image: Optional[StaticImage] = None,
     ) -> None:
         """Animates flies on image"""
 

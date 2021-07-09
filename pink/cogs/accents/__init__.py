@@ -386,7 +386,7 @@ class Accents(Cog):
     ) -> None:
         my_accents = [a.name for a in self.get_user_accents(ctx.me)]
 
-        if accent.name in my_accents:
+        if accent.name in my_accents:  # type: ignore
             await self._remove_accents(ctx, ctx.me, [accent(1)])
         else:
             if min_severity == max_severity:

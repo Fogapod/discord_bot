@@ -201,7 +201,10 @@ class Bot(commands.Bot):
         await super().close()
 
     async def get_context(
-        self, message: discord.Message, *, cls: Type[discord.ext.Context] = None
+        self,
+        message: discord.Message,
+        *,
+        cls: Optional[Type[discord.ext.Context]] = None,
     ) -> Context:
         return await super().get_context(message, cls=cls or Context)
 

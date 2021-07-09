@@ -9,4 +9,4 @@ googletrans>=3.1.0a0
 
 # in case specific commit is needed, this syntax can be used
 # git+https://github.com/Fogapod/pink-accents.git@d4b97c233d81d6d1b85edc18b015af16f791c8d9
-pink_accents==0.0.2
+pink_accents==0.0.3

@@ -1,6 +1,6 @@
 import random
 
-from typing import Union
+from typing import Union, Optional
 
 import discord
 
@@ -64,7 +64,7 @@ class Fun(Cog):
             str,
         ] = None,
         *,
-        item: str = None,
+        item: Optional[str] = None,
     ) -> None:
         """Throw things, for FUN
 

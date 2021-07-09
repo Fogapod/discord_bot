@@ -418,7 +418,7 @@ class Image:
         self,
         ctx: Context,
         *,
-        url: str = None,
+        url: Optional[str] = None,
         **kwargs: Any,
     ) -> FetchedImage:
         if url is None:
