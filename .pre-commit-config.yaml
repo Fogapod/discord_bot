@@ -25,3 +25,6 @@ repos:
     rev: v0.910
     hooks:
       - id: mypy
+        additional_dependencies:
+          - travitia_talk
+          - pink_accents==0.0.3

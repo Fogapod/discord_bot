@@ -16,8 +16,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
-      - name: install requirements
-        run: pip install -r requirements.txt
       - uses: pre-commit/action@v2.0.3
 
   deploy:
