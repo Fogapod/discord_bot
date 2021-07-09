@@ -1,11 +1,13 @@
 import functools
 
+from typing import Any
+
 from discord.ext import commands
 
 from .context import Context
 
 
-def is_owner() -> bool:
+def is_owner() -> commands.check:
     async def predicate(ctx: Context) -> bool:
         if ctx.author.id not in ctx.bot.owner_ids:
             raise commands.NotOwner("Must be a bot owner to use this")
@@ -15,9 +17,9 @@ def is_owner() -> bool:
     return commands.check(predicate)
 
 
-def owner_bypass(check):
+def owner_bypass(check: commands.check):  # type: ignore
     @functools.wraps(check)
-    def inner(*args, **kwargs) -> bool:
+    def inner(*args: Any, **kwargs: Any) -> bool:
         owner_pred = is_owner().predicate
         original_pred = check(*args, **kwargs).predicate
 

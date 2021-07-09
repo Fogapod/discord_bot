@@ -2,7 +2,7 @@ import copy
 import time
 import asyncio
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from discord.ext import commands
 
@@ -80,7 +80,11 @@ class UnityStation(Cog):
             "OSXDownload": "osx",
         }
 
-        async def check_url(url: str) -> int:
+        async def check_url(url: Optional[str]) -> int:
+            # FIXME
+            if url is None:
+                return -1
+
             async with ctx.session.head(url) as r:
                 return r.status
 

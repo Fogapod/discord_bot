@@ -5,7 +5,7 @@ import time
 import random
 
 from math import pi, cos, sin
-from typing import Tuple, Sequence
+from typing import Dict, List, Tuple, Sequence
 
 import PIL
 
@@ -58,7 +58,7 @@ class Fly:
 
         self._modified = True
 
-    def _rand_pos(self) -> int:
+    def _rand_pos(self) -> Tuple[int, int]:
         return (random.randint(*self.bounds_x), random.randint(*self.bounds_y))
 
     def _move_forward(self) -> None:
@@ -94,9 +94,7 @@ class Fly:
 
         self._modified = True
 
-    def spawn(
-        self, bounds_x: Tuple[float, float], bounds_y: Tuple[float, float]
-    ) -> None:
+    def spawn(self, bounds_x: Tuple[int, int], bounds_y: Tuple[int, int]) -> None:
         self.bounds_x, self.bounds_y = bounds_x, bounds_y
 
         self.pos_x, self.pos_y = self._rand_pos()
@@ -130,7 +128,7 @@ class Fly:
 class FlyDrawer:
     def __init__(
         self,
-        src,
+        src: Image,
         flies: Sequence[Fly],
         steps: int = 100,
         fly_src: PIL.Image = None,
@@ -156,10 +154,10 @@ class FlyDrawer:
         for fly in self.flies:
             fly.spawn(bounds_x, bounds_y)
 
-        self._cached_flies = {}
-        self._frames = []
+        self._cached_flies: Dict[str, Image] = {}
+        self._frames: List[Image] = []
 
-    def _get_fly_image(self, angle, state):
+    def _get_fly_image(self, angle: int, state: int) -> Image:
         name = f"{DIRECTIONS[angle]}_{state if not self.fly_src else 0}"
         if name in self._cached_flies:
             img = self._cached_flies[name]
@@ -173,7 +171,7 @@ class FlyDrawer:
 
         return img
 
-    def make_frame(self):
+    def make_frame(self) -> None:
         modified = False
         for fly in self.flies:
             if fly._modified:
@@ -193,7 +191,7 @@ class FlyDrawer:
 
         self._frames.append(overlay)
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         for frame in self._frames:
             frame.close()
 

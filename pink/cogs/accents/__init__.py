@@ -4,8 +4,9 @@ import json
 import random
 import logging
 import contextlib
+import collections
 
-from typing import Any, Dict, List, Type, Iterable, Optional
+from typing import Any, Dict, List, Type, Iterable, Optional, DefaultDict
 
 import discord
 
@@ -145,7 +146,7 @@ class Accents(Cog):
                 a.name,
             ),
         ):
-            if instance := user_accent_map.get(accent.name):
+            if instance := user_accent_map.get(accent.name):  # type: ignore
                 line = (
                     f"+ {instance.full_name:>{longest_name}} : {accent.description}\n"
                 )
@@ -347,16 +348,14 @@ class Accents(Cog):
                 "There is no accent webhook in this channel. Nothing to delete"
             )
 
-        message_counts: Dict[str, int] = {}
+        message_counts: DefaultDict[str, int] = collections.defaultdict(int)
 
         def is_accent_webhook(m: discord.Message) -> bool:
             # mypy does not understand that None was just checked above
             if m.webhook_id != accent_webhook.id:  # type: ignore
                 return False
 
-            user_name = m.author.name
-
-            message_counts[user_name] = message_counts.get(user_name, 0) + 1
+            message_counts[m.author.name] += 1
 
             return True
 
@@ -476,11 +475,6 @@ class Accents(Cog):
         return await original(ctx, message, content=content, **kwargs)
 
     async def _replace_message(self, message: discord.Message) -> None:
-        # note about embeds:
-        # embeds are added with a special edit event, they are not visible now.
-        # by the time message is actually sent, there is a chance that event fired and
-        # embeds are captured. embed quality is usually poor for some reason though
-
         if message.author.bot:
             return
 

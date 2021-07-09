@@ -430,7 +430,7 @@ def _draw_trocr(src: PIL.Image, fields: Sequence[TextField]) -> BytesIO:
     return BytesIO(result.getvalue())
 
 
-async def trocr(ctx: Context, image: StaticImage, language: str) -> (BytesIO, str):
+async def trocr(ctx: Context, image: StaticImage, language: str) -> Tuple[BytesIO, str]:
     src = await image.to_pil_image(ctx)
 
     annotations = await ocr(ctx, image.url)

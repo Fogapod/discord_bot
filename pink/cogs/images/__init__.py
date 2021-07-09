@@ -55,14 +55,14 @@ class Images(Cog):
     @commands.command(hidden=True)
     async def si(self, ctx: Context, i: StaticImage = None) -> None:
         if i is None:
-            i = await StaticImage.from_history(ctx)
+            i = await StaticImage.from_history(ctx)  # type: ignore
 
         await ctx.send(i, accents=[])
 
     @commands.command(hidden=True)
     async def ai(self, ctx: Context, i: AnimatedImage = None) -> None:
         if i is None:
-            i = await AnimatedImage.from_history(ctx)
+            i = await AnimatedImage.from_history(ctx)  # type: ignore
 
         await ctx.send(i, accents=[])
 
@@ -93,9 +93,9 @@ class Images(Cog):
         """
 
         if image is None:
-            image = await StaticImage.from_history(ctx)
+            image = await StaticImage.from_history(ctx)  # type: ignore
 
-        result, stats = await trocr(ctx, image, language)
+        result, stats = await trocr(ctx, image, language)  # type: ignore
 
         await ctx.send(stats, file=discord.File(result, filename="trocr.png"))
 
@@ -107,13 +107,13 @@ class Images(Cog):
         image: StaticImage = None,
         amount: int = 1,
         fly_image: StaticImage = None,
-    ):
+    ) -> None:
         """Animates flies on image"""
 
         if image is None:
-            image = await StaticImage.from_history(ctx)
+            image = await StaticImage.from_history(ctx)  # type: ignore
 
-        src = await image.to_pil_image(ctx)
+        src = await image.to_pil_image(ctx)  # type: ignore
 
         if fly_image is not None:
             fly_src = await fly_image.to_pil_image(ctx)

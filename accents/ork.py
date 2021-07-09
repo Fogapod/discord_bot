@@ -1,4 +1,4 @@
-from typing import Mapping
+from typing import Any, Dict, List
 
 from pink_accents import Accent
 
@@ -313,10 +313,10 @@ if __name__ == "__main__":
         },
     )
 
-    words = {}
-    patterns = {}
+    words: Dict[str, str] = {}
+    patterns: Dict[str, str] = {}
 
-    def push(key: str, value: str, collection: Mapping[str, str]):
+    def push(key: str, value: str, collection: Any) -> None:
         # lower keys are fine, lower values are not
         key = key.lower()
         lower_value = value.lower()
@@ -338,7 +338,7 @@ if __name__ == "__main__":
             if (splitted := v.split("\n")) == [""]:
                 splitted = []
 
-            inp[k] = splitted
+            inp[k] = splitted  # type: ignore
 
         word_keys = {
             "phrases1": "phrases2",
@@ -366,7 +366,7 @@ if __name__ == "__main__":
                 push(fr"{suffix}\b", replacement, patterns)
 
     # merge duplicated values in single regex
-    inverted_words_map = {}
+    inverted_words_map: Dict[str, List[str]] = {}
     for k, v in words.items():
         if isinstance(v, list):
             values = v

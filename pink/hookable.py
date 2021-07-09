@@ -14,12 +14,12 @@ class AsyncHookable:
         yield from self.__hooks__.get(name, [])
 
     @classmethod
-    def hookable(cls):
-        def decorator(func):
+    def hookable(cls):  # type: ignore
+        def decorator(func):  # type: ignore
             name = func.__name__
 
             @wraps(func)
-            async def wrapped(self, *args: Any, **kwargs: Any):
+            async def wrapped(self, *args: Any, **kwargs: Any):  # type: ignore
                 handler = getattr(self, name).__original__
 
                 # thanks aiohttp
@@ -29,15 +29,15 @@ class AsyncHookable:
 
                 return await handler(self, *args, **kwargs)
 
-            wrapped.__original__ = func
+            wrapped.__original__ = func  # type: ignore
 
             return wrapped
 
         return decorator
 
     @classmethod
-    def hook(cls, name: Optional[str] = None):
-        def decorator(func):
+    def hook(cls, name: Optional[str] = None):  # type: ignore
+        def decorator(func):  # type: ignore
             if not inspect.iscoroutinefunction(func):
                 raise TypeError("Not a coroutine")
 
