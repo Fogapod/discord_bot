@@ -9,6 +9,7 @@ from discord.ext import commands
 from pink.bot import Bot
 from pink.cog import Cog
 from pink.context import Context
+from pink.cogs.utils.errorhandler import PINKError
 
 SERVER_FETCH_INTERVAL = 10
 
@@ -47,7 +48,7 @@ class UnityStation(Cog):
 
         async with ctx.session.get("https://api.unitystation.org/serverlist") as r:
             if r.status != 200:
-                await ctx.reply(f"Bad API response status code: {r.status}", exit=True)
+                raise PINKError(f"Bad API response status code: **{r.status}**")
 
             # they send json with html mime type
             data = await r.json(content_type=None)

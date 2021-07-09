@@ -11,7 +11,7 @@ import PIL
 
 from PIL import Image
 
-from pink.errors import UserFacingError
+from pink.cogs.utils.errorhandler import PINKError
 
 DEG_TO_RAD_RATIO = pi / 180
 
@@ -36,11 +36,6 @@ FINAL_STATE = 6
 
 # max allowed side of input image
 MAX_SIDE = 512
-
-
-class ImageTooSmall(UserFacingError):
-    def __str__(self) -> str:
-        return "Image is too small"
 
 
 class Fly:
@@ -144,7 +139,7 @@ class FlyDrawer:
 
         for coordinate in self.src.size:
             if FLY_SIDE > coordinate:
-                raise ImageTooSmall
+                raise PINKError("image is too small", formatted=False)
 
         self.flies = flies
         self.steps = steps

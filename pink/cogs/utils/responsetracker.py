@@ -7,7 +7,7 @@ import discord
 from pink.bot import Bot
 from pink.cog import Cog
 from pink.utils import LRU
-from pink.context import Context, CTXExit
+from pink.context import Context
 
 _EmojiType = Union[discord.Reaction, discord.Emoji, discord.PartialEmoji, str]
 
@@ -93,10 +93,6 @@ class ResponseTracker(Cog):
 
         try:
             message = await original(ctx, *args, **kwargs)
-        except CTXExit as e:
-            message = e.msg
-
-            raise
         finally:
             if message is not None and register:
                 ResponseTracker.register_response(
@@ -117,10 +113,6 @@ class ResponseTracker(Cog):
 
         try:
             message = await original(ctx, emoji, **kwargs)
-        except CTXExit as e:
-            message = e.msg
-
-            raise
         finally:
             if message is not None and register:
                 ResponseTracker.register_response(

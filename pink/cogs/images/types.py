@@ -17,6 +17,7 @@ from discord.ext import commands
 
 from pink.context import Context
 from pink.regexes import ID_REGEX, EMOTE_REGEX, CLEAN_URL_REGEX
+from pink.cogs.utils.errorhandler import PINKError
 
 warnings.simplefilter("error", DecompressionBombWarning)
 
@@ -44,17 +45,19 @@ class FetchedImage:
         try:
             img = PIL.Image.open(BytesIO(self.bytes))
         except PIL.Image.DecompressionBombError:
-            await ctx.send(
-                f"Failed to open image, exceeds **{PIL.Image.MAX_IMAGE_PIXELS}** pixel limit",
-                exit=True,
+            raise PINKError(
+                f"failed to open image, exceeds **{PIL.Image.MAX_IMAGE_PIXELS}** pixel limit",
+                formatted=False,
             )
         except OSError as e:
-            await ctx.send(f"Failed to open image: {e}", exit=True)
+            raise PINKError(f"failed to open image: {e}", formatted=False)
 
         else:
             if sum(img.size) > max_dimensions:
+                # TODO: clean up close calls? Pillow seem to stop leaking memory
                 img.close()
-                await ctx.send(f"Image is too large: {img.size} pixels", exit=True)
+
+                raise PINKError(f"Image is too large: **{img.size}pix**")
 
         return img
 

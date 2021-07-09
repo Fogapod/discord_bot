@@ -7,10 +7,31 @@ from discord.ext import commands
 
 from pink.bot import Bot
 from pink.cog import Cog
-from pink.errors import UserFacingError
-from pink.context import Context, CTXExit
+from pink.context import Context
 
 log = logging.getLogger(__name__)
+
+
+class PINKError(Exception):
+    """Configurable to allow cancelling cooldown and custom error formatting"""
+
+    def __init__(
+        self, msg: str, *, formatted: bool = True, cancel_cooldown: bool = False
+    ):
+        self.msg = msg
+        self.formatted = formatted
+        self.cancel_cooldown = cancel_cooldown
+
+    async def handle(self, ctx: Context) -> None:
+        if self.cancel_cooldown:
+            ctx.command.reset_cooldown(ctx)
+
+        if self.formatted:
+            text = self.msg
+        else:
+            text = f"Error: **{self.msg}**"
+
+        await ctx.reply(text)
 
 
 class ErrorHandler(Cog):
@@ -19,13 +40,11 @@ class ErrorHandler(Cog):
         if isinstance(e, commands.CommandInvokeError):
             e = e.original
 
-        ignored = (
-            commands.CommandNotFound,
-            CTXExit,
-        )
+        ignored = (commands.CommandNotFound,)
         if isinstance(e, ignored):
             return
 
+        # TODO: track error frequency and sort this mess or use map
         if isinstance(e, commands.MissingRole):
             if isinstance(e.missing_role, int):
                 role = f"<@&{e.missing_role}>"
@@ -50,21 +69,21 @@ class ErrorHandler(Cog):
         ):
             ctx.command.reset_cooldown(ctx)
 
-            await ctx.reply(f"Error: {e}")
+            await ctx.reply(f"Error: **{e}**")
         elif isinstance(e, commands.TooManyArguments):
             await ctx.send_help(ctx.command)
         elif isinstance(e, (commands.ArgumentParsingError, commands.BadUnionArgument)):
             await ctx.reply(f"Unable to process command arguments: {e}")
         elif isinstance(e, commands.CommandOnCooldown):
             await ctx.reply(e)
+        elif isinstance(e, PINKError):
+            await e.handle(ctx)
         elif isinstance(e, commands.MaxConcurrencyReached):
             await ctx.reply(e)
         elif isinstance(e, discord.HTTPException):
             await ctx.reply(f"HTTP[{e.status}] ({e.code}): **{e.text}**")
-        elif isinstance(e, UserFacingError):
-            await ctx.reply(str(e))
         else:
-            await ctx.reply(f"Unexpected error: **{type(e).__name__}**: `{e}`")
+            await ctx.reply(f"Unexpected error: **{type(e).__name__}**: **{e}**")
 
             sentry_sdk.capture_exception(e)
 

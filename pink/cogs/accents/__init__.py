@@ -17,6 +17,7 @@ from pink.bot import Bot
 from pink.cog import Cog
 from pink.utils import LRU
 from pink.context import Context
+from pink.cogs.utils.errorhandler import PINKError
 
 from .types import PINKAccent
 from .constants import ALL_ACCENTS
@@ -181,12 +182,11 @@ class Accents(Cog):
                 something_changed = True
 
         if not something_changed:
-            await ctx.send("Nothing to do", exit=True)
+            raise PINKError("Nothing to do")
 
         if len(user_accent_map) > self.MAX_ACCENTS_PER_USER:
-            await ctx.send(
-                f"Cannot have more than **{self.MAX_ACCENTS_PER_USER}** enabled at once",
-                exit=True,
+            raise PINKError(
+                f"Cannot have more than **{self.MAX_ACCENTS_PER_USER}** enabled at once"
             )
 
         all_accents = list(user_accent_map.values())
@@ -231,7 +231,7 @@ class Accents(Cog):
                     something_changed = True
 
             if not something_changed:
-                await ctx.send("Nothing to do", exit=True)
+                raise PINKError("Nothing to do")
 
             updated = list(user_accent_map.values())
 
@@ -273,7 +273,7 @@ class Accents(Cog):
         """Add bot accents"""
 
         if not accents:
-            return await ctx.send("No accents provided")
+            raise commands.BadArgument("no accents provided")
 
         await self._add_accents(ctx, ctx.me, accents)
 
@@ -302,7 +302,7 @@ class Accents(Cog):
         """Add personal accents"""
 
         if not accents:
-            return await ctx.send("No accents provided")
+            raise commands.BadArgument("no accents provided")
 
         await self._add_accents(ctx, ctx.author, accents)
 
@@ -337,14 +337,14 @@ class Accents(Cog):
         upper_limit = 1000
 
         if not lower_limit <= limit <= upper_limit:
-            return await ctx.send(
+            raise PINKError(
                 f"Limit should be between **{lower_limit}** and **{upper_limit}**"
             )
 
         if (
             accent_webhook := await self._get_cached_webhook(ctx.channel, create=False)
         ) is None:
-            return await ctx.send(
+            raise PINKError(
                 "There is no accent webhook in this channel. Nothing to delete"
             )
 

@@ -11,8 +11,8 @@ import PIL
 
 from PIL import ImageDraw, ImageFont, ImageFilter
 
-from pink.errors import UserFacingError
 from pink.context import Context
+from pink.cogs.utils.errorhandler import PINKError
 
 from .types import StaticImage
 
@@ -24,7 +24,7 @@ OCR_API_URL = "https://content-vision.googleapis.com/v1/images:annotate"
 FONT = ImageFont.truetype("DejaVuSans.ttf")
 
 
-class GoogleOCRError(UserFacingError):
+class GoogleOCRError(PINKError):
     KNOWN_HINTS = {
         None: "The world is on fire, something really bad happened. I have no idea.",
         14: "This means Google cannot access image URL. Try using a different one.",
@@ -33,6 +33,8 @@ class GoogleOCRError(UserFacingError):
     def __init__(self, code: Optional[int], message: str):
         self.code = code
         self.message = message
+
+        super().__init__(str(self))
 
     @classmethod
     def from_response(cls, response: Dict[str, Any]) -> GoogleOCRError:
@@ -50,21 +52,6 @@ class GoogleOCRError(UserFacingError):
             base += f"\n\nHint: {hint}"
 
         return base
-
-
-class NoTextDetected(UserFacingError):
-    def __str__(self) -> str:
-        return "No text detected"
-
-
-class NothingToTranslate(UserFacingError):
-    def __str__(self) -> str:
-        return "Nothing to translate on image (either entire text is in target language or language is undetected)"
-
-
-class NothingTranslated(UserFacingError):
-    def __str__(self) -> str:
-        return "Could not translate anything on image"
 
 
 class TROCRException(Exception):
@@ -347,17 +334,15 @@ async def ocr(ctx: Context, image_url: str) -> Dict[str, Any]:
                     # we got some garbage HTML response
                     reason = "unknown error"
 
-                await ctx.reply(
-                    f"Something really bad happened with underlying API[{r.status}]: {reason}",
-                    exit=True,
+                raise PINKError(
+                    f"Something really bad happened with underlying API[{r.status}]: {reason}"
                 )
 
             json = await r.json()
 
-            await ctx.reply(
+            raise PINKError(
                 f"Error in underlying API[{r.status}]: "
-                f'{json.get("message", "unknown error")}',
-                exit=True,
+                f'{json.get("message", "unknown error")}'
             )
         json = await r.json()
 
@@ -370,7 +355,7 @@ async def ocr(ctx: Context, image_url: str) -> Dict[str, Any]:
         if "error" in maybe_annotations:
             raise GoogleOCRError.from_response(maybe_annotations)
         else:
-            raise NoTextDetected()
+            raise PINKError("no text detected", formatted=False)
 
     return maybe_annotations
 
@@ -453,7 +438,10 @@ async def trocr(ctx: Context, image: StaticImage, language: str) -> Tuple[BytesI
             need_trasnslation[i] = line
 
     if not need_trasnslation:
-        raise NothingToTranslate
+        raise PINKError(
+            "nothing to translate on image (either entire text is in target language or language is undetected)",
+            formatted=False,
+        )
 
     if (translator_cog := ctx.bot.get_cog("Translator")) is None:
         raise RuntimeError("No translator cog loaded")
@@ -511,7 +499,7 @@ async def trocr(ctx: Context, image: StaticImage, language: str) -> Tuple[BytesI
                     fields.append(field)
 
     if not fields:
-        raise NothingTranslated
+        raise PINKError("could not translate anything on image", formatted=False)
 
     result = await ctx.bot.loop.run_in_executor(None, _draw_trocr, src, fields)
 
