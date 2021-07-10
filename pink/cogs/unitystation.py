@@ -32,7 +32,7 @@ class UnityStation(Cog):
         self._fetched_servers_time = time.monotonic() - SERVER_FETCH_INTERVAL
         self._fetched_servers: List[Dict[str, Any]] = []
 
-    @commands.command(aliases=["list", "sv"])
+    @commands.command(aliases=["list", "sv", "ls"])
     async def servers(self, ctx: Context, *, server: Optional[str] = None) -> None:
         """List hub servers"""
 
