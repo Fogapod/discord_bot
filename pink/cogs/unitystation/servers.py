@@ -37,10 +37,9 @@ class DownloadAddress:
 
     async def check(self, ctx: Context) -> None:
         if response := await self._cache.get(self.url):
-            if response.status == 200:
-                self.response = response
+            self.response = response
 
-                return
+            return
 
         try:
             async with ctx.session.head(
