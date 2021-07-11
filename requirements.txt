@@ -4,6 +4,7 @@ travitia_talk
 Pillow
 edgedb
 sentry-sdk
+aiocache
 # https://github.com/ssut/py-googletrans/issues/280#issue-827952964
 googletrans>=3.1.0a0
 
