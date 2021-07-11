@@ -184,6 +184,10 @@ class Bot(commands.Bot):
                 log.error(f"Error loading {extension}: {type(e).__name__} - {e}")
                 traceback.print_exc()
 
+                return
+
+            print(f"loaded {extension}")
+
     async def _setup(self) -> None:
         await self.wait_until_ready()
 
