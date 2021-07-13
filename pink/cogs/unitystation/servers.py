@@ -41,6 +41,9 @@ class DownloadAddress:
 
             return
 
+        # TODO: locks because at this point there could be multiple coroutines trying
+        # to fetch same URL if servers use same game version
+
         try:
             async with ctx.session.head(
                 self.url, timeout=aiohttp.ClientTimeout(total=10)
@@ -53,7 +56,7 @@ class DownloadAddress:
 
         self.response = response
 
-        await self._cache.add(self.url, response, ttl=60)
+        await self._cache.set(self.url, response, ttl=60)
 
     @property
     def ok(self) -> bool:
