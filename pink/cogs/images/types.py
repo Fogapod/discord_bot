@@ -346,7 +346,7 @@ class Image:
                 ):
                     return Image(
                         type=ImageType.EMBED,
-                        url=embed.image.url,
+                        url=embed.image.proxy_url,
                     )
 
             # bot condition because we do not want image from
