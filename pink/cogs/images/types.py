@@ -15,9 +15,9 @@ import discord
 from PIL.Image import DecompressionBombWarning
 from discord.ext import commands
 
+from pink.errors import PINKError
 from pink.context import Context
 from pink.regexes import ID_REGEX, EMOTE_REGEX, CLEAN_URL_REGEX
-from pink.cogs.utils.errorhandler import PINKError
 
 warnings.simplefilter("error", DecompressionBombWarning)
 
@@ -46,8 +46,7 @@ class FetchedImage:
             img = PIL.Image.open(BytesIO(self.bytes))
         except PIL.Image.DecompressionBombError:
             raise PINKError(
-                f"failed to open image, exceeds **{PIL.Image.MAX_IMAGE_PIXELS}** pixel limit",
-                formatted=False,
+                f"failed to open image, exceeds **{PIL.Image.MAX_IMAGE_PIXELS}** pixel limit"
             )
         except OSError as e:
             raise PINKError(f"failed to open image: {e}", formatted=False)
@@ -127,8 +126,7 @@ class Image:
 
             raise commands.BadArgument("No images found in referenced message")
 
-        # TODO: better error type
-        raise ValueError(
+        raise commands.BadArgument(
             f"Unable to fetch referenced message {ctx.channel.id}-{ctx.message.id}",
         )
 
@@ -276,7 +274,7 @@ class Image:
         if not argument.startswith(("http://", "https://")):
             raise commands.BadArgument(
                 f"Unable to match custom emote, emoji or user with `{argument}`\n"
-                f"If input is image url, it should begin with http or https",
+                f"If input is image url, it should begin with http or https"
             )
 
         return Image(type=ImageType.URL, url=argument)
@@ -475,7 +473,7 @@ class Image:
             else:
                 error += str(e)
 
-            raise commands.ConversionError(error, e)
+            raise commands.BadArgument(error, e)
 
     async def to_pil_image(self, ctx: Context) -> PIL.Image:
         fetched = await self.fetch(ctx)

@@ -1,7 +1,5 @@
 import os
 
-from typing import Optional
-
 import discord
 
 from discord.ext import commands
@@ -48,28 +46,44 @@ class Images(Cog):
     """
 
     @commands.command(hidden=True)
-    async def i(self, ctx: Context, i: Optional[Image] = None) -> None:
+    async def i(
+        self,
+        ctx: Context,
+        i: Image = None,  # type: ignore
+    ) -> None:
         if i is None:
             i = await Image.from_history(ctx)
 
         await ctx.send(i, accents=[])
 
     @commands.command(hidden=True)
-    async def si(self, ctx: Context, i: Optional[StaticImage] = None) -> None:
+    async def si(
+        self,
+        ctx: Context,
+        i: StaticImage = None,  # type: ignore
+    ) -> None:
         if i is None:
-            i = await StaticImage.from_history(ctx)  # type: ignore
+            i = await StaticImage.from_history(ctx)
 
         await ctx.send(i, accents=[])
 
     @commands.command(hidden=True)
-    async def ai(self, ctx: Context, i: Optional[AnimatedImage] = None) -> None:
+    async def ai(
+        self,
+        ctx: Context,
+        i: AnimatedImage = None,  # type: ignore
+    ) -> None:
         if i is None:
-            i = await AnimatedImage.from_history(ctx)  # type: ignore
+            i = await AnimatedImage.from_history(ctx)
 
         await ctx.send(i, accents=[])
 
     @commands.command()
-    async def ocr(self, ctx: Context, image: Optional[Image] = None) -> None:
+    async def ocr(
+        self,
+        ctx: Context,
+        image: Image = None,  # type: ignore
+    ) -> None:
         """Read text on image"""
 
         if image is None:
@@ -82,7 +96,10 @@ class Images(Cog):
     @commands.group(invoke_without_command=True)
     @commands.cooldown(1, 5, type=commands.BucketType.channel)
     async def trocr(
-        self, ctx: Context, language: Language, image: Optional[StaticImage] = None
+        self,
+        ctx: Context,
+        language: Language,
+        image: StaticImage = None,  # type: ignore
     ) -> None:
         """
         Translate text on image
@@ -95,9 +112,9 @@ class Images(Cog):
         """
 
         if image is None:
-            image = await StaticImage.from_history(ctx)  # type: ignore
+            image = await StaticImage.from_history(ctx)
 
-        result, stats = await trocr(ctx, image, language)  # type: ignore
+        result, stats = await trocr(ctx, image, language)
 
         await ctx.send(stats, file=discord.File(result, filename="trocr.png"))
 
@@ -106,16 +123,16 @@ class Images(Cog):
     async def fly(
         self,
         ctx: Context,
-        image: Optional[StaticImage] = None,
+        image: StaticImage = None,  # type: ignore
         amount: int = 1,
-        fly_image: Optional[StaticImage] = None,
+        fly_image: StaticImage = None,  # type: ignore
     ) -> None:
         """Animates flies on image"""
 
         if image is None:
-            image = await StaticImage.from_history(ctx)  # type: ignore
+            image = await StaticImage.from_history(ctx)
 
-        src = await image.to_pil_image(ctx)  # type: ignore
+        src = await image.to_pil_image(ctx)
 
         if fly_image is not None:
             fly_src = await fly_image.to_pil_image(ctx)
