@@ -27,7 +27,7 @@ DownloadAddressResponse = collections.namedtuple(
 
 
 class DownloadAddress:
-    _cache = SimpleMemoryCache()
+    _cache = SimpleMemoryCache(ttl=60)
 
     def __init__(self, name: str, url: str):
         self.name = name
@@ -56,7 +56,7 @@ class DownloadAddress:
 
         self.response = response
 
-        await self._cache.set(self.url, response, ttl=60)
+        await self._cache.set(self.url, response)
 
     @property
     def ok(self) -> bool:
