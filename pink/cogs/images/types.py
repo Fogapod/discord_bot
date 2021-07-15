@@ -370,7 +370,7 @@ class Image:
 
             return Image(
                 type=ImageType.EMBED,
-                url=embed.thumbnail.url,
+                url=embed.thumbnail.proxy_url,
             )
 
         return None
