@@ -10,6 +10,7 @@ from typing import Any, List, Optional
 from asyncio import TimeoutError
 
 import PIL
+import aiohttp
 import discord
 
 from PIL.Image import DecompressionBombWarning
@@ -236,24 +237,27 @@ class Image:
                 )
 
         # check if pattern is emoji
-        # thanks NotSoSuper#0001 for the API
+        # thanks NotSoSuper and cake for the CDN
 
         # thanks discord for this nonsense
         pattern_no_selector_16 = argument.rstrip("\N{VARIATION SELECTOR-16}")
 
         code = "-".join(map(lambda c: f"{ord(c):x}", pattern_no_selector_16))
+        emote_url = f"https://cdn.notsobot.com/twemoji/512x512/{code}.png"
+
         async with ctx.session.get(
-            f"https://bot.mods.nyc/twemoji/{code}.png", timeout=5
+            emote_url, timeout=aiohttp.ClientTimeout(total=5)
         ) as r:
             if r.status == 200:
                 return Image(
                     type=ImageType.EMOTE,
-                    url=f"https://bot.mods.nyc/twemoji/{code}.png",
+                    url=emote_url,
                     bytes=await r.read(),
                 )
 
         # check if pattern is user mention
         try:
+            # TODO: case insensitive or fuzzy because this is trash
             user = await commands.UserConverter().convert(ctx, argument)
         except commands.UserNotFound:
             pass
