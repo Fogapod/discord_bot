@@ -40,7 +40,9 @@ class Translator(Cog):
 
         await ctx.send(f"{translated.src} -> {language}```\n{translated.text}```")
 
-    async def _raw_translate(self, text: str, out_lang: str) -> googletrans.Translated:
+    async def _raw_translate(
+        self, text: str, out_lang: str
+    ) -> googletrans.models.Translated:
         return await self.bot.loop.run_in_executor(
             None, functools.partial(self.translator.translate, text, dest=out_lang)
         )
