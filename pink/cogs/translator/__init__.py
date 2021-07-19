@@ -36,14 +36,19 @@ class Translator(Cog):
     async def _translate(self, ctx: Context, language: Language, *, text: str) -> None:
         """Translate text into specified language"""
 
-        await ctx.reply(await self.translate(text, language))
+        translated = await self._raw_translate(text, language)
 
-    async def translate(self, text: str, out_lang: str) -> str:
-        translation = await self.bot.loop.run_in_executor(
+        await ctx.send(f"{translated.src} -> {language}```\n{translated.text}```")
+
+    async def _raw_translate(self, text: str, out_lang: str) -> googletrans.Translated:
+        return await self.bot.loop.run_in_executor(
             None, functools.partial(self.translator.translate, text, dest=out_lang)
         )
 
-        return translation.text
+    async def translate(self, text: str, out_lang: str) -> str:
+        translated = await self._raw_translate(text, out_lang)
+
+        return translated.text
 
     @_translate.command(name="list")
     async def _language_list(self, ctx: Context) -> None:
