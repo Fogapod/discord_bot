@@ -49,5 +49,6 @@ USER pink
 COPY --chown=pink:pink pink pink
 COPY --chown=pink:pink dbschema dbschema
 COPY --chown=pink:pink templates templates
+COPY --chown=pink:pink accents accents
 
 ENTRYPOINT ["python", "-m", "pink"]
