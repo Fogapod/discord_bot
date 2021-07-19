@@ -38,7 +38,15 @@ class Translator(Cog):
 
         translated = await self._raw_translate(text, language)
 
-        await ctx.send(f"{translated.src} -> {language}```\n{translated.text}```")
+        if (in_lang := googletrans.LANGUAGES.get(translated.src)) is not None:
+            # full name found, need to title() it
+            in_lang = in_lang.title()
+        else:
+            in_lang = translated.src
+
+        out_lang = googletrans.LANGUAGES[language].title()
+
+        await ctx.send(f"**{in_lang}** -> **{out_lang}**```\n{translated.text}```")
 
     async def _raw_translate(
         self, text: str, out_lang: str
