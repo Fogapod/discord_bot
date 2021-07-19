@@ -24,4 +24,4 @@ ExecStartPre=-/usr/bin/podman stop %n
 ExecStartPre=-/usr/bin/podman rm %n
 
 ExecStart=/usr/bin/podman run --name %n --rm \
-    -v ${PWD}:/code:Z --hostname pink_prod $IMAGE
+    -v ${PWD}:/code:U --hostname pink_prod $IMAGE
