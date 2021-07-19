@@ -29,6 +29,10 @@ RUN apk add --no-cache \
     # Font for trocr
     ttf-dejavu \
     && apk add --no-cache --virtual .build-deps \
+    # uvloop ./configure uses it???
+    file \
+    # uvloop
+    make \
     # Required for almost everything
     gcc \
     musl-dev \
@@ -46,9 +50,6 @@ RUN addgroup -g $GID -S pink \
 USER pink
 
 # at this point .dockerignore might be more appropriate
-COPY --chown=pink:pink pink pink
-COPY --chown=pink:pink dbschema dbschema
-COPY --chown=pink:pink templates templates
-COPY --chown=pink:pink accents accents
+COPY --chown=pink:pink . .
 
 ENTRYPOINT ["python", "-m", "pink"]

@@ -1,1 +1,31 @@
 **/__pycache__
+
+venv
+
+.github
+scripts
+LICENSE
+
+# configs
+*.env
+
+# deployment configs
+units
+
+# tool configs
+.dockerignore
+.flake8
+.gitignore
+.pre-commit-config.yaml
+Dockerfile
+mypy.ini
+pyproject.toml
+
+# tool cache
+.git
+.gigignore
+.mypy_cache
+.pytest_cache
+
+# IDEs
+.vscode
