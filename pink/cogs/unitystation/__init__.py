@@ -91,7 +91,7 @@ class UnityStation(Cog):
             if server.downloads_good:
                 continue
 
-            data["version"][i] = f"! {server.version}"
+            data["version"][i] = f"{server.version} !"
 
         column_widths = {}
 
