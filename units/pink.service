@@ -12,7 +12,7 @@ WorkingDirectory=/srv/pink
 Environment="IMAGE=fogapod/pink"
 Environment="PWD=/srv/pink"
 
-TimeoutStartSec=600
+TimeoutStartSec=15m
 
 # not sure if this is required, but build is inconsistent with pulling all the time
 ExecStartPre=-/usr/bin/podman pull $IMAGE
