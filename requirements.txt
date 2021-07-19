@@ -7,6 +7,7 @@ sentry-sdk
 aiocache
 # https://github.com/ssut/py-googletrans/issues/280#issue-827952964
 googletrans>=3.1.0a0
+uvloop
 
 # in case specific commit is needed, this syntax can be used
 # git+https://github.com/Fogapod/pink-accents.git@d4b97c233d81d6d1b85edc18b015af16f791c8d9

@@ -5,6 +5,13 @@ from .bot import Bot
 
 log = logging.getLogger(__name__)
 
+try:
+    import uvloop
+except ImportError:
+    log.error("uvloop is not installed")
+else:
+    uvloop.install()
+
 if __name__ == "__main__":
     if sentry_dsn := os.environ.get("SENTRY_DSN"):
         import sentry_sdk
