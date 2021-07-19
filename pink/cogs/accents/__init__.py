@@ -108,24 +108,29 @@ class Accents(Cog):
         await ctx.send_help(ctx.command)
 
     @commands.command()
-    @commands.guild_only()
     async def accents(self, ctx: Context, user: discord.Member = None) -> None:
         """Alias for accent list"""
 
-        await ctx.invoke(self.list, user=user)
+        await ctx.invoke(self._list, user=user)
 
-    @accent.command()
-    @commands.guild_only()
-    async def list(self, ctx: Context, user: discord.Member = None) -> None:
+    @accent.command(name="list", aliases=["ls"])
+    async def _list(self, ctx: Context, user: discord.Member = None) -> None:
         """List accents for user"""
 
-        if user is None:
+        # we are in DMs
+        if ctx.message.guild is None:
+            # discord.Member converter looks up global cache in DMs, what a great idea
             user = ctx.author
-        else:
-            if user.bot and user.id != ctx.me.id:
-                return await ctx.send("Bots cannot have accents")
 
-        user_accent_map = {a.name: a for a in self.get_user_accents(user)}
+            user_accent_map = {}
+        else:
+            if user is None:
+                user = ctx.author
+            else:
+                if user.bot and user.id != ctx.me.id:
+                    return await ctx.send("Bots cannot have accents")
+
+            user_accent_map = {a.name: a for a in self.get_user_accents(user)}
 
         body = ""
 
