@@ -499,12 +499,14 @@ async def ocr_translate(
     for original_line, line in zip(lines, new_lines):
         field = TextField(line, src)
 
+        remaining_line = original_line
+
         # TODO: sane iterator instead of this
         for word in word_annotations[current_word:]:
             text = word["description"]
-            if original_line.startswith(text):
+            if remaining_line.startswith(text):
                 current_word += 1
-                original_line = original_line[len(text) :].lstrip()
+                remaining_line = remaining_line[len(text) :].lstrip()
                 # TODO: merge multiple lines into box
                 try:
                     field.add_word(word["boundingPoly"]["vertices"], src.size)
