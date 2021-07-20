@@ -447,7 +447,7 @@ async def _apply_translation(
 
     if not need_trasnslation:
         raise PINKError(
-            "nothing to translate on image ",
+            "nothing to translate on image "
             "(either entire text is in target language or language is undetected)",
             formatted=False,
         )
