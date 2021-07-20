@@ -1,5 +1,7 @@
 import os
 
+from typing import Union
+
 import discord
 
 from discord.ext import commands
@@ -9,7 +11,6 @@ from pink.cog import Cog
 from pink.utils import run_process
 from pink.context import Context
 
-from .ocr import ocr, trocr
 from .flies import draw_flies
 from .types import Image, StaticImage, AnimatedImage
 from .constants import GIFSICLE_ARGUMENTS
@@ -18,6 +19,13 @@ try:
     from pink.cogs.translator.types import Language
 except ImportError:
     raise Exception("This cog relies on the existance of translator cog")
+
+try:
+    from pink.cogs.accents.types import PINKAccent
+except ImportError:
+    raise Exception("This cog relies on the existance of accents cog")
+
+from .ocr import ocr, ocr_translate
 
 
 class Images(Cog):
@@ -93,12 +101,12 @@ class Images(Cog):
 
         await ctx.send(f"```\n{annotations['fullTextAnnotation']['text']}```")
 
-    @commands.group(invoke_without_command=True)
+    @commands.command()
     @commands.cooldown(1, 5, type=commands.BucketType.channel)
     async def trocr(
         self,
         ctx: Context,
-        language: Language,
+        language: Union[Language, PINKAccent],
         image: StaticImage = None,  # type: ignore
     ) -> None:
         """
@@ -114,7 +122,7 @@ class Images(Cog):
         if image is None:
             image = await StaticImage.from_history(ctx)
 
-        result, stats = await trocr(ctx, image, language)
+        result, stats = await ocr_translate(ctx, image, language)
 
         await ctx.send(stats, file=discord.File(result, filename="trocr.png"))
 

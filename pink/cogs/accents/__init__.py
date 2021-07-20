@@ -427,16 +427,14 @@ class Accents(Cog):
         await self._toggle_bot_accent(ctx, ALL_ACCENTS["ork"])
 
     @staticmethod
-    def _apply_accents(content: str, accents: _UserAccentsType) -> str:
+    def apply_accents_to_text(content: str, accents: _UserAccentsType) -> str:
         for accent in accents:
             content = accent.apply(content)
 
         return content.strip()
 
     def apply_member_accents_to_text(self, *, member: discord.Member, text: str) -> str:
-        accents = self.get_user_accents(member)
-
-        return self._apply_accents(text, accents)
+        return self.apply_accents_to_text(text, self.get_user_accents(member))
 
     @Context.hook()
     async def on_send(
@@ -454,7 +452,7 @@ class Accents(Cog):
                 else:
                     accents = []
 
-            content = Accents._apply_accents(str(content), accents)
+            content = Accents.apply_accents_to_text(str(content), accents)
 
         return await original(ctx, content, **kwargs)
 
@@ -475,7 +473,7 @@ class Accents(Cog):
                 else:
                     accents = []
 
-            content = Accents._apply_accents(str(content), accents)
+            content = Accents.apply_accents_to_text(str(content), accents)
 
         return await original(ctx, message, content=content, **kwargs)
 
@@ -516,7 +514,7 @@ class Accents(Cog):
             return
 
         if (
-            content := self._apply_accents(message.content, accents)
+            content := self.apply_accents_to_text(message.content, accents)
         ) == message.content:
             return
 

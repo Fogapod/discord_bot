@@ -5,11 +5,12 @@ import math
 import itertools
 
 from io import BytesIO
-from typing import Any, Dict, Tuple, Iterator, Optional, Sequence
+from typing import Any, Dict, List, Tuple, Union, Iterator, Optional, Sequence
 
 import PIL
 
 from PIL import ImageDraw, ImageFont, ImageFilter
+from pink_accents import Accent
 
 from pink.context import Context
 from pink.cogs.utils.errorhandler import PINKError
@@ -415,7 +416,62 @@ def _draw_trocr(src: PIL.Image, fields: Sequence[TextField]) -> BytesIO:
     return BytesIO(result.getvalue())
 
 
-async def trocr(ctx: Context, image: StaticImage, language: str) -> Tuple[BytesIO, str]:
+def _apply_accents(ctx: Context, lines: List[str], accent: Accent) -> List[str]:
+    if (accent_cog := ctx.bot.get_cog("Accents")) is None:
+        raise RuntimeError("No accents cog loaded")
+
+    return [
+        # trocr fully depends on newlines, apply accents to each line separately and
+        # replace any newlines with spaces to make sure text order is preserved
+        accent_cog.apply_accents_to_text(line, [accent]).replace("\n", " ")
+        for line in lines
+    ]
+
+
+async def _apply_translation(
+    ctx: Context,
+    lines: List[str],
+    language: str,
+    block_annotations: Any,
+) -> List[str]:
+    if (translator_cog := ctx.bot.get_cog("Translator")) is None:
+        raise RuntimeError("No translator cog loaded")
+
+    # TODO: group by input languages to improve translation?
+    need_trasnslation = {}
+    paragraph_languages = _language_iterator(block_annotations)
+
+    for i, line in enumerate(lines):
+        if next(paragraph_languages) is not None:
+            need_trasnslation[i] = line
+
+    if not need_trasnslation:
+        raise PINKError(
+            "nothing to translate on image ",
+            "(either entire text is in target language or language is undetected)",
+            formatted=False,
+        )
+
+    translated = await translator_cog.translate(
+        "\n".join(need_trasnslation.values()), language
+    )
+
+    translated_lines = translated.split("\n")
+    if len(translated_lines) != len(need_trasnslation):
+        raise RuntimeError(
+            f"expected {len(need_trasnslation)} translated lines, got {len(translated_lines)}"
+        )
+
+    new_lines = lines.copy()
+    for idx, translated_line in zip(need_trasnslation.keys(), translated_lines):
+        new_lines[idx] = translated_line
+
+    return new_lines
+
+
+async def ocr_translate(
+    ctx: Context, image: StaticImage, language: Union[str, Accent]
+) -> Tuple[BytesIO, str]:
     src = await image.to_pil_image(ctx)
 
     annotations = await ocr(ctx, image.url)
@@ -429,45 +485,10 @@ async def trocr(ctx: Context, image: StaticImage, language: str) -> Tuple[BytesI
     # Coordinates from words in the same line can be merged
     lines = annotations["fullTextAnnotation"]["text"][:-1].split("\n")
 
-    # TODO: group by input languages to improve translation?
-    need_trasnslation = {}
-    paragraph_languages = _language_iterator(block_annotations)
-
-    for i, line in enumerate(lines):
-        if next(paragraph_languages) is not None:
-            need_trasnslation[i] = line
-
-    if not need_trasnslation:
-        raise PINKError(
-            "nothing to translate on image (either entire text is in target language or language is undetected)",
-            formatted=False,
-        )
-
-    if (translator_cog := ctx.bot.get_cog("Translator")) is None:
-        raise RuntimeError("No translator cog loaded")
-
-    translated = await translator_cog.translate(
-        "\n".join(need_trasnslation.values()), language
-    )
-
-    if (accent_cog := ctx.bot.get_cog("Accents")) is not None:
-        # trocr fully depends on newlines, apply accents to each line separately and
-        # replace any newlines with spaces to make sure text order is preserved
-        translated = "\n".join(
-            accent_cog.apply_member_accents_to_text(member=ctx.me, text=line).replace(
-                "\n", " "
-            )
-            for line in translated.split("\n")
-        )
-
-    translated_lines = translated.split("\n")
-    if len(translated_lines) != len(need_trasnslation):
-        raise RuntimeError(
-            f"expected {len(need_trasnslation)} translated lines, got {len(translated_lines)}"
-        )
-
-    for idx, translated_line in zip(need_trasnslation.keys(), translated_lines):
-        lines[idx] = translated_line
+    if isinstance(language, Accent):
+        new_lines = _apply_accents(ctx, lines, language)
+    else:
+        new_lines = await _apply_translation(ctx, lines, language, block_annotations)
 
     # error reporting
     notes = ""
@@ -475,9 +496,8 @@ async def trocr(ctx: Context, image: StaticImage, language: str) -> Tuple[BytesI
     current_word = 0
     fields = []
 
-    for i, line in enumerate(lines):
+    for original_line, line in zip(lines, new_lines):
         field = TextField(line, src)
-        original_line = need_trasnslation.get(i, line)
 
         # TODO: sane iterator instead of this
         for word in word_annotations[current_word:]:
@@ -494,9 +514,8 @@ async def trocr(ctx: Context, image: StaticImage, language: str) -> Tuple[BytesI
                 break
 
         if field.initialized:
-            if (original_line := need_trasnslation.get(i, line)) is not None:
-                if line.casefold() != original_line.casefold():
-                    fields.append(field)
+            if line.casefold() != original_line.casefold():
+                fields.append(field)
 
     if not fields:
         raise PINKError("could not translate anything on image", formatted=False)
