@@ -25,7 +25,24 @@ try:
 except ImportError:
     raise Exception("This cog relies on the existance of accents cog")
 
+from pink_accents import Accent
+
 from .ocr import ocr, ocr_translate
+
+
+class LanguageOrAccent(commands.Converter):
+    async def convert(self, ctx: Context, argument: str) -> Union[str, Accent]:
+        try:
+            language = await Language.convert(ctx, argument)
+        except commands.BadArgument as e:
+            try:
+                accent = await PINKAccent.convert(ctx, argument)
+            except commands.BadArgument:
+                raise e
+
+            return accent
+
+        return language
 
 
 class Images(Cog):
@@ -106,7 +123,7 @@ class Images(Cog):
     async def trocr(
         self,
         ctx: Context,
-        language: Union[Language, PINKAccent],
+        language: LanguageOrAccent,
         image: StaticImage = None,  # type: ignore
     ) -> None:
         """
