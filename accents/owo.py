@@ -144,12 +144,14 @@ PATTERNS: PatternMapType = {
 }
 
 PATTERNS_9: PatternMapType = {
+    **PATTERNS,
     r"\s+": lambda m: f" {random.choice(ALL_NYAS)} ",
     DISCORD_MESSAGE_START: nya_message_start,
     DISCORD_MESSAGE_END: nya_message_end,
 }
 
 PATTERNS_10: PatternMapType = {
+    **PATTERNS,
     # https://stackoverflow.com/a/6314634
     r"[^\W\d_]+": lambda m: random.choice(ALL_NYAS),
     DISCORD_MESSAGE_END: lambda m: "!" * random.randrange(5, 10),
@@ -161,7 +163,7 @@ class OwO(Accent):
 
     def register_patterns(self) -> None:
         patterns: PatternMapType
-        flags = 0
+        flags = re.IGNORECASE
 
         if self.severity == 9:
             patterns = PATTERNS_9
