@@ -452,11 +452,12 @@ class Image:
         max_content_length: int = 8000000,
     ) -> bytes:
         try:
-            async with ctx.session.get(
-                url, timeout=timeout, raise_for_status=True
-            ) as r:
+            async with ctx.session.get(url, timeout=timeout) as r:
+                if r.status != 200:
+                    raise PINKError(f"bad status code: **{r.status}**")
+
                 if (r.content_length or 0) > max_content_length:
-                    raise Exception("content is too big")
+                    raise PINKError("content is too big", formatted=False)
 
                 allowed_extensions: List[str] = []
                 if allow_static:
@@ -465,11 +466,13 @@ class Image:
                     allowed_extensions.extend(cls.ANIMATED_FORMATS)
 
                 if r.content_type.rpartition("/")[-1].lower() not in allowed_extensions:
-                    raise Exception(
+                    raise PINKError(
                         f'unknown content type: **{r.content_type}**, expected one of **{", ".join(allowed_extensions)}**'
                     )
 
                 return await r.read()
+        except PINKError:
+            raise
         except (Exception, asyncio.TimeoutError) as e:
             error = "Download error: "
             if isinstance(e, TimeoutError):
