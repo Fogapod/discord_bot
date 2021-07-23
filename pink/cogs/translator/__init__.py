@@ -9,22 +9,13 @@ from pink.cog import Cog
 from pink.context import Context
 
 from .types import Language
+from .constants import LANGUAGES
 
 
 class Translator(Cog):
     async def setup(self) -> None:
-        # TODO: fetch list of languages from API or hardcode
         self.translator = googletrans.Translator(
-            service_urls=[
-                "translate.google.com",
-                "translate.google.co.kr",
-                "translate.google.at",
-                "translate.google.de",
-                "translate.google.ru",
-                "translate.google.ch",
-                "translate.google.fr",
-                "translate.google.es",
-            ]
+            service_urls=googletrans.constants.DEFAULT_SERVICE_URLS
         )
 
     @commands.group(
@@ -38,13 +29,13 @@ class Translator(Cog):
 
         translated = await self._raw_translate(text, language)
 
-        if (in_lang := googletrans.LANGUAGES.get(translated.src)) is not None:
+        if (in_lang := LANGUAGES.get(translated.src)) is not None:
             # full name found, need to title() it
             in_lang = in_lang.title()
         else:
             in_lang = translated.src
 
-        out_lang = googletrans.LANGUAGES[language].title()
+        out_lang = LANGUAGES[language].title()
 
         await ctx.send(f"**{in_lang}** -> **{out_lang}**```\n{translated.text}```")
 

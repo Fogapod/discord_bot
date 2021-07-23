@@ -1,18 +1,20 @@
 from discord.ext import commands
-from googletrans import LANGCODES, LANGUAGES
 
 from pink.context import Context
+
+from .constants import LANGCODES, LANGUAGES, LANGCODE_ALIASES
 
 
 class Language(str):
     @classmethod
     async def convert(cls, ctx: Context, argument: str) -> str:
-        language = argument.lower()
+        argument = argument.lower()
 
-        language = LANGCODES.get(language, language)
-        if language not in LANGUAGES:
+        code = LANGCODES.get(argument, argument)
+
+        if (maybe_alias := LANGCODE_ALIASES.get(code, code)) not in LANGUAGES:
             raise commands.BadArgument(
                 "Invalid language. Use `tr list` to get list of supported languages"
             )
 
-        return language
+        return maybe_alias
