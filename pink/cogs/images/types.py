@@ -328,11 +328,9 @@ class Image:
             ):
                 continue
 
-            # proxy_url instead or url because Google OCR started having troubles with
-            # cdn. urls as opposed to media. recently
             return Image(
                 type=ImageType.ATTACHMENT,
-                url=attachment.proxy_url,
+                url=attachment.url,
             )
 
         # check embeds (user posted url / bot posted rich embed)
@@ -340,7 +338,7 @@ class Image:
             if embed.image:
                 if (
                     cls._check_extension(
-                        embed.image.proxy_url,
+                        embed.image.url,
                         allow_static=allow_static,
                         allow_animated=allow_animated,
                     )
@@ -348,7 +346,7 @@ class Image:
                 ):
                     return Image(
                         type=ImageType.EMBED,
-                        url=embed.image.proxy_url,
+                        url=embed.image.url,
                     )
 
             # bot condition because we do not want image from
@@ -364,7 +362,7 @@ class Image:
 
             if (
                 cls._check_extension(
-                    embed.thumbnail.proxy_url,
+                    embed.thumbnail.url,
                     allow_static=allow_static,
                     allow_animated=allow_animated,
                 )
@@ -374,7 +372,7 @@ class Image:
 
             return Image(
                 type=ImageType.EMBED,
-                url=embed.thumbnail.proxy_url,
+                url=embed.thumbnail.url,
             )
 
         return None

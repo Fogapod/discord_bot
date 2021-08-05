@@ -22,6 +22,11 @@ _VerticesType = Tuple[_VertexType, _VertexType, _VertexType, _VertexType]
 
 OCR_API_URL = "https://content-vision.googleapis.com/v1/images:annotate"
 
+# avoid making this a hard dependency by not reading it in constants.py
+# since it is not used anywhere else now
+PINK_PROXY = os.environ["PINK_PROXY"]
+PINK_PROXY_TOKEN = f"Bearer {os.environ['PINK_PROXY_TOKEN']}"
+
 FONT = ImageFont.truetype("DejaVuSans.ttf")
 
 
@@ -306,6 +311,20 @@ def _language_iterator(blocks: Sequence[Any]) -> Iterator[Optional[str]]:
 
 
 async def ocr(ctx: Context, image_url: str) -> Dict[str, Any]:
+    async with ctx.session.post(
+        f"{PINK_PROXY}/proxy",
+        headers=dict(authorization=PINK_PROXY_TOKEN),
+        json=dict(url=image_url, ttl=3600),
+    ) as r:
+        if r.status != 200:
+            await ctx.reply(
+                f"Unable to reach proxy: {r.status}\n"
+                f"Will try raw URL but it will most likely fail"
+            )
+        else:
+            json = await r.json()
+            image_url = f"{PINK_PROXY}/proxy/{json['id']}"
+
     async with ctx.session.post(
         OCR_API_URL,
         params={
