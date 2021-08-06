@@ -103,6 +103,9 @@ class Accents(Cog):
         Accent management.
 
         In order to set accent severity use square brackets: OwO[10]
+
+        Some accents might support special severity values, but usually
+        severity must be in range [1, 10]
         """
 
         await ctx.send_help(ctx.command)

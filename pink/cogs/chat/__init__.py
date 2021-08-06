@@ -13,6 +13,7 @@ from discord.ext import tasks, commands
 
 from pink.bot import Bot
 from pink.cog import Cog
+from pink.errors import PINKError
 from pink.context import Context
 
 from .types import Emotion
@@ -135,7 +136,8 @@ class Chat(Cog):
                 text, id=settings.session_id, emotion=settings.emotion
             )
         except tt.APIError as e:
-            return f"Error: `{e}`"
+            # let sentry catch it
+            raise PINKError(f"Error: `{e}`")
 
         return response.text
 
