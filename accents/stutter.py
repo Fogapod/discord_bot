@@ -16,7 +16,7 @@ def repeat_char(m: Match) -> Optional[str]:
 
 # https://github.com/unitystation/unitystation/blob/cf3bfff6563f0b3d47752e19021ab145ae318736/UnityProject/Assets/Resources/ScriptableObjects/Speech/CustomMods/Stuttering.cs
 class Stutter(Accent):
-    """You st-t-tart repeating some ch-h-hars."""
+    """You st-t-tart repeating some ch-h-hars"""
 
     PATTERNS = {
         r"\b[a-z](?=[a-z]|\s)": repeat_char,

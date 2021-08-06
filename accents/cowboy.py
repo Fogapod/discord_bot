@@ -17,7 +17,7 @@ def yeehaw(m: Match) -> Optional[str]:
 # https://lingojam.com/CowboyTalkTranslator
 # Is pretty bad, needs rework
 class Cowboy(Accent):
-    """Texan accent."""
+    """Doin' rancho relaxo all day every day"""
 
     PATTERNS = {
         r"\bo\B": "aw",

@@ -53,7 +53,7 @@ class State:
 
 
 class Excited(Accent):
-    """I'm very excited"""
+    """You feel excited"""
 
     REPLACEMENTS = [Replacement(r"[a-z]", excited, adjust_case=False)]
 

@@ -30,7 +30,7 @@ SEVERE_PATTERNS = {
 
 # https://github.com/unitystation/unitystation/blob/cf3bfff6563f0b3d47752e19021ab145ae318736/UnityProject/Assets/Resources/ScriptableObjects/Speech/Swedish.asset
 class Swedish(Accent):
-    """Swedish accent."""
+    """You feel the urge to build a meatball monument"""
 
     PATTERNS = {
         r"w": "v",

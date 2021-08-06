@@ -3,7 +3,7 @@ from pink_accents import Accent
 
 
 class Slav(Accent):
-    """Russian accent."""
+    """You feel drunk"""
 
     WORDS = {
         r"my": "our",

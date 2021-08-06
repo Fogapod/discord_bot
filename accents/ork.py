@@ -4,7 +4,7 @@ from pink_accents import Accent
 
 
 class Ork(Accent):
-    """Warhammer40K Ork zpeech"""
+    """You feel the urge to crush ummiez"""
 
     WORDS = {
         r"would have": "woulda",

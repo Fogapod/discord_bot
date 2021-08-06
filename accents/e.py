@@ -36,7 +36,7 @@ def e(m: Match) -> str:
 
 
 class E(Accent):
-    """Eeeeee eeeeeeeeeee eee eeee."""
+    """Eeeeee eeeeeeeeeee eee eeee"""
 
     PATTERNS = {
         r"[a-z]": e,

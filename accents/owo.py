@@ -159,7 +159,7 @@ PATTERNS_10: PatternMapType = {
 
 
 class OwO(Accent):
-    """Use high severity values with caution."""
+    """Red means fast"""
 
     def register_patterns(self) -> None:
         patterns: PatternMapType

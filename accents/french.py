@@ -2,7 +2,7 @@ from pink_accents import Accent
 
 
 class French(Accent):
-    """Accent from France."""
+    """You are at your limit"""
 
     WORDS = {
         r"a": (

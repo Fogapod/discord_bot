@@ -5,7 +5,7 @@ from pink_accents import Accent
 
 
 class Spurdo(Accent):
-    """Finnish accent."""
+    """You want to run away into forest"""
 
     PATTERNS = {
         r"xc": "gg",

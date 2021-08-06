@@ -2,7 +2,7 @@ from pink_accents import Accent
 
 
 class Leet(Accent):
-    """1337 talk."""
+    """1337 talk"""
 
     # note:
     # \ should be avoided because it renders differently in discord codeblocks and

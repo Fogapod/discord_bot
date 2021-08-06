@@ -3,7 +3,7 @@ from pink_accents import Accent
 
 
 class Scotsman(Accent):
-    """Somewhat rude accent."""
+    """Makes you less polite"""
 
     PATTERNS = {
         DISCORD_MESSAGE_END: {

@@ -45,7 +45,7 @@ MORSE_CODE = {
 
 
 class Computer(Accent):
-    """Computer talk."""
+    """Computer talk"""
 
     @staticmethod
     def binary(text: str) -> str:
