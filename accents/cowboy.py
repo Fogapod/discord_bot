@@ -6,11 +6,11 @@ from _shared import DISCORD_MESSAGE_END
 from pink_accents import Match, Accent
 
 
-def yeehaw(m: Match) -> Optional[str]:
+def yeehaw_end(m: Match) -> Optional[str]:
     if random.random() > m.severity / 10:
         return None
 
-    return f"y{'e'* (random.randint(0,5) + m.severity)}haw"
+    return f" y{'e'* (random.randint(0,5) + m.severity)}haw"
 
 
 # https://en.m.wikipedia.org/wiki/Texan_English
@@ -30,7 +30,7 @@ class Cowboy(Accent):
         r"\B(?<!\bh)ey\b": "ay",
         r"(?<=g)r\B": "uh-r",
         r"(?<!h-)re": "hr",
-        DISCORD_MESSAGE_END: lambda m: f" {yeehaw(m)}",
+        DISCORD_MESSAGE_END: yeehaw_end,
     }
     WORDS = {
         r"the": "thuh",
