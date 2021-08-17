@@ -9,7 +9,7 @@ from pink.cog import Cog
 from pink.context import Context
 
 from .types import Language
-from .constants import LANGUAGES
+from .constants import LANGUAGES, REVERSE_LANGCODE_ALIASES
 
 
 class Translator(Cog):
@@ -29,7 +29,11 @@ class Translator(Cog):
 
         translated = await self._raw_translate(text, language)
 
-        if (in_lang := LANGUAGES.get(translated.src)) is not None:
+        maybe_in_lang_alias = REVERSE_LANGCODE_ALIASES.get(
+            translated.src.lower(), translated.src
+        )
+
+        if (in_lang := LANGUAGES.get(maybe_in_lang_alias)) is not None:
             # full name found, need to title() it
             in_lang = in_lang.title()
         else:
