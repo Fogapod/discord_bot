@@ -6,7 +6,7 @@ import asyncio
 import logging
 import traceback
 
-from typing import Any, Set, Dict, List, Type, Union, Optional, Sequence
+from typing import Any, Set, Dict, List, Type, Union, Optional
 
 import edgedb
 import aiohttp
@@ -34,11 +34,8 @@ initial_extensions = (
 )
 
 
-def mention_or_prefix_regex(user_id: int, prefixes: Sequence[str]) -> re.Pattern[str]:
-    choices = [
-        *[re.escape(prefix) for prefix in prefixes],
-        rf"<@!?{user_id}>",
-    ]
+def mention_or_prefix_regex(user_id: int, prefix: str) -> re.Pattern[str]:
+    choices = [re.escape(prefix), rf"<@!?{user_id}>"]
 
     return re.compile(fr"(?:{'|'.join(choices)})\s*", re.I)
 
@@ -154,7 +151,7 @@ class Bot(commands.Bot):
         )
 
     async def _get_prefixes(self) -> None:
-        self._default_prefix_re = mention_or_prefix_regex(self.user.id, [PREFIX])
+        self._default_prefix_re = mention_or_prefix_regex(self.user.id, PREFIX)
 
         for guild in await self.edb.query(
             """
