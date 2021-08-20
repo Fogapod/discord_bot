@@ -312,7 +312,7 @@ def _language_iterator(blocks: Sequence[Any]) -> Iterator[Optional[str]]:
 
 async def ocr(ctx: Context, image_url: str) -> Dict[str, Any]:
     async with ctx.session.post(
-        f"{PINK_PROXY}/proxy",
+        f"{PINK_PROXY}",
         headers=dict(authorization=PINK_PROXY_TOKEN),
         json=dict(url=image_url, ttl=3600),
     ) as r:
@@ -323,7 +323,7 @@ async def ocr(ctx: Context, image_url: str) -> Dict[str, Any]:
             )
         else:
             json = await r.json()
-            image_url = f"{PINK_PROXY}/proxy/{json['id']}"
+            image_url = f"{PINK_PROXY}/{json['id']}"
 
     async with ctx.session.post(
         OCR_API_URL,
