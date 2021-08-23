@@ -126,7 +126,7 @@ def nya_message_end(m: Match) -> Optional[str]:
 # https://github.com/goonstation/goonstation/blob/master/code/modules/medical/genetics/bioEffects/speech.dm
 # also has ideas for other accents
 
-PATTERNS: PatternMapType = {
+PATTERNS_1: PatternMapType = {
     r"[rlv]": "w",
     r"ove": "uv",
     r"(?<!ow)o(?!wo)": {
@@ -139,19 +139,22 @@ PATTERNS: PatternMapType = {
     r"ne": "nye",
     r"no": "nyo",
     r"nu": "nyu",
+}
+
+# 2 - 8
+PATTERNS_2: PatternMapType = {
+    **PATTERNS_1,
     DISCORD_MESSAGE_START: nya_message_start,
     DISCORD_MESSAGE_END: nya_message_end,
 }
 
 PATTERNS_9: PatternMapType = {
-    **PATTERNS,
+    **PATTERNS_2,
     r"\s+": lambda m: f" {random.choice(ALL_NYAS)} ",
-    DISCORD_MESSAGE_START: nya_message_start,
-    DISCORD_MESSAGE_END: nya_message_end,
 }
 
 PATTERNS_10: PatternMapType = {
-    **PATTERNS,
+    **PATTERNS_2,
     # https://stackoverflow.com/a/6314634
     r"[^\W\d_]+": lambda m: random.choice(ALL_NYAS),
     DISCORD_MESSAGE_END: lambda m: "!" * random.randrange(5, 10),
@@ -165,13 +168,15 @@ class OwO(Accent):
         patterns: PatternMapType
         flags = re.IGNORECASE
 
-        if self.severity == 9:
+        if self.severity == 1:
+            patterns = PATTERNS_1
+        elif self.severity == 9:
             patterns = PATTERNS_9
         elif self.severity > 9:
             patterns = PATTERNS_10
             flags = re.UNICODE
         else:
-            patterns = PATTERNS
+            patterns = PATTERNS_2
 
         for k, v in patterns.items():
             self.register_replacement(Replacement(k, v, flags=flags))
