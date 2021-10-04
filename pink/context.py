@@ -35,10 +35,17 @@ class Context(commands.Context, AsyncHookable):
         target: discord.abc.Messageable = None,
         **kwargs: Any,
     ) -> discord.Message:
+
         if target is None:
-            return await super().send(content, **kwargs)
-        else:
+            target = super()
+
+        try:
             return await target.send(content, **kwargs)
+        except discord.HTTPException as e:
+            if e.code == 50035:  # content too long
+                await target.send(content[:2000], **kwargs)
+
+            raise
 
     async def reply(self, content: Any = None, **kwargs: Any) -> discord.Message:
         return await self.send(content, reference=self.message, **kwargs)
