@@ -39,13 +39,9 @@ class Context(commands.Context, AsyncHookable):
         if target is None:
             target = super()
 
-        try:
-            return await target.send(content, **kwargs)
-        except discord.HTTPException as e:
-            if e.code == 50035:  # content too long
-                await target.send(content[:2000], **kwargs)
-
-            raise
+        # hardcoded 2000 limit because error handling is tricky with 50035
+        # and this project is EOL
+        return await target.send(content[:2000], **kwargs)
 
     async def reply(self, content: Any = None, **kwargs: Any) -> discord.Message:
         return await self.send(content, reference=self.message, **kwargs)
