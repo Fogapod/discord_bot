@@ -39,9 +39,12 @@ class Context(commands.Context, AsyncHookable):
         if target is None:
             target = super()
 
-        # hardcoded 2000 limit because error handling is tricky with 50035
-        # and this project is EOL
-        return await target.send(content[:2000], **kwargs)
+        if content is not None:
+            # hardcoded 2000 limit because error handling is tricky with 50035
+            # and this project is EOL
+            content = str(content)[:2000]
+
+        return await target.send(content, **kwargs)
 
     async def reply(self, content: Any = None, **kwargs: Any) -> discord.Message:
         return await self.send(content, reference=self.message, **kwargs)
