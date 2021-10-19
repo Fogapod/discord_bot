@@ -61,6 +61,7 @@ class UnityStation(Cog):
             "gamemode",
             "time",
             "players",
+            "fps",
             "address",
         )
         longest_name = len(max(fields, key=len))
