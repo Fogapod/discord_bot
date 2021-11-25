@@ -141,7 +141,10 @@ class Images(Cog):
 
         result, stats = await ocr_translate(ctx, image, language)
 
-        await ctx.send(stats, file=discord.File(result, filename="trocr.png"))
+        await ctx.send(
+            stats,
+            file=discord.File(result, filename="trocr.png", spoiler=image.is_spoiler),
+        )
 
     @commands.command(aliases=["flies"])
     @commands.cooldown(1, 12, type=commands.BucketType.channel)
@@ -184,7 +187,9 @@ class Images(Cog):
             # optimize gif using gifsicle
             await run_process("gifsicle", *GIFSICLE_ARGUMENTS + [filename])
 
-        await ctx.send(file=discord.File(filename, filename="fly.gif"))
+        await ctx.send(
+            file=discord.File(filename, filename="fly.gif", spoiler=image.is_spoiler)
+        )
 
         os.remove(filename)
 

@@ -35,8 +35,8 @@ class ImageType(enum.Enum):
 class FetchedImage:
     __slots__ = ("bytes",)
 
-    def __init__(self, bytes: bytes):
-        self.bytes = bytes
+    def __init__(self, data: bytes):
+        self.bytes = data
 
     async def to_pil_image(
         self, ctx: Context, *, max_dimensions: int = 10000
@@ -81,18 +81,21 @@ class Image:
         "type",
         "url",
         "fetched",
+        "is_spoiler",
     )
 
     def __init__(
         self,
-        type: ImageType,
+        kind: ImageType,
         url: str,
-        bytes: Optional[bytes] = None,
+        data: Optional[bytes] = None,
+        is_spoiler: bool = False,
     ):
-        self.type = type
+        self.type = kind
         self.url = url
+        self.is_spoiler = is_spoiler
 
-        self.fetched = FetchedImage(bytes) if bytes else None
+        self.fetched = FetchedImage(data) if data else None
 
     @classmethod
     async def convert(cls, ctx: Context, argument: str) -> Image:
@@ -214,12 +217,12 @@ class Image:
 
             if emote := ctx.bot.get_emoji(emote_id):
                 return Image(
-                    type=ImageType.EMOTE,
+                    kind=ImageType.EMOTE,
                     url=str(emote.url_as(format=emote_format)),
                 )
 
             return Image(
-                type=ImageType.EMOTE,
+                kind=ImageType.EMOTE,
                 url=f"https://cdn.discordapp.com/emojis/{emote_id}.{emote_format}",
             )
 
@@ -232,7 +235,7 @@ class Image:
                     )
 
                 return Image(
-                    type=ImageType.EMOTE,
+                    kind=ImageType.EMOTE,
                     url=str(emote.url_as(format=emote_format)),
                 )
 
@@ -250,9 +253,9 @@ class Image:
         ) as r:
             if r.status == 200:
                 return Image(
-                    type=ImageType.EMOTE,
+                    kind=ImageType.EMOTE,
                     url=emote_url,
-                    bytes=await r.read(),
+                    data=await r.read(),
                 )
 
         # check if pattern is user mention
@@ -268,7 +271,7 @@ class Image:
                 )
 
             return Image(
-                type=ImageType.USER,
+                kind=ImageType.USER,
                 url=str(user.avatar_url_as(format=avatar_format)),
             )
 
@@ -281,7 +284,7 @@ class Image:
                 f"If input is image url, it should begin with http or https"
             )
 
-        return Image(type=ImageType.URL, url=argument)
+        return Image(kind=ImageType.URL, url=argument)
 
     @classmethod
     async def from_history(
@@ -329,8 +332,9 @@ class Image:
                 continue
 
             return Image(
-                type=ImageType.ATTACHMENT,
+                kind=ImageType.ATTACHMENT,
                 url=attachment.url,
+                is_spoiler=attachment.is_spoiler(),
             )
 
         # check embeds (user posted url / bot posted rich embed)
@@ -345,7 +349,7 @@ class Image:
                     is not None
                 ):
                     return Image(
-                        type=ImageType.EMBED,
+                        kind=ImageType.EMBED,
                         url=embed.image.url,
                     )
 
@@ -371,7 +375,7 @@ class Image:
                 continue
 
             return Image(
-                type=ImageType.EMBED,
+                kind=ImageType.EMBED,
                 url=embed.thumbnail.url,
             )
 
