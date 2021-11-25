@@ -2,7 +2,7 @@ discord.py>=1.6<2.0.0
 python-dotenv
 travitia-talk
 Pillow
-edgedb
+edgedb<=0.17.3
 sentry-sdk
 aiocache
 # https://github.com/ssut/py-googletrans/issues/280#issue-827952964
