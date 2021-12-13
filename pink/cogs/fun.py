@@ -164,6 +164,39 @@ class Fun(Cog):
 
         await ctx.send(f"{data['setup']}\n||{data['punchline']}||")
 
+    @commands.command(aliases=["pretend"])
+    @commands.bot_has_permissions(manage_webhooks=True)
+    async def impersonate(self, ctx: Context, user: discord.User, *, text: str) -> None:
+        """Send message as someone else"""
+
+        name = user.display_name[:32]
+
+        # webhook names cannot be shorter than 2
+        if len(name) < 2:
+            name = f"\u200b{name}"
+
+        try:
+            webhook = await ctx.channel.create_webhook(
+                name="PINK impersonation webhook"
+            )
+        except Exception as e:
+            await ctx.reply(f"Unable to create webhook: {e}")
+
+            return
+
+        try:
+            await ctx.send(
+                text,
+                target=webhook,
+                username=name,
+                avatar_url=user.avatar_url_as(format="png"),
+                wait=True,
+            )
+        except Exception as e:
+            await ctx.reply(f"Unable to send message: {e}")
+        finally:
+            await webhook.delete()
+
 
 def setup(bot: Bot) -> None:
     bot.add_cog(Fun(bot))
