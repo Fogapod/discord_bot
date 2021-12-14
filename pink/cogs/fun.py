@@ -1,4 +1,5 @@
 import random
+import logging
 
 from typing import Union, Optional
 
@@ -9,6 +10,8 @@ from discord.ext import commands
 from pink.bot import Bot
 from pink.cog import Cog
 from pink.context import Context
+
+log = logging.getLogger(__name__)
 
 
 class Fun(Cog):
@@ -166,7 +169,9 @@ class Fun(Cog):
 
     @commands.command(aliases=["pretend"])
     @commands.bot_has_permissions(manage_webhooks=True)
-    async def impersonate(self, ctx: Context, user: discord.User, *, text: str) -> None:
+    async def impersonate(
+        self, ctx: Context, user: Union[discord.Member, discord.User], *, text: str
+    ) -> None:
         """Send message as someone else"""
 
         name = user.display_name[:32]
@@ -174,6 +179,17 @@ class Fun(Cog):
         # webhook names cannot be shorter than 2
         if len(name) < 2:
             name = f"\u200b{name}"
+
+        accents = []
+
+        if isinstance(user, discord.Member):
+            if (accent_cog := ctx.bot.get_cog("Accents")) is None:
+                log.warning(
+                    "accents cog not found, cannot apply accents to impersonation"
+                )
+            else:
+                if user_accents := accent_cog.get_user_accents(user):
+                    accents = user_accents
 
         try:
             webhook = await ctx.channel.create_webhook(
@@ -191,6 +207,7 @@ class Fun(Cog):
                 username=name,
                 avatar_url=user.avatar_url_as(format="png"),
                 wait=True,
+                accents=accents,
             )
         except Exception as e:
             await ctx.reply(f"Unable to send message: {e}")
