@@ -35,7 +35,7 @@ class Meta(Cog):
         self.bot.help_command = self.old_help_command
 
     @commands.command(aliases=["p"])
-    async def ping(self, ctx: Context, *args: Any) -> None:
+    async def ping(self, ctx: Context, *_args: Any) -> None:
         """Check bot latency"""
 
         start = perf_counter()

@@ -100,7 +100,7 @@ def repeat_word(m: Match) -> str:
     return f"{m.original}, {', '.join(m.original for _ in  range(n))}"
 
 
-def generate_neologism(m: Match) -> str:
+def generate_neologism(_: Match) -> str:
     return f"{random.choice(start)}{random.choice(ending)}"
 
 

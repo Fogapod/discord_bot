@@ -133,7 +133,7 @@ PATTERNS_1: PatternMapType = {
         "owo": 0.2,
     },
     # do not break discord mentions by avoiding @
-    r"(?<!@)!": lambda m: f" {random.choice(NYAS)}!",
+    r"(?<!@)!": lambda _: f" {random.choice(NYAS)}!",
     r"ni": "nyee",
     r"na": "nya",
     r"ne": "nye",
@@ -150,14 +150,14 @@ PATTERNS_2: PatternMapType = {
 
 PATTERNS_9: PatternMapType = {
     **PATTERNS_2,
-    r"\s+": lambda m: f" {random.choice(ALL_NYAS)} ",
+    r"\s+": lambda _: f" {random.choice(ALL_NYAS)} ",
 }
 
 PATTERNS_10: PatternMapType = {
     **PATTERNS_2,
     # https://stackoverflow.com/a/6314634
-    r"[^\W\d_]+": lambda m: random.choice(ALL_NYAS),
-    DISCORD_MESSAGE_END: lambda m: "!" * random.randrange(5, 10),
+    r"[^\W\d_]+": lambda _: random.choice(ALL_NYAS),
+    DISCORD_MESSAGE_END: lambda _: "!" * random.randrange(5, 10),
 }
 
 

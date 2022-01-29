@@ -6,7 +6,7 @@ from pink.context import Context
 
 
 class Emotion(commands.Converter):
-    async def convert(self, ctx: Context, argument: str) -> tt.Emotion:
+    async def convert(self, _: Context, argument: str) -> tt.Emotion:
         try:
             return tt.Emotion(argument)
         except ValueError:

@@ -34,7 +34,7 @@ def convert_emoji_reaction(emoji: _EmojiType) -> str:
 
 
 class RemovableResponse:
-    async def remove(self, bot: Bot) -> None:
+    async def remove(self, _bot: Bot) -> None:
         raise NotImplementedError
 
 

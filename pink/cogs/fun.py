@@ -151,7 +151,7 @@ class Fun(Cog):
             )
 
     @commands.command()
-    async def say(seld, ctx: Context, *, text: str) -> None:
+    async def say(self, ctx: Context, *, text: str) -> None:
         """Make bot say something"""
 
         await ctx.send(text)

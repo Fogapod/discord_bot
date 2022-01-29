@@ -603,7 +603,9 @@ class Accents(Cog):
 
     # needed in case people use command and edit their message
     @Cog.listener()
-    async def on_message_edit(self, old: discord.Message, new: discord.Message) -> None:
+    async def on_message_edit(
+        self, _old: discord.Message, new: discord.Message
+    ) -> None:
         await self._replace_message(new)
 
 

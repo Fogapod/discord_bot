@@ -14,7 +14,7 @@ class PINKAccent(Accent, register=False):
     MAX_SEVERITY = 10
 
     @classmethod
-    async def convert(cls, ctx: Context, argument: str) -> Accent:
+    async def convert(cls, _: Context, argument: str) -> Accent:
         match = re.fullmatch(r"(.+?)(:?\[(.+?)\])?", argument)
         assert match
 

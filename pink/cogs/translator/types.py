@@ -7,7 +7,7 @@ from .constants import LANGCODES, LANGUAGES, LANGCODE_ALIASES
 
 class Language(str):
     @classmethod
-    async def convert(cls, ctx: Context, argument: str) -> str:
+    async def convert(cls, _: Context, argument: str) -> str:
         argument = argument.lower()
 
         code = LANGCODES.get(argument, argument)

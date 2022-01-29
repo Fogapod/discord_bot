@@ -52,5 +52,5 @@ class Swedish(Accent):
 
         if bork_severity > 1:
             self.register_replacement(
-                Replacement(DISCORD_MESSAGE_END, lambda m: bork(bork_severity))
+                Replacement(DISCORD_MESSAGE_END, lambda _: bork(bork_severity))
             )

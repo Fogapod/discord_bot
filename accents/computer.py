@@ -67,7 +67,7 @@ class Computer(Accent):
     def morse(text: str) -> str:
         return "".join(MORSE_CODE.get(c.upper(), c) for c in text)
 
-    def apply(self, text: str, **kwargs: Any) -> str:
+    def apply(self, text: str, **_kwargs: Any) -> str:
         algos = {
             1: self.binary,
             2: self.base64,

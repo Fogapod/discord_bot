@@ -219,5 +219,5 @@ class Bot(commands.Bot):
 
         await self.process_commands(message)
 
-    async def on_command_error(self, ctx: Context, e: BaseException) -> None:
+    async def on_command_error(self, _: Context, _e: BaseException) -> None:
         pass

@@ -206,7 +206,7 @@ class TechAdmin(Cog):
             else:
                 return f"{from_stdout}{returned}"
 
-    async def _exec(self, ctx: Context, arguments: str) -> commands.Paginator:
+    async def _exec(self, _: Context, arguments: str) -> commands.Paginator:
         stdout, stderr = await run_process_shell(arguments)
 
         if stderr:
