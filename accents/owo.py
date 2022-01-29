@@ -3,9 +3,10 @@ import random
 
 from typing import Optional
 
-from _shared import DISCORD_MESSAGE_END, DISCORD_MESSAGE_START
 from pink_accents import Match, Accent, Replacement
 from pink_accents.types import PatternMapType
+
+from ._shared import DISCORD_MESSAGE_END, DISCORD_MESSAGE_START
 
 NYAS = (
     ":3",

@@ -2,8 +2,9 @@ import random
 
 from typing import Optional
 
-from _shared import DISCORD_MESSAGE_END
 from pink_accents import Accent, Replacement
+
+from ._shared import DISCORD_MESSAGE_END
 
 
 def bork(severity: int) -> Optional[str]:
