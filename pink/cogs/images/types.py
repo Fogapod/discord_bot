@@ -39,7 +39,7 @@ class FetchedImage:
         self.bytes = data
 
     async def to_pil_image(
-        self, ctx: Context, *, max_dimensions: int = 10000
+        self, _: Context, *, max_dimensions: int = 10000
     ) -> PIL.Image:
         """Returns Pillow image created from bytes. Should be closed manually"""
 
@@ -450,7 +450,7 @@ class Image:
         *,
         allow_static: bool = True,
         allow_animated: bool = False,
-        timeout: int = 10,
+        timeout: int = 15,
         max_content_length: int = 8000000,
     ) -> bytes:
         try:
@@ -482,7 +482,7 @@ class Image:
             else:
                 error += str(e)
 
-            raise commands.BadArgument(error, e)
+            raise commands.BadArgument(error)
 
     async def to_pil_image(self, ctx: Context) -> PIL.Image:
         fetched = await self.fetch(ctx)

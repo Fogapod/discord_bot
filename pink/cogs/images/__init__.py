@@ -111,12 +111,13 @@ class Images(Cog):
     ) -> None:
         """Read text on image"""
 
-        if image is None:
-            image = await Image.from_history(ctx)
+        async with ctx.typing():
+            if image is None:
+                image = await Image.from_history(ctx)
 
-        annotations = await ocr(ctx, image.url)
+            annotations = await ocr(ctx, image.url)
 
-        await ctx.send(f"```\n{annotations['fullTextAnnotation']['text']}```")
+            await ctx.send(f"```\n{annotations['fullTextAnnotation']['text']}```")
 
     @commands.command()
     @commands.cooldown(1, 5, type=commands.BucketType.channel)
@@ -136,15 +137,18 @@ class Images(Cog):
             (for multi-language images)
         """
 
-        if image is None:
-            image = await StaticImage.from_history(ctx)
+        async with ctx.typing():
+            if image is None:
+                image = await StaticImage.from_history(ctx)
 
-        result, stats = await ocr_translate(ctx, image, language)
+            result, stats = await ocr_translate(ctx, image, language)
 
-        await ctx.send(
-            stats,
-            file=discord.File(result, filename="trocr.png", spoiler=image.is_spoiler),
-        )
+            await ctx.send(
+                stats,
+                file=discord.File(
+                    result, filename="trocr.png", spoiler=image.is_spoiler
+                ),
+            )
 
     @commands.command(aliases=["flies"])
     @commands.cooldown(1, 12, type=commands.BucketType.channel)
