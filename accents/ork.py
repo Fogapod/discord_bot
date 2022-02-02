@@ -131,7 +131,7 @@ class Ork(Accent):
         r"was": "wuz",
         r"with": (
             "wit",
-            "wiv ",
+            "wiv",
             "wit'",
         ),
         r"women": "wimmen",
@@ -182,7 +182,7 @@ class Ork(Accent):
         r"lover": "luvva",
         r"lovers": "luvvas",
         r"just": (
-            "jus' ",
+            "jus'",
             "jus",
             "jus’",
         ),
@@ -200,7 +200,7 @@ class Ork(Accent):
         r"defeated": "stomped",
         r"killing": "stomp'n'",
         r"(flashy|wealth)": "flash",
-        r"rich": "snobby ",
+        r"rich": "snobby",
         r"wealthy": "snobby",
         r"scorch": "skorch",
         r"them": "im",
@@ -251,27 +251,23 @@ class Ork(Accent):
         r"teleported": "tellyported",
         r"barrel": "barrul",
         r"barrels": "barrulz",
-        r"mechanic": "mekaniak ",
+        r"mechanic": "mekaniak",
         r"(what'sit|whatsit)": "wotsit",
     }
+
     PATTERNS = {
-        r"\bth": "d",
-        r"\bca": "ka",
-        r"\bcu": "ku",
-        r"\bco": "ko",
-        r"\bcr": "kr",
-        r"\bex": "'",
-        r"th\b": "d",
-        r"ca\b": "ka",
-        r"cu\b": "ku",
-        r"co\b": "ko",
-        r"cr\b": "kr",
-        r"ex\b": "'",
+        r"(\bth|th\b)": "d",
+        r"(\bca|ca\b)": "ka",
+        r"(\bcu|cu\b)": "ku",
+        r"(\bco|co\b)": "ko",
+        r"(\bcr|cr\b)": "kr",
+        r"(\bex|ex\b)": "'",
     }
 
 
 if __name__ == "__main__":
     # generate accent from website data, can be found in html
+    # TODO: badass self-modifying file
     inputs = (
         # https://lingojam.com/Warhammer40KOrkTranslator
         {
@@ -313,8 +309,8 @@ if __name__ == "__main__":
         },
     )
 
-    words: Dict[str, str] = {}
-    patterns: Dict[str, str] = {}
+    words: Dict[str, List[str]] = {}
+    patterns: Dict[str, List[str]] = {}
 
     def push(key: str, value: str, collection: Any) -> None:
         # lower keys are fine, lower values are not
@@ -365,38 +361,45 @@ if __name__ == "__main__":
             for suffix, replacement in zip(inp[k], inp[v]):
                 push(fr"{suffix}\b", replacement, patterns)
 
-    # merge duplicated values in single regex
-    inverted_words_map: Dict[str, List[str]] = {}
-    for k, v in words.items():
-        if isinstance(v, list):
-            values = v
+    # apparently, mypy is too stupid to understand Dict[str, Union[str, List[str]]]
+    # it also causes problems in inner loop where type is known, so use Any for sanity sake
+    def merge_duplicate_regexes(
+        collection: Dict[str, List[str]]
+    ) -> Dict[str, List[str]]:
+        """Create regex groups `(a|b)` for all duplicated keys, leave others untouched"""
+
+        inverted_map: Dict[str, List[str]] = {}
+
+        for k, val in collection.items():
+            for v in val:
+                if v in inverted_map:
+                    inverted_map[v].append(k)
+                else:
+                    inverted_map[v] = [k]
+
+        merged: Dict[str, Any] = {}
+        for replacement, w in inverted_map.items():
+            key = f'({"|".join(w)})' if len(w) > 1 else w[0]
+
+            push(key, replacement, merged)
+
+        return merged
+
+    print("    WORDS = {")
+    for k, v_ in merge_duplicate_regexes(words).items():
+        # note on strip:
+        # i believe there are 3 typos with trailing spaces ( r"mechanic": "mekaniak ", => r"mechanic": "mekaniak", )
+        # strip corrects these. we do not expect newlines/spaces at word bounds anyway
+        if len(v_) == 1:
+            print(f'        r"{k}": "{v_[0].strip()}",')
         else:
-            values = [v]
-
-        for v in values:
-            if v in inverted_words_map:
-                inverted_words_map[v].append(k)
-            else:
-                inverted_words_map[v] = [k]
-
-    words = {}
-    for replacement, w in inverted_words_map.items():
-        key = f'({"|".join(w)})' if len(w) > 1 else w[0]
-
-        push(key, replacement, words)
-
-    print("WORDS = {")
-    for k, v in words.items():
-        if len(v) == 1:
-            print(f'r"{k}": "{v[0]}",')
+            print(f"""        r"{k}": ({",".join(f'"{i.strip()}"' for i in v_)},),""")
+    print("    }")
+    print()
+    print("    PATTERNS = {")
+    for k, v_ in merge_duplicate_regexes(patterns).items():
+        if len(v_) == 1:
+            print(f'        r"{k}": "{v_[0]}",')
         else:
-            print(f"""r"{k}": ({",".join(f'"{i}"' for i in v)},),""")
-    print("}")
-
-    print("PATTERNS = {")
-    for k, v in patterns.items():
-        if len(v) == 1:
-            print(f'r"{k}": "{v[0]}",')
-        else:
-            print(f"""r"{k}": ({", ".join(f'"{i}"' for i in v)},),""")
-    print("}")
+            print(f"""        r"{k}": ({", ".join(f'"{i}"' for i in v_)},),""")
+    print("    }")
