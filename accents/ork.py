@@ -1,4 +1,6 @@
-from typing import Any, Dict, List
+import textwrap
+
+from typing import Dict, List
 
 from pink_accents import Accent
 
@@ -265,6 +267,85 @@ class Ork(Accent):
     }
 
 
+def push(key: str, value: str, collection: Dict[str, List[str]]) -> None:
+    """Push key to collection. I forgot what it does"""
+
+    # lower keys are fine, lower values are not
+    key = key.lower()
+    lower_value = value.lower()
+
+    if key not in collection:
+        collection[key] = [value]
+    else:
+        # avoid adding replacements for different letter cases, a few of these are
+        # present in input data
+        for i in collection[key]:
+            if i.lower() == lower_value:
+                break
+        else:
+            collection[key].append(value)
+
+
+def merge_duplicate_regexes(collection: Dict[str, List[str]]) -> Dict[str, List[str]]:
+    """Create regex groups `(a|b)` for all duplicated keys, leave others untouched"""
+
+    inverted_map: Dict[str, List[str]] = {}
+
+    for k, val in collection.items():
+        for v in val:
+            if v in inverted_map:
+                inverted_map[v].append(k)
+            else:
+                inverted_map[v] = [k]
+
+    merged: Dict[str, List[str]] = {}
+    for replacement, w in inverted_map.items():
+        key = f'({"|".join(w)})' if len(w) > 1 else w[0]
+
+        push(key, replacement, merged)
+
+    return merged
+
+
+def print_pink_accent(
+    words: Dict[str, List[str]], patterns: Dict[str, List[str]]
+) -> None:
+    words_lines = []
+    patterns_lines = []
+
+    for k, v in merge_duplicate_regexes(words).items():
+        # note on strip:
+        # i believe there are 3 typos with trailing spaces ( r"mechanic": "mekaniak ", => r"mechanic": "mekaniak", )
+        # strip corrects these. we do not expect newlines/spaces at word bounds anyway
+        if len(v) == 1:
+            words_lines.append(f'r"{k}": "{v[0].strip()}"')
+        else:
+            words_lines.append(
+                f"""r"{k}": ({",".join(f'"{i.strip()}"' for i in v)},)"""
+            )
+
+    for k, v in merge_duplicate_regexes(patterns).items():
+        if len(v) == 1:
+            patterns_lines.append(f'r"{k}": "{v[0]}"')
+        else:
+            patterns_lines.append(f"""r"{k}": ({", ".join(f'"{i}"' for i in v)},)""")
+
+    sep = ",\n"
+    print(
+        textwrap.indent(
+            f"""\
+WORDS = {{
+{textwrap.indent(sep.join(words_lines), "    ")}
+}}
+
+PATTERNS = {{
+{textwrap.indent(sep.join(patterns_lines), "    ")}
+}}""",
+            "    ",
+        )
+    )
+
+
 if __name__ == "__main__":
     # generate accent from website data, can be found in html
     # TODO: badass self-modifying file
@@ -312,22 +393,6 @@ if __name__ == "__main__":
     words: Dict[str, List[str]] = {}
     patterns: Dict[str, List[str]] = {}
 
-    def push(key: str, value: str, collection: Any) -> None:
-        # lower keys are fine, lower values are not
-        key = key.lower()
-        lower_value = value.lower()
-
-        if key not in collection:
-            collection[key] = [value]
-        else:
-            # avoid adding replacements for different letter cases, a few of these are
-            # present in input data
-            for i in collection[key]:
-                if i.lower() == lower_value:
-                    break
-            else:
-                collection[key].append(value)
-
     for inp in inputs:
         # split in advance
         for k, v in inp.items():
@@ -361,45 +426,4 @@ if __name__ == "__main__":
             for suffix, replacement in zip(inp[k], inp[v]):
                 push(fr"{suffix}\b", replacement, patterns)
 
-    # apparently, mypy is too stupid to understand Dict[str, Union[str, List[str]]]
-    # it also causes problems in inner loop where type is known, so use Any for sanity sake
-    def merge_duplicate_regexes(
-        collection: Dict[str, List[str]]
-    ) -> Dict[str, List[str]]:
-        """Create regex groups `(a|b)` for all duplicated keys, leave others untouched"""
-
-        inverted_map: Dict[str, List[str]] = {}
-
-        for k, val in collection.items():
-            for v in val:
-                if v in inverted_map:
-                    inverted_map[v].append(k)
-                else:
-                    inverted_map[v] = [k]
-
-        merged: Dict[str, Any] = {}
-        for replacement, w in inverted_map.items():
-            key = f'({"|".join(w)})' if len(w) > 1 else w[0]
-
-            push(key, replacement, merged)
-
-        return merged
-
-    print("    WORDS = {")
-    for k, v_ in merge_duplicate_regexes(words).items():
-        # note on strip:
-        # i believe there are 3 typos with trailing spaces ( r"mechanic": "mekaniak ", => r"mechanic": "mekaniak", )
-        # strip corrects these. we do not expect newlines/spaces at word bounds anyway
-        if len(v_) == 1:
-            print(f'        r"{k}": "{v_[0].strip()}",')
-        else:
-            print(f"""        r"{k}": ({",".join(f'"{i.strip()}"' for i in v_)},),""")
-    print("    }")
-    print()
-    print("    PATTERNS = {")
-    for k, v_ in merge_duplicate_regexes(patterns).items():
-        if len(v_) == 1:
-            print(f'        r"{k}": "{v_[0]}",')
-        else:
-            print(f"""        r"{k}": ({", ".join(f'"{i}"' for i in v_)},),""")
-    print("    }")
+    print_pink_accent(words, patterns)
