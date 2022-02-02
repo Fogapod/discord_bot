@@ -307,7 +307,7 @@ def merge_duplicate_regexes(collection: Dict[str, List[str]]) -> Dict[str, List[
     return merged
 
 
-def print_pink_accent(
+def generate_pink_accent(
     words: Dict[str, List[str]], patterns: Dict[str, List[str]]
 ) -> None:
     words_lines = []
@@ -342,6 +342,38 @@ PATTERNS = {{
 {textwrap.indent(sep.join(patterns_lines), "    ")}
 }}""",
             "    ",
+        )
+    )
+
+
+def generate_unitystation_accent(
+    words: Dict[str, List[str]], patterns: Dict[str, List[str]]
+) -> None:
+    blocks = []
+
+    for k, v in {**words, **patterns}.items():
+        block = f"""\
+- original: {k}
+  replaceWith:"""
+        for word in v:
+            word = word.replace("'", "\\'")
+            block += f"\n  - {word}"
+
+        blocks.append(block)
+
+    sep = "\n"
+    print(
+        textwrap.indent(
+            f"""\
+wordReplaceList:
+{textwrap.indent(sep.join(blocks), "  ")}
+letterReplaceList: []
+activateAdditions: 0
+probability: 0
+beginning: []
+ending: []
+""",
+            "  ",
         )
     )
 
@@ -426,4 +458,5 @@ if __name__ == "__main__":
             for suffix, replacement in zip(inp[k], inp[v]):
                 push(fr"{suffix}\b", replacement, patterns)
 
-    print_pink_accent(words, patterns)
+    generate_pink_accent(words, patterns)
+    # generate_unitystation_accent(words, patterns)
