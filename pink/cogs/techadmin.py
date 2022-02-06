@@ -52,7 +52,7 @@ class TechAdmin(Cog):
         await ctx.ok()
 
     # https://github.com/Rapptz/RoboDanny/blob/715a5cf8545b94d61823f62db484be4fac1c95b1/cogs/admin.py#L422
-    @commands.command(aliases=["sudo", "doas", "da"])
+    @commands.command(aliases=["doas", "da"])
     async def runas(
         self, ctx: Context, user: Union[discord.Member, discord.User], *, command: str
     ) -> None:
