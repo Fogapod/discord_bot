@@ -37,7 +37,9 @@ class Context(commands.Context, AsyncHookable):
     ) -> discord.Message:
 
         if target is None:
-            target = self
+            # mypy does not recognize superclass here and just names it "super"
+            target = super()  # type: ignore[assignment]
+            assert target is not None
 
         if content is not None:
             # hardcoded 2000 limit because error handling is tricky with 50035
