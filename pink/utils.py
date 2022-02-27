@@ -1,7 +1,7 @@
 import asyncio
 
-from typing import Any, Tuple
 from collections import OrderedDict
+from typing import Any, Tuple
 
 
 async def run_process(cmd: str, *args: str) -> Tuple[str, str]:

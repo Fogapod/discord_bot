@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import time
 import asyncio
-import logging
 import collections
+import logging
+import time
 
+from dataclasses import InitVar, dataclass, field
 from typing import Any, List, Mapping
-from dataclasses import InitVar, field, dataclass
 
 import aiohttp
 
@@ -15,8 +15,8 @@ import aiohttp
 # aiocache_logger.setLevel(logging.WARNING)
 from aiocache import SimpleMemoryCache
 
-from pink.errors import PINKError
 from pink.context import Context
+from pink.errors import PINKError
 
 log = logging.getLogger(__name__)
 

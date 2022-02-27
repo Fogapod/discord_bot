@@ -2,7 +2,7 @@ import random
 
 from typing import Optional
 
-from pink_accents import Match, Accent
+from pink_accents import Accent, Match
 
 
 def repeat_char(m: Match) -> Optional[str]:

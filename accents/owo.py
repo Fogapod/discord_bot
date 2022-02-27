@@ -1,10 +1,10 @@
-import re
 import random
+import re
 
 from typing import Optional
 
 from _shared import DISCORD_MESSAGE_END, DISCORD_MESSAGE_START
-from pink_accents import Match, Accent, Replacement
+from pink_accents import Accent, Match, Replacement
 from pink_accents.types import PatternMapType
 
 NYAS = (

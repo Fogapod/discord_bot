@@ -2,7 +2,7 @@ import functools
 
 from typing import Any
 
-from discord.ext import commands
+from discord.ext import commands  # type: ignore[attr-defined]
 
 from .context import Context
 

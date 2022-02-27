@@ -5,9 +5,9 @@ This is heavily based on E accent.
 import random
 
 from math import log10
-from typing import Any, Type, Generator
+from typing import Any, Generator, Type
 
-from pink_accents import Match, Accent, Replacement, ReplacementContext
+from pink_accents import Accent, Match, Replacement, ReplacementContext
 from pink_accents.errors import BadSeverity
 
 

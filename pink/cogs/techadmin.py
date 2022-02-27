@@ -1,24 +1,24 @@
-import io
+import asyncio
 import copy
+import io
 import json
 import random
-import asyncio
 import textwrap
 import traceback
 
-from typing import Any, Dict, Union, Iterator, Sequence
 from contextlib import redirect_stdout
+from typing import Any, Dict, Iterator, Sequence, Union
 
-import edgedb
 import discord
+import edgedb
 
-from discord.ext import commands
+from discord.ext import commands  # type: ignore[attr-defined]
 
 from pink.bot import Bot
-from pink.cog import Cog
-from pink.utils import run_process_shell
 from pink.checks import is_owner
+from pink.cog import Cog
 from pink.context import Context
+from pink.utils import run_process_shell
 
 
 class TechAdmin(Cog):
@@ -155,7 +155,8 @@ class TechAdmin(Cog):
                 return await ctx.send(f"Error: **{type(e).__name__}**: `{e}`")
 
             if not data:
-                return await ctx.ok()
+                await ctx.ok()
+                return
 
             paginator = await self._edgedb_table(data)
 

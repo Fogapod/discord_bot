@@ -1,19 +1,19 @@
 from __future__ import annotations
 
-import os
-import math
 import itertools
+import math
+import os
 
 from io import BytesIO
-from typing import Any, Dict, List, Tuple, Union, Iterator, Optional, Sequence
+from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple, Union
 
 import PIL
 
-from PIL import ImageDraw, ImageFont, ImageFilter
+from PIL import ImageDraw, ImageFilter, ImageFont
 from pink_accents import Accent
 
-from pink.context import Context
 from pink.cogs.utils.errorhandler import PINKError
+from pink.context import Context
 
 from .types import StaticImage
 

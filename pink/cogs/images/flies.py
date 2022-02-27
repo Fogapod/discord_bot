@@ -1,11 +1,11 @@
 # most of this is blatantly copied from:
 # https://github.com/Fogapod/KiwiBot/blob/master/modules/images/module_fly.py
 
-import time
 import random
+import time
 
-from math import pi, cos, sin
-from typing import Dict, List, Tuple, Sequence
+from math import cos, pi, sin
+from typing import Dict, List, Sequence, Tuple
 
 import PIL
 

@@ -448,7 +448,7 @@ if __name__ == "__main__":
 
         for k, v in prefix_keys.items():
             for prefix, replacement in zip(inp[k], inp[v]):
-                push(fr"\b{prefix}", replacement, patterns)
+                push(rf"\b{prefix}", replacement, patterns)
 
         suffix_keys = {
             "suffixes1": "suffixes2",
@@ -456,7 +456,7 @@ if __name__ == "__main__":
 
         for k, v in prefix_keys.items():
             for suffix, replacement in zip(inp[k], inp[v]):
-                push(fr"{suffix}\b", replacement, patterns)
+                push(rf"{suffix}\b", replacement, patterns)
 
     generate_pink_accent(words, patterns)
     # generate_unitystation_accent(words, patterns)

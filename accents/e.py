@@ -5,7 +5,7 @@ import random
 
 from typing import Generator
 
-from pink_accents import Match, Accent, ReplacementContext
+from pink_accents import Accent, Match, ReplacementContext
 
 CURSED_ES = "EĒÊËÈÉ"
 

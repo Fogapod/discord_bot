@@ -1,7 +1,7 @@
 import inspect
 
-from typing import Any, Dict, List, Iterator, Optional
-from functools import wraps, partial, update_wrapper
+from functools import partial, update_wrapper, wraps
+from typing import Any, Dict, Iterator, List, Optional
 
 # TODO
 _HookType = Any

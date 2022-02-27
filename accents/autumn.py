@@ -1,7 +1,7 @@
 import random
 
 from _shared import DISCORD_MESSAGE_END
-from pink_accents import Match, Accent
+from pink_accents import Accent, Match
 
 
 def go_brrrr(m: Match) -> str:

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
-import os
 import json
+import os
 import sqlite3
 
 from typing import Any, Dict, List, Tuple

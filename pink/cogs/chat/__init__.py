@@ -1,20 +1,20 @@
 from __future__ import annotations
 
+import asyncio
 import os
 import time
-import asyncio
 
 from typing import Dict, Optional, Sequence
 
 import discord
 import travitia_talk as tt
 
-from discord.ext import tasks, commands
+from discord.ext import commands, tasks  # type: ignore[attr-defined]
 
 from pink.bot import Bot
 from pink.cog import Cog
-from pink.errors import PINKError
 from pink.context import Context
+from pink.errors import PINKError
 
 from .types import Emotion
 
@@ -176,7 +176,8 @@ class Chat(Cog):
             return await ctx.send("Closed session")
 
         if (time.time() - settings.last_reply) < self.SESSION_RATELIMIT:
-            return await ctx.reply("You are sending messages too frequently")
+            await ctx.reply("You are sending messages too frequently")
+            return
 
         if settings.lock.locked():
             return

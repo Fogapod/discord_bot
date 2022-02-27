@@ -1,11 +1,11 @@
 from time import perf_counter
 
-from discord.ext import commands
+from discord.ext import commands  # type: ignore[attr-defined]
 
 from pink.bot import Bot, Prefix
 from pink.cog import Cog
-from pink.context import Context
 from pink.constants import PREFIX
+from pink.context import Context
 
 PINK_ART = r"""   ___ _____    __
   / _ \\_   \/\ \ \/\ /\

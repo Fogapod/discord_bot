@@ -6,8 +6,8 @@ import discord
 
 from pink.bot import Bot
 from pink.cog import Cog
-from pink.utils import LRU
 from pink.context import Context
+from pink.utils import LRU
 
 _EmojiType = Union[discord.Reaction, discord.Emoji, discord.PartialEmoji, str]
 

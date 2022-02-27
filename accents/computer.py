@@ -1,6 +1,6 @@
 from base64 import b64encode, b85encode
-from typing import Any
 from hashlib import sha256
+from typing import Any
 
 from pink_accents import Accent
 

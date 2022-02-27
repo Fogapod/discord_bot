@@ -2,10 +2,10 @@
 # commit: https://github.com/Fogapod/pink/commit/ff46d56a4c258d9597a731c678dcb71d9fa43999
 
 
-import re
 import random
+import re
 
-from pink_accents import Match, Accent
+from pink_accents import Accent, Match
 
 ending = (
     "thing",
