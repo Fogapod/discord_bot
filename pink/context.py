@@ -1,10 +1,10 @@
-from typing import Any, Union, Optional
+from typing import Any, Optional, Union
 
-import edgedb
 import aiohttp
 import discord
+import edgedb
 
-from discord.ext import commands
+from discord.ext import commands  # type: ignore[attr-defined]
 
 from .hookable import AsyncHookable
 
@@ -32,12 +32,12 @@ class Context(commands.Context, AsyncHookable):
         self,
         content: Any = None,
         *,
-        target: discord.abc.Messageable = None,
+        target: Optional[discord.abc.Messageable] = None,
         **kwargs: Any,
     ) -> discord.Message:
 
         if target is None:
-            target = super()
+            target = self
 
         if content is not None:
             # hardcoded 2000 limit because error handling is tricky with 50035
@@ -64,7 +64,7 @@ class Context(commands.Context, AsyncHookable):
     async def react(
         self,
         emoji: Union[discord.Emoji, str],
-        message: discord.Message = None,
+        message: Optional[discord.Message] = None,
     ) -> discord.Message:
         if message is None:
             message = self.message
@@ -73,13 +73,13 @@ class Context(commands.Context, AsyncHookable):
 
         return message
 
-    async def ok(self, message: discord.Message = None) -> discord.Message:
+    async def ok(self, message: Optional[discord.Message] = None) -> discord.Message:
         if message is None:
             message = self.message
 
         return await self.react("\N{HEAVY CHECK MARK}", message=message)
 
-    async def nope(self, message: discord.Message = None) -> discord.Message:
+    async def nope(self, message: Optional[discord.Message] = None) -> discord.Message:
         if message is None:
             message = self.message
 

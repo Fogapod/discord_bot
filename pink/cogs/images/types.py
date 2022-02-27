@@ -1,24 +1,24 @@
 from __future__ import annotations
 
-import re
-import enum
 import asyncio
+import enum
+import re
 import warnings
 
+from asyncio import TimeoutError
 from io import BytesIO
 from typing import Any, List, Optional
-from asyncio import TimeoutError
 
-import PIL
 import aiohttp
 import discord
+import PIL
 
+from discord.ext import commands  # type: ignore[attr-defined]
 from PIL.Image import DecompressionBombWarning
-from discord.ext import commands
 
-from pink.errors import PINKError
 from pink.context import Context
-from pink.regexes import ID_REGEX, EMOTE_REGEX, CLEAN_URL_REGEX
+from pink.errors import PINKError
+from pink.regexes import CLEAN_URL_REGEX, EMOTE_REGEX, ID_REGEX
 
 warnings.simplefilter("error", DecompressionBombWarning)
 
@@ -99,11 +99,11 @@ class Image:
 
     @classmethod
     async def convert(cls, ctx: Context, argument: str) -> Image:
-        return await cls.from_pattern(ctx, argument)
+        return await cls.from_text(ctx, argument)
 
     @classmethod
-    async def from_pattern(cls, ctx: Context, argument: str) -> Image:
-        return await cls._from_pattern(ctx, argument, allow_animated=True)
+    async def from_text(cls, ctx: Context, argument: str) -> Image:
+        return await cls._from_text(ctx, argument, allow_animated=True)
 
     @classmethod
     async def _from_reference(
@@ -135,7 +135,7 @@ class Image:
         )
 
     @classmethod
-    async def _from_pattern(
+    async def _from_text(
         cls,
         ctx: Context,
         argument: str,
@@ -272,7 +272,7 @@ class Image:
 
             return Image(
                 kind=ImageType.USER,
-                url=str(user.avatar_url_as(format=avatar_format)),
+                url=str(user.display_avatar.with_format(avatar_format)),
             )
 
         # check if pattern is url
@@ -337,12 +337,14 @@ class Image:
                 is_spoiler=attachment.is_spoiler(),
             )
 
+        # note on embed type ignores: pretty sure urls are present when objects exist
+
         # check embeds (user posted url / bot posted rich embed)
         for embed in msg.embeds:
             if embed.image:
                 if (
                     cls._check_extension(
-                        embed.image.url,
+                        embed.image.url,  # type: ignore[arg-type]
                         allow_static=allow_static,
                         allow_animated=allow_animated,
                     )
@@ -350,7 +352,7 @@ class Image:
                 ):
                     return Image(
                         kind=ImageType.EMBED,
-                        url=embed.image.url,
+                        url=embed.image.url,  # type: ignore[arg-type]
                     )
 
             # bot condition because we do not want image from
@@ -361,12 +363,12 @@ class Image:
             # avoid case when image embed was created from url that is
             # used as argument or flag
             if msg.id == ctx.message.id:
-                if embed.thumbnail.url in msg.content:
+                if embed.thumbnail.url in msg.content:  # type: ignore[operator]
                     continue
 
             if (
                 cls._check_extension(
-                    embed.thumbnail.url,
+                    embed.thumbnail.url,  # type: ignore[arg-type]
                     allow_static=allow_static,
                     allow_animated=allow_animated,
                 )
@@ -376,7 +378,7 @@ class Image:
 
             return Image(
                 kind=ImageType.EMBED,
-                url=embed.thumbnail.url,
+                url=embed.thumbnail.url,  # type: ignore[arg-type]
             )
 
         return None
@@ -495,8 +497,8 @@ class Image:
 
 class StaticImage(Image):
     @classmethod
-    async def from_pattern(cls, ctx: Context, argument: str) -> Image:
-        return await cls._from_pattern(ctx, argument)
+    async def from_text(cls, ctx: Context, argument: str) -> Image:
+        return await cls._from_text(ctx, argument)
 
     @classmethod
     async def from_history(
@@ -508,8 +510,8 @@ class StaticImage(Image):
 
 class AnimatedImage(Image):
     @classmethod
-    async def from_pattern(cls, ctx: Context, argument: str) -> Image:
-        return await cls._from_pattern(
+    async def from_text(cls, ctx: Context, argument: str) -> Image:
+        return await cls._from_text(
             ctx, argument, allow_static=False, allow_animated=True
         )
 

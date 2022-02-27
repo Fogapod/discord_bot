@@ -4,16 +4,16 @@ from typing import Union
 
 import discord
 
-from discord.ext import commands
+from discord.ext import commands  # type: ignore[attr-defined]
 
 from pink.bot import Bot
 from pink.cog import Cog
-from pink.utils import run_process
 from pink.context import Context
+from pink.utils import run_process
 
-from .flies import draw_flies
-from .types import Image, StaticImage, AnimatedImage
 from .constants import GIFSICLE_ARGUMENTS
+from .flies import draw_flies
+from .types import AnimatedImage, Image, StaticImage
 
 try:
     from pink.cogs.translator.types import Language

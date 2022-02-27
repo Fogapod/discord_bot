@@ -2,14 +2,14 @@ import functools
 
 import googletrans
 
-from discord.ext import commands
+from discord.ext import commands  # type: ignore[attr-defined]
 
 from pink.bot import Bot
 from pink.cog import Cog
 from pink.context import Context
 
-from .types import Language
 from .constants import LANGUAGES, REVERSE_LANGCODE_ALIASES
+from .types import Language
 
 
 class Translator(Cog):

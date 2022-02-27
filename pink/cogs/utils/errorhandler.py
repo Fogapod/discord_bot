@@ -3,7 +3,7 @@ import logging
 import discord
 import sentry_sdk
 
-from discord.ext import commands
+from discord.ext import commands  # type: ignore[attr-defined]
 
 from pink.bot import Bot
 from pink.cog import Cog

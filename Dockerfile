@@ -28,6 +28,8 @@ RUN apk add --no-cache \
     # Font for trocr
     ttf-dejavu \
     && apk add --no-cache --virtual .build-deps \
+    # git pip packages
+    git \
     # uvloop ./configure uses it???
     file \
     # uvloop

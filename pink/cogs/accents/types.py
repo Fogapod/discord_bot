@@ -1,6 +1,6 @@
 import re
 
-from discord.ext import commands
+from discord.ext import commands  # type: ignore[attr-defined]
 from pink_accents import Accent
 from pink_accents.errors import BadSeverity
 

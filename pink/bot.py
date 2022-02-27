@@ -1,22 +1,22 @@
 from __future__ import annotations
 
-import os
-import re
 import asyncio
 import logging
+import os
+import re
 import traceback
 
-from typing import Any, Set, Dict, List, Type, Union, Optional
+from typing import Any, Dict, List, Optional, Set, Type, Union
 
-import edgedb
 import aiohttp
 import discord
+import edgedb
 import sentry_sdk
 
-from discord.ext import commands
+from discord.ext import commands  # type: ignore[attr-defined]
 
-from .context import Context
 from .constants import PREFIX
+from .context import Context
 
 log = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ initial_extensions = (
 def mention_or_prefix_regex(user_id: int, prefix: str) -> re.Pattern[str]:
     choices = [re.escape(prefix), rf"<@!?{user_id}>"]
 
-    return re.compile(fr"(?:{'|'.join(choices)})\s*", re.I)
+    return re.compile(rf"(?:{'|'.join(choices)})\s*", re.I)
 
 
 class Prefix:
@@ -203,7 +203,7 @@ class Bot(commands.Bot):
         self,
         message: discord.Message,
         *,
-        cls: Optional[Type[discord.ext.Context]] = None,
+        cls: Optional[Type[commands.Context]] = None,
     ) -> Context:
         return await super().get_context(message, cls=cls or Context)
 

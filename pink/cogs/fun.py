@@ -1,11 +1,11 @@
-import random
 import logging
+import random
 
-from typing import Union, Optional
+from typing import Optional, Union
 
 import discord
 
-from discord.ext import commands
+from discord.ext import commands  # type: ignore[attr-defined]
 
 from pink.bot import Bot
 from pink.cog import Cog
@@ -59,12 +59,14 @@ class Fun(Cog):
     async def throw(
         self,
         ctx: Context,
-        target: Union[
-            discord.User,
-            discord.TextChannel,
-            discord.CategoryChannel,
-            discord.VoiceChannel,
-            str,
+        target: Optional[
+            Union[
+                discord.User,
+                discord.TextChannel,
+                discord.CategoryChannel,
+                discord.VoiceChannel,
+                str,
+            ]
         ] = None,
         *,
         item: Optional[str] = None,
@@ -205,7 +207,7 @@ class Fun(Cog):
                 text,
                 target=webhook,
                 username=name,
-                avatar_url=user.avatar_url_as(format="png"),
+                avatar_url=user.display_avatar.with_format("png"),
                 wait=True,
                 accents=accents,
             )

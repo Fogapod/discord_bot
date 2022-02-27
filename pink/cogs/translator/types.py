@@ -1,8 +1,8 @@
-from discord.ext import commands
+from discord.ext import commands  # type: ignore[attr-defined]
 
 from pink.context import Context
 
-from .constants import LANGCODES, LANGUAGES, LANGCODE_ALIASES
+from .constants import LANGCODE_ALIASES, LANGCODES, LANGUAGES
 
 
 class Language(str):

@@ -6,7 +6,7 @@ import traceback
 
 from typing import Any
 
-from discord.ext import commands
+from discord.ext import commands  # type: ignore[attr-defined]
 
 from .bot import Bot
 

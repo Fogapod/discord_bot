@@ -1,26 +1,26 @@
 from __future__ import annotations
 
-import json
-import random
-import logging
-import contextlib
 import collections
+import contextlib
+import json
+import logging
+import random
 
-from typing import Any, Dict, List, Type, Iterable, Optional, DefaultDict
+from typing import TYPE_CHECKING, Any, DefaultDict, Dict, Iterable, List, Optional, Type
 
 import discord
 
-from discord.ext import commands
+from discord.ext import commands  # type: ignore[attr-defined]
 from pink_accents import Accent
 
 from pink.bot import Bot
 from pink.cog import Cog
-from pink.utils import LRU
-from pink.context import Context
 from pink.cogs.utils.errorhandler import PINKError
+from pink.context import Context
+from pink.utils import LRU
 
-from .types import PINKAccent
 from .constants import ALL_ACCENTS
+from .types import PINKAccent
 
 REQUIRED_PERMS = discord.Permissions(
     send_messages=True, manage_messages=True, manage_webhooks=True
@@ -111,13 +111,15 @@ class Accents(Cog):
         await ctx.send_help(ctx.command)
 
     @commands.command()
-    async def accents(self, ctx: Context, user: discord.Member = None) -> None:
+    async def accents(
+        self, ctx: Context, user: Optional[discord.Member] = None
+    ) -> None:
         """Alias for accent list"""
 
         await ctx.invoke(self._list, user=user)
 
     @accent.command(name="list", aliases=["ls"])
-    async def _list(self, ctx: Context, user: discord.Member = None) -> None:
+    async def _list(self, ctx: Context, user: Optional[discord.Member] = None) -> None:
         """List accents for user"""
 
         # we are in DMs
@@ -500,6 +502,14 @@ class Accents(Cog):
 
         # TODO: some other way to prevent accent trigger that is not a missing feature?
 
+        if TYPE_CHECKING:
+            assert isinstance(message.author, discord.Member)
+            # PartialMessageable is weird, it must be excluded by doing this
+            assert isinstance(
+                message.channel,
+                (discord.TextChannel, discord.DMChannel, discord.Thread),
+            )
+
         if not (accents := self.get_user_accents(message.author)):
             return
 
@@ -584,16 +594,16 @@ class Accents(Cog):
         await ctx.send(
             content,
             allowed_mentions=discord.AllowedMentions(
-                everyone=original.author.guild_permissions.mention_everyone,
+                everyone=original.author.guild_permissions.mention_everyone,  # type: ignore[union-attr]
                 users=True,
                 roles=True,
             ),
-            target=await self._get_cached_webhook(original.channel),
+            target=await self._get_cached_webhook(original.channel),  # type: ignore[arg-type]
             register=False,
             accents=[],
             # webhook data
             username=original.author.display_name,
-            avatar_url=original.author.avatar_url,
+            avatar_url=original.author.display_avatar,
             embeds=list(map(self._copy_embed, original.embeds)),
         )
 

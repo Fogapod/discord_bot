@@ -5,7 +5,7 @@ repos:
       - id: isort
 
   - repo: https://github.com/ambv/black
-    rev: 21.12b0
+    rev: 22.1.0
     hooks:
       - id: black
 
@@ -28,3 +28,4 @@ repos:
         additional_dependencies:
           - "travitia_talk"
           - "pink_accents==0.0.4"
+          - "discord.py @ git+https://github.com/Rapptz/discord.py@45d498c1b76deaf3b394d17ccf56112fa691d160"
