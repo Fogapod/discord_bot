@@ -104,6 +104,7 @@ class Bot(commands.Bot):
                 bans=True,
                 emojis=True,
                 messages=True,
+                message_content=True,
                 reactions=True,
             ),
             **kwargs,

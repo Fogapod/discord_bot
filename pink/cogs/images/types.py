@@ -23,6 +23,11 @@ from pink.regexes import CLEAN_URL_REGEX, EMOTE_REGEX, ID_REGEX
 warnings.simplefilter("error", DecompressionBombWarning)
 
 
+# discord cdn generates all formats for emojis. discord.py decided to not support this
+def emoji_url_with_format(emoji: discord.Emoji, fmt: str) -> str:
+    return f"{discord.Asset.BASE}/emojis/{emoji.id}.{fmt}"
+
+
 class ImageType(enum.Enum):
     EMOTE = 0
     EMOJI = 1
@@ -168,11 +173,14 @@ class Image:
 
         # match up to 50 previous messages using one or multiple ^'s
         if re.fullmatch(r"\^{1,50}", argument):
-            msgs = await ctx.channel.history(
-                before=ctx.message.created_at, limit=50
-            ).flatten()
+            history = [
+                m
+                async for m in ctx.channel.history(
+                    before=ctx.message.created_at, limit=50
+                )
+            ]
 
-            message = msgs[len(argument) - 1]
+            message = history[len(argument) - 1]
 
             if not (
                 image := cls.from_message(
@@ -218,7 +226,7 @@ class Image:
             if emote := ctx.bot.get_emoji(emote_id):
                 return Image(
                     kind=ImageType.EMOTE,
-                    url=str(emote.url_as(format=emote_format)),
+                    url=emoji_url_with_format(emote, emote_format),
                 )
 
             return Image(
@@ -236,7 +244,7 @@ class Image:
 
                 return Image(
                     kind=ImageType.EMOTE,
-                    url=str(emote.url_as(format=emote_format)),
+                    url=emoji_url_with_format(emote, emote_format),
                 )
 
         # check if pattern is emoji
@@ -409,9 +417,10 @@ class Image:
         #
         # command can be invoked by message edit, but we still want
         # to check messages before created_at
-        history = await ctx.channel.history(
-            limit=200, before=ctx.message.created_at
-        ).flatten()
+        history = [
+            m
+            async for m in ctx.channel.history(limit=200, before=ctx.message.created_at)
+        ]
 
         for msg in [ctx.message] + history:
             if (

@@ -1,4 +1,4 @@
-discord.py @ git+https://github.com/Rapptz/discord.py@45d498c1b76deaf3b394d17ccf56112fa691d160
+discord.py @ git+https://github.com/Rapptz/discord.py@a909c1ff069b1bdb332b7f3b01ef1c4b8a3a3a15
 python-dotenv
 travitia-talk
 Pillow
