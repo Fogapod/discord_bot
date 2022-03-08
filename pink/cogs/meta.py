@@ -69,9 +69,8 @@ class Meta(Cog):
         invite = "TNXn8R7"
 
         return await ctx.send(
-            f"""\
-```
-{PINK_ART}\n"
+            f"""```
+{PINK_ART}
 
 PINK art by: patorjk.com/software/taag
 \
@@ -81,8 +80,7 @@ Prefix: @mention or {PREFIX}
 Source code: github.com/Fogapod/pink {revision}
 {authors}
 Support server: discord.gg / {invite}
-```\
-            """
+```"""
         )
 
     @commands.group(
