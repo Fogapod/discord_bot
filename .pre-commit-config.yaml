@@ -30,3 +30,4 @@ repos:
           - "pink_accents==0.0.4"
           - "discord.py @ git+https://github.com/Rapptz/discord.py@a909c1ff069b1bdb332b7f3b01ef1c4b8a3a3a15"
           - "edgedb<=0.17.3"
+          - "types-orjson"

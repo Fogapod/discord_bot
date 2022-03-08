@@ -53,4 +53,12 @@ USER pink
 # at this point .dockerignore might be more appropriate
 COPY --chown=pink:pink . .
 
+ARG GIT_BRANCH="master"
+ARG GIT_COMMIT=""
+ARG GIT_DIRTY="0"
+
+ENV GIT_BRANCH=${GIT_BRANCH}
+ENV GIT_COMMIT=${GIT_COMMIT}
+ENV GIT_DIRTY=${GIT_DIRTY}
+
 ENTRYPOINT ["python", "-m", "pink"]

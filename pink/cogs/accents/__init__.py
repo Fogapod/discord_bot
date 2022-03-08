@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import collections
 import contextlib
-import json
 import logging
 import random
 
 from typing import TYPE_CHECKING, Any, DefaultDict, Dict, Iterable, List, Optional, Type
 
 import discord
+import orjson
 
 from discord.ext import commands  # type: ignore[attr-defined]
 from pink_accents import Accent
@@ -206,7 +206,7 @@ class Accents(Cog):
             """,
             guild_id=ctx.guild.id,
             user_id=member.id,
-            accents=json.dumps([(a.name, a.severity) for a in all_accents]),
+            accents=orjson.dumps([(a.name, a.severity) for a in all_accents]),
         )
 
     async def _remove_accents(self, ctx: Context, member: discord.Member, accents: _UserAccentsType) -> None:
@@ -242,7 +242,7 @@ class Accents(Cog):
             """,
             guild_id=ctx.guild.id,
             user_id=member.id,
-            accents=json.dumps([(a.name, a.severity) for a in updated]),
+            accents=orjson.dumps([(a.name, a.severity) for a in updated]),
         )
 
     async def _update_nick(self, ctx: Context) -> None:

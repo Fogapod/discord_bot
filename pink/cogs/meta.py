@@ -1,3 +1,5 @@
+import os
+
 from time import perf_counter
 
 from discord.ext import commands  # type: ignore[attr-defined]
@@ -49,24 +51,38 @@ class Meta(Cog):
     async def about(self, ctx: Context) -> None:
         """General information about bot"""
 
-        owners = [await self.bot.fetch_user(oid) for oid in self.bot.owner_ids]
+        if git_commit := os.environ.get("GIT_COMMIT"):
+            revision = git_commit[:10]
+            if git_branch := os.environ.get("GIT_BRANCH"):
+                revision = f"{git_branch}/{revision}"
 
+            if (git_dirty_files := os.environ.get("GIT_DIRTY", "0")) != "0":
+                revision = f"{revision} DIRTY[{git_dirty_files}]"
+
+            revision = f"[{revision}]"
+        else:
+            revision = ""
+
+        owners = [await self.bot.fetch_user(oid) for oid in self.bot.owner_ids]
         authors = f"Author{'s' if len(owners) > 1 else ''}: {', '.join(str(o) for o in owners)}"
+
         invite = "TNXn8R7"
 
         return await ctx.send(
-            f"```\n"
-            f"{PINK_ART}\n"
-            f"\n"
-            f"PINK art by: patorjk.com/software/taag\n"
-            f"\n"
-            f"This bot was originally made for PotatoStation server for UnityStation.\n"
-            f"\n"
-            f"Prefix: @mention or {PREFIX}\n"
-            f"Source code: github.com/Fogapod/pink\n"
-            f"{authors}\n"
-            f"Support server: discord.gg/{invite}\n"
-            f"```"
+            f"""\
+```
+{PINK_ART}\n"
+
+PINK art by: patorjk.com/software/taag
+\
+This bot was originally made for PotatoStation server for UnityStation.
+
+Prefix: @mention or {PREFIX}
+Source code: github.com/Fogapod/pink {revision}
+{authors}
+Support server: discord.gg / {invite}
+```\
+            """
         )
 
     @commands.group(

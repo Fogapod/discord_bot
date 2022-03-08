@@ -1,7 +1,6 @@
 import asyncio
 import copy
 import io
-import json
 import random
 import textwrap
 import traceback
@@ -11,6 +10,7 @@ from typing import Any, Dict, Iterator, Sequence, Union
 
 import discord
 import edgedb
+import orjson
 
 from discord.ext import commands  # type: ignore[attr-defined]
 
@@ -142,7 +142,7 @@ class TechAdmin(Cog):
         async with ctx.typing():
             try:
                 # https://github.com/edgedb/edgedb-python/issues/107
-                data = json.loads(await ctx.edb.query_json(program))  # type: ignore[no-untyped-call]
+                data = orjson.loads(await ctx.edb.query_json(program))  # type: ignore[no-untyped-call]
             except edgedb.EdgeDBError as e:
                 return await ctx.send(f"Error: **{type(e).__name__}**: `{e}`")
 
