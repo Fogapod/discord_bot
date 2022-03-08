@@ -61,10 +61,7 @@ class Fly:
         new_x = self.pos_x + round(cos(angle) * self.speed)
         new_y = self.pos_y - round(sin(angle) * self.speed)
 
-        if not (
-            (self.bounds_x[0] <= new_x <= self.bounds_x[1])
-            and (self.bounds_y[0] <= new_y <= self.bounds_y[1])
-        ):
+        if not ((self.bounds_x[0] <= new_x <= self.bounds_x[1]) and (self.bounds_y[0] <= new_y <= self.bounds_y[1])):
 
             new_x = min(self.bounds_x[1], max(self.bounds_x[0], new_x))
             new_y = min(self.bounds_y[1], max(self.bounds_y[0], new_y))

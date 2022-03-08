@@ -2,7 +2,7 @@ from time import perf_counter
 
 from discord.ext import commands  # type: ignore[attr-defined]
 
-from pink.bot import Bot, Prefix
+from pink.bot import PINK, Prefix
 from pink.cog import Cog
 from pink.constants import PREFIX
 from pink.context import Context
@@ -22,7 +22,7 @@ class CustomHelp(commands.DefaultHelpCommand):
 class Meta(Cog):
     """Bot related utility commands"""
 
-    def __init__(self, bot: Bot):
+    def __init__(self, bot: PINK):
         super().__init__(bot)
 
         self.old_help_command = bot.help_command
@@ -43,9 +43,7 @@ class Meta(Cog):
 
         latency = round(self.bot.latency * 1000)
 
-        await ctx.edit(
-            m, content=f"Pong, **{send_diff}ms**\n\nLatency: **{latency}ms**"
-        )
+        await ctx.edit(m, content=f"Pong, **{send_diff}ms**\n\nLatency: **{latency}ms**")
 
     @commands.command(aliases=["info"])
     async def about(self, ctx: Context) -> None:
@@ -80,9 +78,7 @@ class Meta(Cog):
         """Get local prefix (if any)."""
 
         if ctx.guild.id not in ctx.bot.prefixes:
-            return await ctx.send(
-                f"Custom prefix not set, default is @mention or {PREFIX}"
-            )
+            return await ctx.send(f"Custom prefix not set, default is @mention or {PREFIX}")
 
         await ctx.send(f"Local prefix: {ctx.bot.prefixes[ctx.guild.id].prefix}")
 
@@ -115,5 +111,5 @@ class Meta(Cog):
         await ctx.ok()
 
 
-def setup(bot: Bot) -> None:
+def setup(bot: PINK) -> None:
     bot.add_cog(Meta(bot))

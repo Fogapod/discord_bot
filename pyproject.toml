@@ -1,12 +1,13 @@
-[tool.black]
-target-version = ['py38']
-
 [tool.isort]
 profile = "black"
 line_length = 121
 atomic = true
 combine_as_imports = true
 lines_between_types = 1
+
+[tool.black]
+target-version = ['py38']
+line-length = 121
 
 [tool.mypy]
 python_version = "3.10"
@@ -19,36 +20,43 @@ warn_unused_configs = true
 warn_unused_ignores = true
 # it is very convenient to return from event handler
 # warn_return_any = true
-
 check_untyped_defs = true
 disallow_any_generics = true
 disallow_untyped_defs = true
 # discord models are untyped
 # disallow_subclassing_any = true
-# some external code is untyped like edgedb
-# disallow_untyped_calls = true
+disallow_untyped_calls = true
 disallow_incomplete_defs = true
-# all discord.py decorators are untyped
+# discord decorators are untyped because it is currently not type checked
 # disallow_untyped_decorators = true
 no_implicit_optional = true
-# doesnt like edgedb properties
-# no_implicit_reexport = true
+no_implicit_reexport = true
 strict_equality = true
 
-
+# new type: ignore comments in discord.py break mypy, do not typecheck it
+# https://github.com/python/mypy/issues/12299
 [[tool.mypy.overrides]]
 module = [
-    "googletrans.*",
-    "PIL.*",
+    "discord.*",
 ]
-ignore_missing_imports = true
+follow_imports = "skip"
 
-# seem to require `namespace_packages = true`, but it is currently broken in mypy:
+# discord.ext seem to require `namespace_packages = true`, but it is currently broken in mypy:
 # https://github.com/python/mypy/issues/12257
-#
-# this doesnt do anything though, unfortunate
 [[tool.mypy.overrides]]
 module = [
     "discord.ext.*",
+    "googletrans.*",
+    "PIL.*",
+    "sentry_sdk.*",
+    "aiocache.*",
+]
+ignore_missing_imports = true
+
+# mypy does not like cythonized code and spits out attr-defined for everything
+[[tool.mypy.overrides]]
+module = [
+    "edgedb.*",
 ]
 ignore_errors = true
+no_implicit_reexport = false

@@ -8,7 +8,7 @@ from typing import Any
 
 from discord.ext import commands  # type: ignore[attr-defined]
 
-from .bot import Bot
+from .bot import PINK
 
 log = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ class Cog(commands.Cog):
 
         return self
 
-    def __init__(self, bot: Bot):
+    def __init__(self, bot: PINK):
         self.bot = bot
 
         self.bot.loop.create_task(self._setup())

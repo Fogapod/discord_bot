@@ -4,7 +4,7 @@ import googletrans
 
 from discord.ext import commands  # type: ignore[attr-defined]
 
-from pink.bot import Bot
+from pink.bot import PINK
 from pink.cog import Cog
 from pink.context import Context
 
@@ -14,9 +14,7 @@ from .types import Language
 
 class Translator(Cog):
     async def setup(self) -> None:
-        self.translator = googletrans.Translator(
-            service_urls=googletrans.constants.DEFAULT_SERVICE_URLS
-        )
+        self.translator = googletrans.Translator(service_urls=googletrans.constants.DEFAULT_SERVICE_URLS)
 
     @commands.group(
         name="translate",
@@ -29,9 +27,7 @@ class Translator(Cog):
 
         translated = await self._raw_translate(text, language)
 
-        maybe_in_lang_alias = REVERSE_LANGCODE_ALIASES.get(
-            translated.src.lower(), translated.src
-        )
+        maybe_in_lang_alias = REVERSE_LANGCODE_ALIASES.get(translated.src.lower(), translated.src)
 
         if (in_lang := LANGUAGES.get(maybe_in_lang_alias)) is not None:
             # full name found, need to title() it
@@ -43,9 +39,7 @@ class Translator(Cog):
 
         await ctx.send(f"**{in_lang}** -> **{out_lang}**```\n{translated.text}```")
 
-    async def _raw_translate(
-        self, text: str, out_lang: str
-    ) -> googletrans.models.Translated:
+    async def _raw_translate(self, text: str, out_lang: str) -> googletrans.models.Translated:
         return await self.bot.loop.run_in_executor(
             None, functools.partial(self.translator.translate, text, dest=out_lang)
         )
@@ -64,5 +58,5 @@ class Translator(Cog):
         )
 
 
-def setup(bot: Bot) -> None:
+def setup(bot: PINK) -> None:
     bot.add_cog(Translator(bot))

@@ -1,10 +1,13 @@
 import inspect
 
 from functools import partial, update_wrapper, wraps
-from typing import Any, Dict, Iterator, List, Optional
+from typing import Any, Callable, Coroutine, Dict, Iterator, List, Optional, ParamSpec, TypeVar
 
-# TODO
-_HookType = Any
+T = TypeVar("T")
+P = ParamSpec("P")
+
+Coro = Coroutine[Any, Any, T]
+_HookType = Callable[..., Coro[Any]]
 
 
 class AsyncHookable:
@@ -13,31 +16,36 @@ class AsyncHookable:
     def _hooks_for(self, name: str) -> Iterator[_HookType]:
         yield from self.__hooks__.get(name, [])
 
+    # mypy does not seem to understand wrapping decorator. any attempt to use ParamSpec resulted in function losing its
+    # arguments or locking it to first decorated signture preventing from using @hookable for other functions
     @classmethod
-    def hookable(cls):  # type: ignore
-        def decorator(func):  # type: ignore
+    def hookable(  # type: ignore
+        cls,
+    ):
+        # TODO: Concatenate[Any, P] for self arg once mypy supports it
+        def decorator(func: Callable[P, Coro[T]]) -> Callable[P, Coro[T]]:
             name = func.__name__
 
             @wraps(func)
-            async def wrapped(self, *args: Any, **kwargs: Any):  # type: ignore
-                handler = getattr(self, name).__original__
+            def wrapped(self: Any, *args: P.args, **kwargs: P.kwargs) -> Coro[T]:
+                handler: _HookType = getattr(self, name).__original__
 
                 # thanks aiohttp
                 # https://github.com/aio-libs/aiohttp/blob/3edc43c1bb718b01a1fbd67b01937cff9058e437/aiohttp/web_app.py#L346-L350
                 for hook in self._hooks_for(name):
                     handler = update_wrapper(partial(hook, handler), handler)
 
-                return await handler(self, *args, **kwargs)
+                return handler(self, *args, **kwargs)
 
-            wrapped.__original__ = func  # type: ignore
+            wrapped.__original__ = func  # type: ignore[attr-defined]
 
-            return wrapped
+            return wrapped  # type: ignore
 
         return decorator
 
     @classmethod
-    def hook(cls, name: Optional[str] = None):  # type: ignore
-        def decorator(func):  # type: ignore
+    def hook(cls, name: Optional[str] = None) -> Callable[[Callable[P, T]], Callable[P, T]]:
+        def decorator(func: Callable[P, T]) -> Callable[P, T]:
             if not inspect.iscoroutinefunction(func):
                 raise TypeError("Not a coroutine")
 
@@ -56,13 +64,13 @@ class AsyncHookable:
             if not hasattr(original, "__original__"):
                 raise ValueError(f"Function is not hookable: {name}")
 
-            func.__hook_name__ = name
-            func.__hook_target__ = cls
+            func.__hook_name__ = name  # type: ignore[attr-defined]
+            func.__hook_target__ = cls  # type: ignore[attr-defined]
 
             if name in cls.__hooks__:
-                cls.__hooks__[name].append(func)
+                cls.__hooks__[name].append(func)  # type: ignore[arg-type]
             else:
-                cls.__hooks__[name] = [func]
+                cls.__hooks__[name] = [func]  # type: ignore[list-item]
 
             return func
 
@@ -70,7 +78,7 @@ class AsyncHookable:
 
     @classmethod
     def remove_hook(cls, hook: _HookType) -> None:
-        name = hook.__hook_name__
+        name = hook.__hook_name__  # type: ignore[attr-defined]
         if name in cls.__hooks__:
             try:
                 cls.__hooks__[name].remove(hook)

@@ -6,7 +6,7 @@ import discord
 
 from discord.ext import commands  # type: ignore[attr-defined]
 
-from pink.bot import Bot
+from pink.bot import PINK
 from pink.cog import Cog
 from pink.context import Context
 from pink.utils import run_process
@@ -145,9 +145,7 @@ class Images(Cog):
 
             await ctx.send(
                 stats,
-                file=discord.File(
-                    result, filename="trocr.png", spoiler=image.is_spoiler
-                ),
+                file=discord.File(result, filename="trocr.png", spoiler=image.is_spoiler),
             )
 
     @commands.command(aliases=["flies"])
@@ -175,28 +173,22 @@ class Images(Cog):
         max_amount = 50
 
         if not min_amount <= amount <= max_amount:
-            raise commands.BadArgument(
-                f"fly amount should be between **{min_amount}** and **{max_amount}**"
-            )
+            raise commands.BadArgument(f"fly amount should be between **{min_amount}** and **{max_amount}**")
 
         # TODO: make configurable
         steps = 100
         velocity = 10
 
         async with ctx.channel.typing():
-            filename = await self.bot.loop.run_in_executor(
-                None, draw_flies, src, fly_src, steps, velocity, amount
-            )
+            filename = await self.bot.loop.run_in_executor(None, draw_flies, src, fly_src, steps, velocity, amount)
 
             # optimize gif using gifsicle
             await run_process("gifsicle", *GIFSICLE_ARGUMENTS + [filename])
 
-        await ctx.send(
-            file=discord.File(filename, filename="fly.gif", spoiler=image.is_spoiler)
-        )
+        await ctx.send(file=discord.File(filename, filename="fly.gif", spoiler=image.is_spoiler))
 
         os.remove(filename)
 
 
-def setup(bot: Bot) -> None:
+def setup(bot: PINK) -> None:
     bot.add_cog(Images(bot))

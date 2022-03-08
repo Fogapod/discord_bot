@@ -11,7 +11,7 @@ import travitia_talk as tt
 
 from discord.ext import commands, tasks  # type: ignore[attr-defined]
 
-from pink.bot import Bot
+from pink.bot import PINK
 from pink.cog import Cog
 from pink.context import Context
 from pink.errors import PINKError
@@ -59,7 +59,7 @@ class Chat(Cog):
     SESSION_RATELIMIT = 3
     SESSION_TIMEOUT = 60
 
-    def __init__(self, bot: Bot):
+    def __init__(self, bot: PINK):
         super().__init__(bot)
 
         self.chatbot = tt.ChatBot(os.environ["TRAVITIA_API_TOKEN"])
@@ -90,16 +90,12 @@ class Chat(Cog):
         """Talk to bot"""
 
         async with ctx.typing():
-            result = await self._query(
-                text, SessionSettings(ctx.author.id, channel_id=ctx.channel.id)
-            )
+            result = await self._query(text, SessionSettings(ctx.author.id, channel_id=ctx.channel.id))
 
             await ctx.send(result)
 
     @commands.command()
-    async def session(
-        self, ctx: Context, emotion: Emotion, *accents: PINKAccent
-    ) -> None:
+    async def session(self, ctx: Context, emotion: Emotion, *accents: PINKAccent) -> None:
         """Start chat session in channel
 
         Use  accent list  commamd to get list of accents.
@@ -132,9 +128,7 @@ class Chat(Cog):
             return f"Error: Text lenght must be between **{lower_bound}** and **{upper_bound}**"
 
         try:
-            response = await self.chatbot.ask(
-                text, id=settings.session_id, emotion=settings.emotion
-            )
+            response = await self.chatbot.ask(text, id=settings.session_id, emotion=settings.emotion)
         except tt.APIError as e:
             # let sentry catch it
             raise PINKError(f"Error: `{e}`")
@@ -191,5 +185,5 @@ class Chat(Cog):
             settings.last_reply = time.time()
 
 
-def setup(bot: Bot) -> None:
+def setup(bot: PINK) -> None:
     bot.add_cog(Chat(bot))

@@ -2,7 +2,7 @@ from typing import Dict, List, Optional
 
 from discord.ext import commands  # type: ignore[attr-defined]
 
-from pink.bot import Bot
+from pink.bot import PINK
 from pink.cog import Cog
 from pink.context import Context
 
@@ -48,10 +48,7 @@ class UnityStation(Cog):
 
         longest_download_name = len(max([d.name for d in server.downloads], key=len))
 
-        downloads = "\n".join(
-            f"{download.name:<{longest_download_name}} : {download}"
-            for download in server.downloads
-        )
+        downloads = "\n".join(f"{download.name:<{longest_download_name}} : {download}" for download in server.downloads)
 
         fields = (
             "name",
@@ -66,9 +63,7 @@ class UnityStation(Cog):
         )
         longest_name = len(max(fields, key=len))
 
-        main_info = "\n".join(
-            f"{field:<{longest_name}} : {getattr(server, field)}" for field in fields
-        )
+        main_info = "\n".join(f"{field:<{longest_name}} : {getattr(server, field)}" for field in fields)
 
         await ctx.send(f"```\n{main_info}\n\nDownloads\n{downloads}```")
 
@@ -101,9 +96,7 @@ class UnityStation(Cog):
 
             column_widths[col_name] = max(len(longest_value), len(col_name))
 
-        header = " | ".join(
-            f"{col_name:<{column_widths[col_name]}}" for col_name in data.keys()
-        )
+        header = " | ".join(f"{col_name:<{column_widths[col_name]}}" for col_name in data.keys())
         separator = " + ".join("-" * i for i in column_widths.values())
 
         body = ""
@@ -118,5 +111,5 @@ class UnityStation(Cog):
         await ctx.send(f"```\n{header}\n{separator}\n{body}```")
 
 
-def setup(bot: Bot) -> None:
+def setup(bot: PINK) -> None:
     bot.add_cog(UnityStation(bot))

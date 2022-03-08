@@ -43,17 +43,13 @@ class FetchedImage:
     def __init__(self, data: bytes):
         self.bytes = data
 
-    async def to_pil_image(
-        self, _: Context, *, max_dimensions: int = 10000
-    ) -> PIL.Image:
+    async def to_pil_image(self, _: Context, *, max_dimensions: int = 10000) -> PIL.Image:
         """Returns Pillow image created from bytes. Should be closed manually"""
 
         try:
             img = PIL.Image.open(BytesIO(self.bytes))
         except PIL.Image.DecompressionBombError:
-            raise PINKError(
-                f"failed to open image, exceeds **{PIL.Image.MAX_IMAGE_PIXELS}** pixel limit"
-            )
+            raise PINKError(f"failed to open image, exceeds **{PIL.Image.MAX_IMAGE_PIXELS}** pixel limit")
         except OSError as e:
             raise PINKError(f"failed to open image: {e}", formatted=False)
 
@@ -173,12 +169,7 @@ class Image:
 
         # match up to 50 previous messages using one or multiple ^'s
         if re.fullmatch(r"\^{1,50}", argument):
-            history = [
-                m
-                async for m in ctx.channel.history(
-                    before=ctx.message.created_at, limit=50
-                )
-            ]
+            history = [m async for m in ctx.channel.history(before=ctx.message.created_at, limit=50)]
 
             message = history[len(argument) - 1]
 
@@ -190,19 +181,13 @@ class Image:
                     allow_animated=allow_animated,
                 )
             ):
-                raise commands.BadArgument(
-                    f"Nothing found in message <{message.jump_url}>"
-                )
+                raise commands.BadArgument(f"Nothing found in message <{message.jump_url}>")
 
             return image
 
         def pick_format(target_animated: bool) -> Optional[str]:
             if allow_static and allow_animated:
-                return (
-                    cls.DEFAULT_ANIMATED_FORMAT
-                    if target_animated
-                    else cls.DEFAULT_STATIC_FORMAT
-                )
+                return cls.DEFAULT_ANIMATED_FORMAT if target_animated else cls.DEFAULT_STATIC_FORMAT
 
             if allow_animated and target_animated:
                 return cls.DEFAULT_ANIMATED_FORMAT
@@ -219,9 +204,7 @@ class Image:
             is_animated = emote_match["animated"] != ""
 
             if (emote_format := pick_format(is_animated)) is None:
-                raise commands.BadArgument(
-                    "Static images are not allowed, static emote provided"
-                )
+                raise commands.BadArgument("Static images are not allowed, static emote provided")
 
             if emote := ctx.bot.get_emoji(emote_id):
                 return Image(
@@ -238,9 +221,7 @@ class Image:
         if id_match := ID_REGEX.fullmatch(argument):
             if emote := ctx.bot.get_emoji(int(id_match.string)):
                 if (emote_format := pick_format(emote.animated)) is None:
-                    raise commands.BadArgument(
-                        "Static images are not allowed, static emote provided"
-                    )
+                    raise commands.BadArgument("Static images are not allowed, static emote provided")
 
                 return Image(
                     kind=ImageType.EMOTE,
@@ -256,9 +237,7 @@ class Image:
         code = "-".join(map(lambda c: f"{ord(c):x}", pattern_no_selector_16))
         emote_url = f"https://cdn.notsobot.com/twemoji/512x512/{code}.png"
 
-        async with ctx.session.get(
-            emote_url, timeout=aiohttp.ClientTimeout(total=5)
-        ) as r:
+        async with ctx.session.get(emote_url, timeout=aiohttp.ClientTimeout(total=5)) as r:
             if r.status == 200:
                 return Image(
                     kind=ImageType.EMOTE,
@@ -352,7 +331,7 @@ class Image:
             if embed.image:
                 if (
                     cls._check_extension(
-                        embed.image.url,  # type: ignore[arg-type]
+                        embed.image.url,
                         allow_static=allow_static,
                         allow_animated=allow_animated,
                     )
@@ -360,7 +339,7 @@ class Image:
                 ):
                     return Image(
                         kind=ImageType.EMBED,
-                        url=embed.image.url,  # type: ignore[arg-type]
+                        url=embed.image.url,
                     )
 
             # bot condition because we do not want image from
@@ -371,12 +350,12 @@ class Image:
             # avoid case when image embed was created from url that is
             # used as argument or flag
             if msg.id == ctx.message.id:
-                if embed.thumbnail.url in msg.content:  # type: ignore[operator]
+                if embed.thumbnail.url in msg.content:
                     continue
 
             if (
                 cls._check_extension(
-                    embed.thumbnail.url,  # type: ignore[arg-type]
+                    embed.thumbnail.url,
                     allow_static=allow_static,
                     allow_animated=allow_animated,
                 )
@@ -386,7 +365,7 @@ class Image:
 
             return Image(
                 kind=ImageType.EMBED,
-                url=embed.thumbnail.url,  # type: ignore[arg-type]
+                url=embed.thumbnail.url,
             )
 
         return None
@@ -417,17 +396,10 @@ class Image:
         #
         # command can be invoked by message edit, but we still want
         # to check messages before created_at
-        history = [
-            m
-            async for m in ctx.channel.history(limit=200, before=ctx.message.created_at)
-        ]
+        history = [m async for m in ctx.channel.history(limit=200, before=ctx.message.created_at)]
 
         for msg in [ctx.message] + history:
-            if (
-                img := cls.from_message(
-                    ctx, msg, allow_static=allow_static, allow_animated=allow_animated
-                )
-            ) is not None:
+            if (img := cls.from_message(ctx, msg, allow_static=allow_static, allow_animated=allow_animated)) is not None:
                 return img
 
         raise commands.BadArgument("Nothing found in latest 200 messages")
@@ -520,9 +492,7 @@ class StaticImage(Image):
 class AnimatedImage(Image):
     @classmethod
     async def from_text(cls, ctx: Context, argument: str) -> Image:
-        return await cls._from_text(
-            ctx, argument, allow_static=False, allow_animated=True
-        )
+        return await cls._from_text(ctx, argument, allow_static=False, allow_animated=True)
 
     @classmethod
     async def from_history(

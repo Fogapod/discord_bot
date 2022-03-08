@@ -25,9 +25,7 @@ class PINKAccent(Accent, register=False):
             raise commands.BadArgument(f"{name}: severity must be integer")
 
         if severity > cls.MAX_SEVERITY:
-            raise commands.BadArgument(
-                f"{name}: severity must be lower or equal to {cls.MAX_SEVERITY}"
-            )
+            raise commands.BadArgument(f"{name}: severity must be lower or equal to {cls.MAX_SEVERITY}")
 
         try:
             accent = ALL_ACCENTS[name.lower()]

@@ -88,9 +88,7 @@ class TextField:
             # Get angle from first word
             self.angle = self._get_angle(vertices)
 
-        left, upper, right, lower = self._vertices_to_coords(
-            vertices, src_size, self.angle
-        )
+        left, upper, right, lower = self._vertices_to_coords(vertices, src_size, self.angle)
 
         self.left = left if self.left is None else min((self.left, left))
         self.upper = upper if self.upper is None else min((self.upper, upper))
@@ -98,9 +96,7 @@ class TextField:
         self.lower = lower if self.lower is None else max((self.lower, lower))
 
     @staticmethod
-    def _vertices_to_coords(
-        vertices: _VerticesType, src_size: Tuple[int, int], angle: int
-    ) -> Tuple[int, int, int, int]:
+    def _vertices_to_coords(vertices: _VerticesType, src_size: Tuple[int, int], angle: int) -> Tuple[int, int, int, int]:
         """Returns Pillow style coordinates (left, upper, right, lower)."""
 
         # A - 0
@@ -281,9 +277,7 @@ def _language_iterator(blocks: Sequence[Any]) -> Iterator[Optional[str]]:
         if (languages := properties.get("detectedLanguages")) is None:
             return None
 
-        return sorted(languages, key=lambda l: l.get("confidence", 1))[-1][
-            "languageCode"
-        ]
+        return sorted(languages, key=lambda l: l.get("confidence", 1))[-1]["languageCode"]
 
     for block in blocks:
         block_language = extract_language(block)
@@ -317,10 +311,7 @@ async def ocr(ctx: Context, image_url: str) -> Dict[str, Any]:
         json=dict(url=image_url, ttl=3600),
     ) as r:
         if r.status != 200:
-            await ctx.reply(
-                f"Unable to reach proxy: {r.status}\n"
-                f"Will try raw URL but it will most likely fail"
-            )
+            await ctx.reply(f"Unable to reach proxy: {r.status}\n" f"Will try raw URL but it will most likely fail")
         else:
             json = await r.json()
             image_url = f"{PINK_PROXY}/{json['id']}"
@@ -354,16 +345,11 @@ async def ocr(ctx: Context, image_url: str) -> Dict[str, Any]:
                     # we got some garbage HTML response
                     reason = "unknown error"
 
-                raise PINKError(
-                    f"Something really bad happened with underlying API[{r.status}]: {reason}"
-                )
+                raise PINKError(f"Something really bad happened with underlying API[{r.status}]: {reason}")
 
             json = await r.json()
 
-            raise PINKError(
-                f"Error in underlying API[{r.status}]: "
-                f'{json.get("message", "unknown error")}'
-            )
+            raise PINKError(f"Error in underlying API[{r.status}]: " f'{json.get("message", "unknown error")}')
         json = await r.json()
 
     if len((responses := json["responses"])) == 0:
@@ -466,20 +452,15 @@ async def _apply_translation(
 
     if not need_trasnslation:
         raise PINKError(
-            "nothing to translate on image "
-            "(either entire text is in target language or language is undetected)",
+            "nothing to translate on image " "(either entire text is in target language or language is undetected)",
             formatted=False,
         )
 
-    translated = await translator_cog.translate(
-        "\n".join(need_trasnslation.values()), language
-    )
+    translated = await translator_cog.translate("\n".join(need_trasnslation.values()), language)
 
     translated_lines = translated.split("\n")
     if len(translated_lines) != len(need_trasnslation):
-        raise RuntimeError(
-            f"expected {len(need_trasnslation)} translated lines, got {len(translated_lines)}"
-        )
+        raise RuntimeError(f"expected {len(need_trasnslation)} translated lines, got {len(translated_lines)}")
 
     new_lines = lines.copy()
     for idx, translated_line in zip(need_trasnslation.keys(), translated_lines):
@@ -488,9 +469,7 @@ async def _apply_translation(
     return new_lines
 
 
-async def ocr_translate(
-    ctx: Context, image: StaticImage, language: Union[str, Accent]
-) -> Tuple[BytesIO, str]:
+async def ocr_translate(ctx: Context, image: StaticImage, language: Union[str, Accent]) -> Tuple[BytesIO, str]:
     src = await image.to_pil_image(ctx)
 
     annotations = await ocr(ctx, image.url)

@@ -46,7 +46,7 @@ class Prefix:
         "prefix_re",
     )
 
-    def __init__(self, bot: Bot, *, prefix: str):
+    def __init__(self, bot: PINK, *, prefix: str):
         self.prefix = prefix
 
         # custom prefix or mention
@@ -55,7 +55,7 @@ class Prefix:
         self.prefix_re = mention_or_prefix_regex(bot.user.id, self.prefix)
 
     @classmethod
-    def from_edb(cls, bot: Bot, data: edgedb.Object) -> Prefix:
+    def from_edb(cls, bot: PINK, data: edgedb.Object) -> Prefix:
         return cls(bot, prefix=data.prefix)
 
     async def write(self, ctx: Context) -> None:
@@ -90,14 +90,12 @@ class Prefix:
         return f"<{type(self).__name__} prefix={self.prefix}>"
 
 
-class Bot(commands.Bot):
+class PINK(commands.Bot):
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(
             command_prefix=PREFIX,
             case_insensitive=True,
-            allowed_mentions=discord.AllowedMentions(
-                roles=False, everyone=False, users=True
-            ),
+            allowed_mentions=discord.AllowedMentions(roles=False, everyone=False, users=True),
             intents=discord.Intents(
                 guilds=True,
                 members=True,
@@ -147,9 +145,7 @@ class Bot(commands.Bot):
         print(f"Prefix: {PREFIX}")
 
     async def critical_setup(self) -> None:
-        self.edb = await edgedb.create_async_pool(
-            dsn=os.environ["EDGEDB_DSN"], min_size=1, max_size=2
-        )
+        self.edb = await edgedb.create_async_pool(dsn=os.environ["EDGEDB_DSN"], min_size=1, max_size=2)  # type: ignore[no-untyped-call]
 
     async def _get_prefixes(self) -> None:
         self._default_prefix_re = mention_or_prefix_regex(self.user.id, PREFIX)
@@ -214,9 +210,7 @@ class Bot(commands.Bot):
 
         sentry_sdk.set_user({"id": message.author.id, "username": str(message.author)})
         sentry_sdk.set_context("channel", {"id": message.channel.id})
-        sentry_sdk.set_context(
-            "guild", {"id": None if message.guild is None else message.guild.id}
-        )
+        sentry_sdk.set_context("guild", {"id": None if message.guild is None else message.guild.id})
 
         await self.process_commands(message)
 

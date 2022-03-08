@@ -1,7 +1,7 @@
 import logging
 import os
 
-from .bot import Bot
+from .bot import PINK
 
 log = logging.getLogger(__name__)
 
@@ -23,6 +23,5 @@ if __name__ == "__main__":
     else:
         log.warning("skipped sentry initialization")
 
-    bot = Bot()
-
-    bot.run(os.environ["BOT_TOKEN"])
+    pink = PINK()
+    pink.run(os.environ["BOT_TOKEN"])

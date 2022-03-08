@@ -13,8 +13,6 @@ class Language(str):
         code = LANGCODES.get(argument, argument)
 
         if (maybe_alias := LANGCODE_ALIASES.get(code, code)) not in LANGUAGES:
-            raise commands.BadArgument(
-                "Invalid language. Use `tr list` to get list of supported languages"
-            )
+            raise commands.BadArgument("Invalid language. Use `tr list` to get list of supported languages")
 
         return maybe_alias

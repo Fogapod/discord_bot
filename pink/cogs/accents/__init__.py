@@ -13,7 +13,7 @@ import discord
 from discord.ext import commands  # type: ignore[attr-defined]
 from pink_accents import Accent
 
-from pink.bot import Bot
+from pink.bot import PINK
 from pink.cog import Cog
 from pink.cogs.utils.errorhandler import PINKError
 from pink.context import Context
@@ -22,9 +22,7 @@ from pink.utils import LRU
 from .constants import ALL_ACCENTS
 from .types import PINKAccent
 
-REQUIRED_PERMS = discord.Permissions(
-    send_messages=True, manage_messages=True, manage_webhooks=True
-)
+REQUIRED_PERMS = discord.Permissions(send_messages=True, manage_messages=True, manage_webhooks=True)
 
 
 log = logging.getLogger(__name__)
@@ -41,7 +39,7 @@ class Accents(Cog):
 
     MAX_ACCENTS_PER_USER = 10
 
-    def __init__(self, bot: Bot):
+    def __init__(self, bot: PINK):
         Accents.instance = self
 
         super().__init__(bot)
@@ -69,10 +67,7 @@ class Accents(Cog):
             accents = []
             for accent in settings.accents:
                 if (accent_cls := ALL_ACCENTS.get(accent.name.lower())) is None:
-                    log.error(
-                        f"unknown accent: "
-                        f"guild={settings.guild_id} user={settings.user_id} {accent}"
-                    )
+                    log.error(f"unknown accent: " f"guild={settings.guild_id} user={settings.user_id} {accent}")
 
                     continue
 
@@ -89,9 +84,7 @@ class Accents(Cog):
 
         return self._accents[member.guild.id].get(member.id, [])
 
-    def set_user_accents(
-        self, member: discord.Member, accents: _UserAccentsType
-    ) -> None:
+    def set_user_accents(self, member: discord.Member, accents: _UserAccentsType) -> None:
         if member.guild.id not in self._accents:
             self._accents[member.guild.id] = {}
 
@@ -111,9 +104,7 @@ class Accents(Cog):
         await ctx.send_help(ctx.command)
 
     @commands.command()
-    async def accents(
-        self, ctx: Context, user: Optional[discord.Member] = None
-    ) -> None:
+    async def accents(self, ctx: Context, user: Optional[discord.Member] = None) -> None:
         """Alias for accent list"""
 
         await ctx.invoke(self._list, user=user)
@@ -158,9 +149,7 @@ class Accents(Cog):
             ),
         ):
             if instance := user_accent_map.get(accent.name):  # type: ignore
-                line = (
-                    f"+ {instance.full_name:>{longest_name}} : {accent.description}\n"
-                )
+                line = f"+ {instance.full_name:>{longest_name}} : {accent.description}\n"
             else:
                 line = f"- {accent.name:>{longest_name}} : {accent.description}\n"
 
@@ -173,9 +162,7 @@ class Accents(Cog):
             accents=[],
         )
 
-    async def _add_accents(
-        self, ctx: Context, member: discord.Member, accents: _UserAccentsType
-    ) -> None:
+    async def _add_accents(self, ctx: Context, member: discord.Member, accents: _UserAccentsType) -> None:
         user_accent_map = {a.name: a for a in self.get_user_accents(member)}
 
         something_changed = False
@@ -195,9 +182,7 @@ class Accents(Cog):
             raise PINKError("Nothing to do")
 
         if len(user_accent_map) > self.MAX_ACCENTS_PER_USER:
-            raise PINKError(
-                f"Cannot have more than **{self.MAX_ACCENTS_PER_USER}** enabled at once"
-            )
+            raise PINKError(f"Cannot have more than **{self.MAX_ACCENTS_PER_USER}** enabled at once")
 
         all_accents = list(user_accent_map.values())
 
@@ -224,9 +209,7 @@ class Accents(Cog):
             accents=json.dumps([(a.name, a.severity) for a in all_accents]),
         )
 
-    async def _remove_accents(
-        self, ctx: Context, member: discord.Member, accents: _UserAccentsType
-    ) -> None:
+    async def _remove_accents(self, ctx: Context, member: discord.Member, accents: _UserAccentsType) -> None:
         if not accents:
             updated = []
         else:
@@ -347,16 +330,10 @@ class Accents(Cog):
         upper_limit = 1000
 
         if not lower_limit <= limit <= upper_limit:
-            raise PINKError(
-                f"Limit should be between **{lower_limit}** and **{upper_limit}**"
-            )
+            raise PINKError(f"Limit should be between **{lower_limit}** and **{upper_limit}**")
 
-        if (
-            accent_webhook := await self._get_cached_webhook(ctx.channel, create=False)
-        ) is None:
-            raise PINKError(
-                "There is no accent webhook in this channel. Nothing to delete"
-            )
+        if (accent_webhook := await self._get_cached_webhook(ctx.channel, create=False)) is None:
+            raise PINKError("There is no accent webhook in this channel. Nothing to delete")
 
         message_counts: DefaultDict[str, int] = collections.defaultdict(int)
 
@@ -370,20 +347,15 @@ class Accents(Cog):
             return True
 
         async with ctx.typing():
-            deleted = await ctx.channel.purge(
-                limit=limit, check=is_accent_webhook, before=ctx.message.created_at
-            )
+            deleted = await ctx.channel.purge(limit=limit, check=is_accent_webhook, before=ctx.message.created_at)
 
             if not deleted:
                 return await ctx.send("No accent messages found")
 
-            message_counts_table = "\n".join(
-                f"{name}: {count}" for name, count in message_counts.items()
-            )
+            message_counts_table = "\n".join(f"{name}: {count}" for name, count in message_counts.items())
 
             await ctx.send(
-                f"Deleted **{len(deleted)}** out of **{limit}** message(s) from:"
-                f"```\n{message_counts_table}```"
+                f"Deleted **{len(deleted)}** out of **{limit}** message(s) from:" f"```\n{message_counts_table}```"
             )
 
     async def _toggle_bot_accent(
@@ -513,9 +485,7 @@ class Accents(Cog):
         if not (accents := self.get_user_accents(message.author)):
             return
 
-        if not message.channel.permissions_for(message.guild.me).is_superset(
-            REQUIRED_PERMS
-        ):
+        if not message.channel.permissions_for(message.guild.me).is_superset(REQUIRED_PERMS):
             # NOTE: the decision has been made for this to fail silently.
             # this adds some overhead, but makes bot setup much simplier.
             #
@@ -526,9 +496,7 @@ class Accents(Cog):
         if (ctx := await self.bot.get_context(message)).valid:
             return
 
-        if (
-            content := self.apply_accents_to_text(message.content, accents)
-        ) == message.content:
+        if (content := self.apply_accents_to_text(message.content, accents)) == message.content:
             return
 
         try:
@@ -594,11 +562,11 @@ class Accents(Cog):
         await ctx.send(
             content,
             allowed_mentions=discord.AllowedMentions(
-                everyone=original.author.guild_permissions.mention_everyone,  # type: ignore[union-attr]
+                everyone=original.author.guild_permissions.mention_everyone,
                 users=True,
                 roles=True,
             ),
-            target=await self._get_cached_webhook(original.channel),  # type: ignore[arg-type]
+            target=await self._get_cached_webhook(original.channel),
             register=False,
             accents=[],
             # webhook data
@@ -613,11 +581,9 @@ class Accents(Cog):
 
     # needed in case people use command and edit their message
     @Cog.listener()
-    async def on_message_edit(
-        self, _old: discord.Message, new: discord.Message
-    ) -> None:
+    async def on_message_edit(self, _old: discord.Message, new: discord.Message) -> None:
         await self._replace_message(new)
 
 
-def setup(bot: Bot) -> None:
+def setup(bot: PINK) -> None:
     bot.add_cog(Accents(bot))

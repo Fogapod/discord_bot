@@ -14,7 +14,7 @@ import edgedb
 
 from discord.ext import commands  # type: ignore[attr-defined]
 
-from pink.bot import Bot
+from pink.bot import PINK
 from pink.checks import is_owner
 from pink.cog import Cog
 from pink.context import Context
@@ -53,9 +53,7 @@ class TechAdmin(Cog):
 
     # https://github.com/Rapptz/RoboDanny/blob/715a5cf8545b94d61823f62db484be4fac1c95b1/cogs/admin.py#L422
     @commands.command(aliases=["doas", "da"])
-    async def runas(
-        self, ctx: Context, user: Union[discord.Member, discord.User], *, command: str
-    ) -> None:
+    async def runas(self, ctx: Context, user: Union[discord.Member, discord.User], *, command: str) -> None:
         """Run command as other user"""
 
         msg = copy.copy(ctx.message)
@@ -70,9 +68,7 @@ class TechAdmin(Cog):
     def _make_paginator(self, text: str, prefix: str = "```") -> commands.Paginator:
         paginator = commands.Paginator(prefix=prefix)
         # https://github.com/Rapptz/discord.py/blob/5c868ed871184b26a46319c45a799c190e635892/discord/ext/commands/help.py#L125
-        max_page_size = (
-            paginator.max_size - len(paginator.prefix) - len(paginator.suffix) - 2
-        )
+        max_page_size = paginator.max_size - len(paginator.prefix) - len(paginator.suffix) - 2
 
         def wrap_with_limit(text: str, limit: int) -> Iterator[str]:
             limit -= 1
@@ -95,15 +91,11 @@ class TechAdmin(Cog):
 
         return paginator
 
-    async def _send_paginator(
-        self, ctx: Context, paginator: commands.Paginator
-    ) -> None:
+    async def _send_paginator(self, ctx: Context, paginator: commands.Paginator) -> None:
         if len(paginator.pages) > self.PAGINATOR_PAGES_CAP:
             pages = paginator.pages[-self.PAGINATOR_PAGES_CAP :]
 
-            await ctx.send(
-                f"Sending last **{len(pages)}** of **{len(paginator.pages)}** pages"
-            )
+            await ctx.send(f"Sending last **{len(pages)}** of **{len(paginator.pages)}** pages")
         else:
             pages = paginator.pages
 
@@ -150,7 +142,7 @@ class TechAdmin(Cog):
         async with ctx.typing():
             try:
                 # https://github.com/edgedb/edgedb-python/issues/107
-                data = json.loads(await ctx.edb.query_json(program))
+                data = json.loads(await ctx.edb.query_json(program))  # type: ignore[no-untyped-call]
             except edgedb.EdgeDBError as e:
                 return await ctx.send(f"Error: **{type(e).__name__}**: `{e}`")
 
@@ -219,9 +211,7 @@ class TechAdmin(Cog):
 
         return self._make_paginator(result, prefix="```bash\n")
 
-    async def _edgedb_table(
-        self, result: Union[Sequence[Dict[str, Any]], Sequence[Any]]
-    ) -> commands.Paginator:
+    async def _edgedb_table(self, result: Union[Sequence[Dict[str, Any]], Sequence[Any]]) -> commands.Paginator:
         if not isinstance(result[0], dict):
             paginator = commands.Paginator(prefix="```python\n")
             paginator.add_line(str(result))
@@ -239,9 +229,7 @@ class TechAdmin(Cog):
                     )
                 )
 
-        header = " | ".join(
-            f"{column:^{col_widths[i]}}" for i, column in enumerate(columns)
-        )
+        header = " | ".join(f"{column:^{col_widths[i]}}" for i, column in enumerate(columns))
         separator = "-+-".join("-" * width for width in col_widths)
 
         def sanitize_value(value: Any) -> str:
@@ -258,14 +246,11 @@ class TechAdmin(Cog):
 
         for row in result:
             paginator.add_line(
-                " | ".join(
-                    f"{sanitize_value(value):<{col_widths[i]}}"
-                    for i, value in enumerate(row.values())
-                )
+                " | ".join(f"{sanitize_value(value):<{col_widths[i]}}" for i, value in enumerate(row.values()))
             )
 
         return paginator
 
 
-def setup(bot: Bot) -> None:
+def setup(bot: PINK) -> None:
     bot.add_cog(TechAdmin(bot))

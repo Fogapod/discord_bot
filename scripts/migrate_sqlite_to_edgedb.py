@@ -20,9 +20,7 @@ def main() -> None:
     edgedb_conn = edgedb.connect(os.environ["EDGEDB_DSN"])
 
     accents: Dict[Tuple[int, int], List[Any]] = {}
-    for accent in sqlite_conn.execute(
-        "SELECT guild_id, user_id, accent, severity FROM user_accent"
-    ):
+    for accent in sqlite_conn.execute("SELECT guild_id, user_id, accent, severity FROM user_accent"):
         pk = (accent["guild_id"], accent["user_id"])
         data = (accent["accent"], accent["severity"])
         if pk in accents:

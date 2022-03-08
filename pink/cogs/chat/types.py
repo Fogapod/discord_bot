@@ -10,6 +10,4 @@ class Emotion(commands.Converter):
         try:
             return tt.Emotion(argument)
         except ValueError:
-            raise commands.BadArgument(
-                f"Must be one of {', '.join(e.value for e in tt.Emotion)}"
-            )
+            raise commands.BadArgument(f"Must be one of {', '.join(e.value for e in tt.Emotion)}")

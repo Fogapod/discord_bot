@@ -7,7 +7,7 @@ import discord
 
 from discord.ext import commands  # type: ignore[attr-defined]
 
-from pink.bot import Bot
+from pink.bot import PINK
 from pink.cog import Cog
 from pink.context import Context
 
@@ -129,16 +129,11 @@ class Fun(Cog):
             )
         )
 
-        await ctx.send(
-            f"**{ctx.author}** {verb} {item} {preposition} **{mention}**{modifier}!"
-        )
+        await ctx.send(f"**{ctx.author}** {verb} {item} {preposition} **{mention}**{modifier}!")
 
         if isinstance(target, discord.TextChannel):
             if target.guild == ctx.guild:
-                if (
-                    target.permissions_for(ctx.author).send_messages
-                    and target.permissions_for(ctx.me).send_messages
-                ):
+                if target.permissions_for(ctx.author).send_messages and target.permissions_for(ctx.me).send_messages:
                     if ctx.channel.is_nsfw() and not target.is_nsfw():
                         return await ctx.send("Can't throw items from horny channel!")
 
@@ -148,9 +143,7 @@ class Fun(Cog):
                         allowed_mentions=discord.AllowedMentions(users=False),
                     )
 
-            await ctx.send(
-                f"{item} bounces back from {mention} and hits `{ctx.author}`!"
-            )
+            await ctx.send(f"{item} bounces back from {mention} and hits `{ctx.author}`!")
 
     @commands.command()
     async def say(self, ctx: Context, *, text: str) -> None:
@@ -162,18 +155,14 @@ class Fun(Cog):
     async def joke(self, ctx: Context) -> None:
         """Summon the funny"""
 
-        async with ctx.session.get(
-            "https://official-joke-api.appspot.com/jokes/random"
-        ) as r:
+        async with ctx.session.get("https://official-joke-api.appspot.com/jokes/random") as r:
             data = await r.json()
 
         await ctx.send(f"{data['setup']}\n||{data['punchline']}||")
 
     @commands.command(aliases=["pretend"])
     @commands.bot_has_permissions(manage_webhooks=True)
-    async def impersonate(
-        self, ctx: Context, user: Union[discord.Member, discord.User], *, text: str
-    ) -> None:
+    async def impersonate(self, ctx: Context, user: Union[discord.Member, discord.User], *, text: str) -> None:
         """Send message as someone else"""
 
         name = user.display_name[:32]
@@ -186,17 +175,13 @@ class Fun(Cog):
 
         if isinstance(user, discord.Member):
             if (accent_cog := ctx.bot.get_cog("Accents")) is None:
-                log.warning(
-                    "accents cog not found, cannot apply accents to impersonation"
-                )
+                log.warning("accents cog not found, cannot apply accents to impersonation")
             else:
                 if user_accents := accent_cog.get_user_accents(user):
                     accents = user_accents
 
         try:
-            webhook = await ctx.channel.create_webhook(
-                name="PINK impersonation webhook"
-            )
+            webhook = await ctx.channel.create_webhook(name="PINK impersonation webhook")
         except Exception as e:
             await ctx.reply(f"Unable to create webhook: {e}")
 
@@ -217,5 +202,5 @@ class Fun(Cog):
             await webhook.delete()
 
 
-def setup(bot: Bot) -> None:
+def setup(bot: PINK) -> None:
     bot.add_cog(Fun(bot))

@@ -4,7 +4,7 @@ from typing import Any, Union
 
 import discord
 
-from pink.bot import Bot
+from pink.bot import PINK
 from pink.cog import Cog
 from pink.context import Context
 from pink.utils import LRU
@@ -27,14 +27,12 @@ def convert_emoji_reaction(emoji: _EmojiType) -> str:
         return emoji.strip("<>")
 
     raise discord.errors.InvalidArgument(
-        "emoji argument must be str, Emoji, or Reaction not {.__class__.__name__}.".format(
-            emoji
-        )
+        "emoji argument must be str, Emoji, or Reaction not {.__class__.__name__}.".format(emoji)
     )
 
 
 class RemovableResponse:
-    async def remove(self, _bot: Bot) -> None:
+    async def remove(self, _bot: PINK) -> None:
         raise NotImplementedError
 
 
@@ -48,7 +46,7 @@ class MessageResponse(RemovableResponse):
         self.channel_id = message.channel.id
         self.message_id = message.id
 
-    async def remove(self, bot: Bot) -> None:
+    async def remove(self, bot: PINK) -> None:
         with contextlib.suppress(discord.NotFound):
             await bot.http.delete_message(self.channel_id, self.message_id)
 
@@ -72,11 +70,9 @@ class ReactionResponse(RemovableResponse):
         self.message_id = message.id
         self.emoji = emoji
 
-    async def remove(self, bot: Bot) -> None:
+    async def remove(self, bot: PINK) -> None:
         with contextlib.suppress(discord.NotFound):
-            await bot.http.remove_own_reaction(
-                self.channel_id, self.message_id, self.emoji
-            )
+            await bot.http.remove_own_reaction(self.channel_id, self.message_id, self.emoji)
 
     def __repr__(self) -> str:
         return f"<{type(self).__name__} channel={self.channel_id} message={self.message_id} emoji={self.emoji}>"
@@ -86,18 +82,14 @@ class ResponseTracker(Cog):
     responses = LRU(1024)
 
     @Context.hook()
-    async def on_send(
-        original, ctx: Context, *args: Any, register: bool = True, **kwargs: Any
-    ) -> discord.Message:
+    async def on_send(original, ctx: Context, *args: Any, register: bool = True, **kwargs: Any) -> discord.Message:
         message = None
 
         try:
             message = await original(ctx, *args, **kwargs)
         finally:
             if message is not None and register:
-                ResponseTracker.register_response(
-                    ctx.message.id, MessageResponse(message)
-                )
+                ResponseTracker.register_response(ctx.message.id, MessageResponse(message))
 
         return message
 
@@ -150,7 +142,7 @@ class ResponseTracker(Cog):
         cls.responses[message_id] = existing
 
     @classmethod
-    async def remove_responses(cls, message_id: int, bot: Bot) -> None:
+    async def remove_responses(cls, message_id: int, bot: PINK) -> None:
         responses = cls.responses.pop(message_id, [])
 
         for response in responses:
@@ -160,5 +152,5 @@ class ResponseTracker(Cog):
         # asyncio.gather(*[r.remove(bot) for r in responses])
 
 
-def setup(bot: Bot) -> None:
+def setup(bot: PINK) -> None:
     bot.add_cog(ResponseTracker(bot))

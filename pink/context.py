@@ -1,4 +1,6 @@
-from typing import Any, Optional, Union
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 import aiohttp
 import discord
@@ -8,11 +10,16 @@ from discord.ext import commands  # type: ignore[attr-defined]
 
 from .hookable import AsyncHookable
 
+if TYPE_CHECKING:
+    from .bot import PINK
+
 
 class Context(commands.Context, AsyncHookable):
+    bot: PINK
+
     @property
-    def prefix(self) -> str:
-        return self._prefix  # type: ignore
+    def prefix(self) -> Optional[str]:
+        return self._prefix
 
     @prefix.setter
     def prefix(self, value: Optional[str]) -> None:
@@ -27,7 +34,7 @@ class Context(commands.Context, AsyncHookable):
     def session(self) -> aiohttp.ClientSession:
         return self.bot.session
 
-    @AsyncHookable.hookable()
+    @AsyncHookable.hookable()  # type: ignore[no-untyped-call]
     async def send(
         self,
         content: Any = None,
@@ -37,9 +44,11 @@ class Context(commands.Context, AsyncHookable):
     ) -> discord.Message:
 
         if target is None:
+            target = super()
+
             # mypy does not recognize superclass here and just names it "super"
-            target = super()  # type: ignore[assignment]
-            assert target is not None
+            if TYPE_CHECKING:
+                assert isinstance(target, discord.abc.Messageable)
 
         if content is not None:
             # hardcoded 2000 limit because error handling is tricky with 50035
@@ -51,7 +60,7 @@ class Context(commands.Context, AsyncHookable):
     async def reply(self, content: Any = None, **kwargs: Any) -> discord.Message:
         return await self.send(content, reference=self.message, **kwargs)
 
-    @AsyncHookable.hookable()
+    @AsyncHookable.hookable()  # type: ignore[no-untyped-call]
     async def edit(
         self,
         message: discord.Message,
@@ -62,7 +71,7 @@ class Context(commands.Context, AsyncHookable):
 
         await message.edit(content=content, **kwargs)
 
-    @AsyncHookable.hookable()
+    @AsyncHookable.hookable()  # type: ignore[no-untyped-call]
     async def react(
         self,
         emoji: Union[discord.Emoji, str],

@@ -5,7 +5,7 @@ import sentry_sdk
 
 from discord.ext import commands  # type: ignore[attr-defined]
 
-from pink.bot import Bot
+from pink.bot import PINK
 from pink.cog import Cog
 from pink.context import Context
 
@@ -15,9 +15,7 @@ log = logging.getLogger(__name__)
 class PINKError(Exception):
     """Configurable to allow cancelling cooldown and custom error formatting"""
 
-    def __init__(
-        self, msg: str, *, formatted: bool = True, cancel_cooldown: bool = False
-    ):
+    def __init__(self, msg: str, *, formatted: bool = True, cancel_cooldown: bool = False):
         self.msg = msg
         self.formatted = formatted
         self.cancel_cooldown = cancel_cooldown
@@ -90,5 +88,5 @@ class ErrorHandler(Cog):
             raise e
 
 
-def setup(bot: Bot) -> None:
+def setup(bot: PINK) -> None:
     bot.add_cog(ErrorHandler(bot))

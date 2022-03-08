@@ -21,9 +21,7 @@ from pink.errors import PINKError
 log = logging.getLogger(__name__)
 
 
-DownloadAddressResponse = collections.namedtuple(
-    "DownloadAddressResponse", ["status", "error"]
-)
+DownloadAddressResponse = collections.namedtuple("DownloadAddressResponse", ["status", "error"])
 
 
 class DownloadAddress:
@@ -45,9 +43,7 @@ class DownloadAddress:
         # to fetch same URL if servers use same game version
 
         try:
-            async with ctx.session.head(
-                self.url, timeout=aiohttp.ClientTimeout(total=10)
-            ) as r:
+            async with ctx.session.head(self.url, timeout=aiohttp.ClientTimeout(total=10)) as r:
                 response = DownloadAddressResponse(r.status, None)
         except Exception as e:
             log.error("fetching %s: %s: %s", repr(self), type(e).__name__, str(e))
@@ -123,9 +119,7 @@ class Server:
         }
 
         return cls(
-            downloads=[
-                DownloadAddress(v, data[k]) for k, v in download_aliases.items()
-            ],
+            downloads=[DownloadAddress(v, data[k]) for k, v in download_aliases.items()],
             # how is this an incompatibe type, mypy???
             **{v: str(data.get(k, "unknown")) for k, v in aliases.items()},  # type: ignore
         )
