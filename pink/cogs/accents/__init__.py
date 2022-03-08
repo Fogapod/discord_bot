@@ -206,7 +206,7 @@ class Accents(Cog):
             """,
             guild_id=ctx.guild.id,
             user_id=member.id,
-            accents=orjson.dumps([(a.name, a.severity) for a in all_accents]),
+            accents=orjson.dumps([(a.name, a.severity) for a in all_accents]).decode(),
         )
 
     async def _remove_accents(self, ctx: Context, member: discord.Member, accents: _UserAccentsType) -> None:
@@ -242,7 +242,7 @@ class Accents(Cog):
             """,
             guild_id=ctx.guild.id,
             user_id=member.id,
-            accents=orjson.dumps([(a.name, a.severity) for a in updated]),
+            accents=orjson.dumps([(a.name, a.severity) for a in updated]).decode(),
         )
 
     async def _update_nick(self, ctx: Context) -> None:
