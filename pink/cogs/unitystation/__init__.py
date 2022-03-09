@@ -27,14 +27,13 @@ class UnityStation(Cog):
     async def servers(self, ctx: Context, *, server: Optional[str] = None) -> None:
         """List hub servers"""
 
-        # commented out because discord dead
-        # async with ctx.typing():
-        await self.servers.fetch(ctx)
+        async with ctx.typing():
+            await self.servers.fetch(ctx)
 
-        if server is None:
-            await self._servers(ctx)
-        else:
-            await self._server(ctx, server)
+            if server is None:
+                await self._servers(ctx)
+            else:
+                await self._server(ctx, server)
 
     async def _server(self, ctx: Context, server_name: str) -> None:
         server_name = server_name.lower()
