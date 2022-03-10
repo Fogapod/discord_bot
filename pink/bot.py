@@ -7,8 +7,7 @@ import re
 import time
 import traceback
 
-from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Set, Type, Union
+from typing import Any, Dict, List, Optional, Set, Type, Union
 
 import aiohttp
 import discord
@@ -21,6 +20,19 @@ from .constants import PREFIX
 from .context import Context
 
 log = logging.getLogger(__name__)
+
+initial_extensions = (
+    "pink.cogs.utils.errorhandler",
+    "pink.cogs.utils.responsetracker",
+    "pink.cogs.accents",
+    "pink.cogs.chat",
+    "pink.cogs.fun",
+    "pink.cogs.images",
+    "pink.cogs.translator",
+    "pink.cogs.meta",
+    "pink.cogs.techadmin",
+    "pink.cogs.unitystation",
+)
 
 
 def mention_or_prefix_regex(user_id: int, prefix: str) -> re.Pattern[str]:
@@ -107,18 +119,10 @@ class PINK(commands.Bot):
 
     # --- custon functions ---
     async def pre_setup(self) -> None:
-        """
-        First async initialization. Critical bot components must be created here if possible
-        (happens before gateway connection)
-        """
         self.launched_at = time.monotonic()
 
         self.session = aiohttp.ClientSession(headers={"user-agent": "PINK bot"})
-        self.edb = await edgedb.create_async_pool(
-            dsn=os.environ["EDGEDB_DSN"],
-            min_size=1,
-            max_size=2,
-        )  # type: ignore[no-untyped-call]
+        self.edb = await edgedb.create_async_pool(dsn=os.environ["EDGEDB_DSN"], min_size=1, max_size=2)  # type: ignore[no-untyped-call]
 
     async def _setup(self) -> None:
         await self.wait_until_ready()
@@ -131,14 +135,19 @@ class PINK(commands.Bot):
             raise
 
     async def setup(self) -> None:
-        """Hapens after bot is ready and does not block anything. Misc setup like filling caches"""
-
         await self.wait_until_ready()
 
         await self._get_prefixes()
         await self._fetch_owners()
 
-        self._load_cogs()
+        for extension in initial_extensions:
+            try:
+                self.load_extension(extension)
+            except Exception as e:
+                log.error(f"Error loading {extension}: {type(e).__name__} - {e}")
+                traceback.print_exc()
+            else:
+                print(f"loaded {extension}")
 
     async def _get_prefixes(self) -> None:
         self._default_prefix_re = mention_or_prefix_regex(self.user.id, PREFIX)
@@ -159,31 +168,6 @@ class PINK(commands.Bot):
             self.owner_ids = set((app_info.owner.id,))
         else:
             self.owner_ids = set(m.id for m in app_info.team.members)
-
-    def _load_cogs(self) -> None:
-        for cog_path in self._iterate_cogs(Path("pink") / "cogs"):
-            module = ".".join(cog_path.parts)
-            try:
-                self.load_extension(module)
-            except Exception as e:
-                log.error(f"Error loading {module}: {type(e).__name__} - {e}")
-                traceback.print_exc()
-            else:
-                print(f"loaded {module}")
-
-    def _iterate_cogs(self, path: Path) -> Iterator[Path]:
-        for entry in path.iterdir():
-            if entry.name.startswith("_"):
-                continue
-
-            if entry.is_dir():
-                # if folder has __init__.py, it is a cog. otherwise it is a group of cogs
-                if (entry / "__init__.py").exists():
-                    yield entry
-                else:
-                    yield from self._iterate_cogs(entry)
-            else:
-                yield entry.parent / entry.stem
 
     # --- overloads ---
     async def close(self) -> None:
