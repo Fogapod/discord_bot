@@ -35,17 +35,19 @@ class Meta(Cog):
     def cog_unload(self) -> None:
         self.bot.help_command = self.old_help_command
 
-    @commands.command(aliases=["p"])
+    @commands.command(aliases=["pink"])
     async def ping(self, ctx: Context, *_args: str) -> None:
         """Check bot latency"""
 
+        g_or_k = "g" if ctx.invoked_with == "ping" else "k"
+
         start = perf_counter()
-        m = await ctx.send("pinging")
+        m = await ctx.send(f"pin{g_or_k}ing")
         send_diff = round((perf_counter() - start) * 1000)
 
         latency = round(self.bot.latency * 1000)
 
-        await ctx.edit(m, content=f"Pong, **{send_diff}ms**\n\nLatency: **{latency}ms**")
+        await ctx.edit(m, content=f"Pon{g_or_k}, **{send_diff}ms**\n\nLatency: **{latency}ms**")
 
     @commands.command(aliases=["info"])
     async def about(self, ctx: Context) -> None:

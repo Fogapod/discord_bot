@@ -252,7 +252,7 @@ class Image:
         except commands.UserNotFound:
             pass
         else:
-            if (avatar_format := pick_format(user.is_avatar_animated())) is None:
+            if (avatar_format := pick_format(user.avatar.is_animated())) is None:
                 raise commands.BadArgument(
                     f"Static images are not allowed, {user} has static avatar",
                 )
