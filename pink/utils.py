@@ -27,8 +27,9 @@ async def run_process_shell(program: str) -> Tuple[str, str]:
     return [stream.decode() if stream is not None else "" for stream in data]  # type: ignore
 
 
-def minutes_to_human_readable(minutes: int) -> str:
+def seconds_to_human_readable(minutes: int) -> str:
     ranges = (
+        (60, "s"),  # seconds/minute
         (60, "m"),  # minutes/hour
         (24, "h"),  # hours/day
         (30, "d"),  # days/month

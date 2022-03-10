@@ -4,6 +4,7 @@ import asyncio
 import logging
 import os
 import re
+import time
 import traceback
 
 from typing import Any, Dict, List, Optional, Set, Type, Union
@@ -108,16 +109,72 @@ class PINK(commands.Bot):
             **kwargs,
         )
 
-        self.session = aiohttp.ClientSession(headers={"user-agent": "PINK bot"})
-
         self._default_prefix_re: Optional[re.Pattern[str]] = None
 
         self.prefixes: Dict[int, Prefix] = {}
-
         self.owner_ids: Set[int] = set()
 
-        self.loop.run_until_complete(self.critical_setup())
+        self.loop.run_until_complete(self.pre_setup())
         self.loop.create_task(self._setup())
+
+    # --- custon functions ---
+    async def pre_setup(self) -> None:
+        self.launched_at = time.monotonic()
+
+        self.session = aiohttp.ClientSession(headers={"user-agent": "PINK bot"})
+        self.edb = await edgedb.create_async_pool(dsn=os.environ["EDGEDB_DSN"], min_size=1, max_size=2)  # type: ignore[no-untyped-call]
+
+    async def _setup(self) -> None:
+        await self.wait_until_ready()
+
+        try:
+            await asyncio.shield(self.setup())
+        except Exception:
+            await self.close()
+
+            raise
+
+    async def setup(self) -> None:
+        await self.wait_until_ready()
+
+        await self._get_prefixes()
+        await self._fetch_owners()
+
+        for extension in initial_extensions:
+            try:
+                self.load_extension(extension)
+            except Exception as e:
+                log.error(f"Error loading {extension}: {type(e).__name__} - {e}")
+                traceback.print_exc()
+            else:
+                print(f"loaded {extension}")
+
+    async def _get_prefixes(self) -> None:
+        self._default_prefix_re = mention_or_prefix_regex(self.user.id, PREFIX)
+
+        for guild in await self.edb.query(
+            """
+            SELECT Prefix {
+                guild_id,
+                prefix,
+            }
+            """
+        ):
+            self.prefixes[guild.guild_id] = Prefix.from_edb(self, guild)
+
+    async def _fetch_owners(self) -> None:
+        app_info = await self.application_info()
+        if app_info.team is None:
+            self.owner_ids = set((app_info.owner.id,))
+        else:
+            self.owner_ids = set(m.id for m in app_info.team.members)
+
+    # --- overloads ---
+    async def close(self) -> None:
+        await self.edb.aclose()
+        await self.session.close()
+
+        await super().close()
 
     async def get_prefix(self, message: discord.Message) -> Union[List[str], str]:
         if self._default_prefix_re is None:
@@ -140,62 +197,6 @@ class PINK(commands.Bot):
         # allow empty match in DMs
         return ""
 
-    async def on_ready(self) -> None:
-        print(f"Logged in as {self.user}!")
-        print(f"Prefix: {PREFIX}")
-
-    async def critical_setup(self) -> None:
-        self.edb = await edgedb.create_async_pool(dsn=os.environ["EDGEDB_DSN"], min_size=1, max_size=2)  # type: ignore[no-untyped-call]
-
-    async def _get_prefixes(self) -> None:
-        self._default_prefix_re = mention_or_prefix_regex(self.user.id, PREFIX)
-
-        for guild in await self.edb.query(
-            """
-            SELECT Prefix {
-                guild_id,
-                prefix,
-            }
-            """
-        ):
-            self.prefixes[guild.guild_id] = Prefix.from_edb(self, guild)
-
-    async def _fetch_owners(self) -> None:
-        app_info = await self.application_info()
-        if app_info.team is None:
-            self.owner_ids = set((app_info.owner.id,))
-        else:
-            self.owner_ids = set(m.id for m in app_info.team.members)
-
-    async def setup(self) -> None:
-        await self._get_prefixes()
-        await self._fetch_owners()
-
-        for extension in initial_extensions:
-            try:
-                self.load_extension(extension)
-            except Exception as e:
-                log.error(f"Error loading {extension}: {type(e).__name__} - {e}")
-                traceback.print_exc()
-            else:
-                print(f"loaded {extension}")
-
-    async def _setup(self) -> None:
-        await self.wait_until_ready()
-
-        try:
-            await asyncio.shield(self.setup())
-        except Exception:
-            await self.close()
-
-            raise
-
-    async def close(self) -> None:
-        await self.edb.aclose()
-        await self.session.close()
-
-        await super().close()
-
     async def get_context(
         self,
         message: discord.Message,
@@ -203,6 +204,11 @@ class PINK(commands.Bot):
         cls: Optional[Type[commands.Context]] = None,
     ) -> Context:
         return await super().get_context(message, cls=cls or Context)
+
+    # --- events ---
+    async def on_ready(self) -> None:
+        print(f"Logged in as {self.user}!")
+        print(f"Prefix: {PREFIX}")
 
     async def on_message(self, message: discord.Message) -> None:
         if message.author.bot:

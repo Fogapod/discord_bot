@@ -1,6 +1,5 @@
 import os
-
-from time import perf_counter
+import time
 
 from discord.ext import commands  # type: ignore[attr-defined]
 
@@ -8,6 +7,7 @@ from pink.bot import PINK, Prefix
 from pink.cog import Cog
 from pink.constants import PREFIX
 from pink.context import Context
+from pink.utils import seconds_to_human_readable
 
 PINK_ART = r"""   ___ _____    __
   / _ \\_   \/\ \ \/\ /\
@@ -41,9 +41,9 @@ class Meta(Cog):
 
         g_or_k = "g" if ctx.invoked_with == "ping" else "k"
 
-        start = perf_counter()
+        start = time.perf_counter()
         m = await ctx.send(f"pin{g_or_k}ing")
-        send_diff = round((perf_counter() - start) * 1000)
+        send_diff = round((time.perf_counter() - start) * 1000)
 
         latency = round(self.bot.latency * 1000)
 
@@ -70,18 +70,22 @@ class Meta(Cog):
 
         invite = "TNXn8R7"
 
+        running_for = seconds_to_human_readable(int(time.monotonic() - ctx.bot.launched_at))
+
         return await ctx.send(
             f"""```
 {PINK_ART}
 
-PINK art by: patorjk.com/software/taag
-\
-This bot was originally made for PotatoStation server for UnityStation.
+[PINK art by: patorjk.com/software/taag]
+
+This bot was originally made for PotatoStation server of UnityStation.
 
 Prefix: @mention or {PREFIX}
 Source code: github.com/Fogapod/pink {revision}
 {authors}
 Support server: discord.gg / {invite}
+
+Uptime: {running_for}
 ```"""
         )
 
