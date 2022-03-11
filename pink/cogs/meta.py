@@ -42,12 +42,12 @@ class Meta(Cog):
         g_or_k = "g" if ctx.invoked_with == "ping" else "k"
 
         start = time.perf_counter()
-        m = await ctx.send(f"pin{g_or_k}ing")
+        m = await ctx.send(f"pin{g_or_k}ing...")
         send_diff = round((time.perf_counter() - start) * 1000)
 
         latency = round(self.bot.latency * 1000)
 
-        await ctx.edit(m, content=f"Pon{g_or_k}, **{send_diff}ms**\n\nLatency: **{latency}ms**")
+        await ctx.edit(m, content=f"Pon{g_or_k}! Took **{send_diff}ms** to edit\n\nWS latency: **{latency}ms**")
 
     @commands.command(aliases=["info"])
     async def about(self, ctx: Context) -> None:
