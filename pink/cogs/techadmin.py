@@ -1,12 +1,15 @@
+from __future__ import annotations
+
 import asyncio
 import copy
 import io
 import random
+import re
 import textwrap
 import traceback
 
 from contextlib import redirect_stdout
-from typing import Any, Dict, Iterator, Sequence, Union
+from typing import Any, Dict, Iterator, Optional, Sequence, Union
 
 import discord
 import edgedb
@@ -19,6 +22,41 @@ from pink.checks import is_owner
 from pink.cog import Cog
 from pink.context import Context
 from pink.utils import run_process_shell
+
+
+class Code:
+    __slots__ = (
+        "language",
+        "body",
+        "has_codeblock",
+    )
+
+    def __init__(self, *, language: Optional[str], body: str, has_codeblock: bool = True):
+        self.language = language
+        self.body = body
+        self.has_codeblock = has_codeblock
+
+    @classmethod
+    async def convert(cls, _: Context, argument: str) -> Code:
+        # i have no idea why + and - are allowed as language name
+        if match := re.match(r"```(?P<language>[\w+-]*)\n?(?P<body>.*?)```", argument):
+            if body := match["body"]:
+                language = match["language"] or None
+            else:
+                # discord displays language in codeblocks without code as code, be consistent with that
+                language = None
+                body = match["language"]
+
+            return Code(language=language, body=body)
+
+        return Code(language=None, body=argument, has_codeblock=False)
+
+    def __str__(self) -> str:
+        if not self.has_codeblock:
+            return self.body
+
+        # this is not completely accurate because it always inserts \n between language and body
+        return f"```{'' if self.language is None else self.language}\n{self.body}```"
 
 
 class TechAdmin(Cog):
@@ -103,23 +141,16 @@ class TechAdmin(Cog):
             await ctx.send(page)
 
     @commands.command()
-    async def eval(self, ctx: Context, *, program: str) -> None:
+    async def eval(self, ctx: Context, *, code: Code) -> None:
         """
         Evaluate code inside bot, with async support
         Has conveniece shortcuts like
         - ctx
         - discord
-
-        To get result you can either print or return object.
         """
 
-        if program.startswith("```") and program.endswith("```"):
-            # strip codeblock
-            program = program[:-3]
-            program = "\n".join(program.split("\n")[1:])
-
         async with ctx.typing():
-            result = await self._eval(ctx, program)
+            result = await self._eval(ctx, code)
             result = result.replace(self.bot.http.token, "TOKEN_LEAKED")
 
             paginator = self._make_paginator(result, prefix="```py\n")
@@ -127,22 +158,22 @@ class TechAdmin(Cog):
             await self._send_paginator(ctx, paginator)
 
     @commands.command()
-    async def exec(self, ctx: Context, *, arguments: str) -> None:
+    async def exec(self, ctx: Context, *, code: Code) -> None:
         """Execute shell command"""
 
         async with ctx.typing():
-            paginator = await self._exec(ctx, arguments)
+            paginator = await self._exec(ctx, code.body)
 
             await self._send_paginator(ctx, paginator)
 
     @commands.command(aliases=["edgeql", "edb"])
-    async def edgedb(self, ctx: Context, *, program: str) -> None:
+    async def edgedb(self, ctx: Context, *, code: Code) -> None:
         """Run EdgeQL code against bot database"""
 
         async with ctx.typing():
             try:
                 # https://github.com/edgedb/edgedb-python/issues/107
-                data = orjson.loads(await ctx.edb.query_json(program))  # type: ignore[no-untyped-call]
+                data = orjson.loads(await ctx.edb.query_json(code.body))  # type: ignore[no-untyped-call]
             except edgedb.EdgeDBError as e:
                 return await ctx.send(f"Error: **{type(e).__name__}**: `{e}`")
 
@@ -154,11 +185,10 @@ class TechAdmin(Cog):
 
             await self._send_paginator(ctx, paginator)
 
-    async def _eval(self, ctx: Context, program: str) -> str:
+    async def _eval(self, ctx: Context, code: Code) -> str:
         # copied from https://github.com/Fogapod/KiwiBot/blob/49743118661abecaab86388cb94ff8a99f9011a8/modules/owner/module_eval.py
         # (originally copied from R. Danny bot)
         glob = {
-            "self": self,
             "bot": self.bot,
             "ctx": ctx,
             "message": ctx.message,
@@ -166,26 +196,33 @@ class TechAdmin(Cog):
             "author": ctx.author,
             "channel": ctx.channel,
             "asyncio": asyncio,
-            "random": random,
             "discord": discord,
+            "random": random,
         }
 
-        fake_stdout = io.StringIO()
+        # insert return
+        code_no_last_line, _, code_last_line = code.body.rpartition("\n")
+        if not code_last_line.startswith(("return ", "raise ")):
+            # special syntax for not inserting final return
+            if code_last_line.startswith("!"):
+                code_last_line = code_last_line[1:]
+            else:
+                code_last_line = f"return {code_last_line}"
 
-        to_compile = "async def func():\n" + textwrap.indent(program, "  ")
+        to_compile = "async def func():\n" + textwrap.indent(f"{code_no_last_line}\n{code_last_line}", "  ")
 
         try:
             exec(to_compile, glob)
         except Exception as e:
-            return f"{e.__class__.__name__}: {e}"
+            return f"{type(e).__name__}: {e}"
 
         func = glob["func"]
+
+        fake_stdout = io.StringIO()
 
         try:
             with redirect_stdout(fake_stdout):
                 returned = await func()
-        except asyncio.CancelledError:
-            raise
         except Exception:
             return f"{fake_stdout.getvalue()}{traceback.format_exc()}"
         else:
