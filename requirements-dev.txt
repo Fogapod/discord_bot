@@ -1,0 +1,13 @@
+# formatting
+isort
+black
+
+# linting
+pre-commit
+mypy
+flake8
+flake8-bugbear
+flake8-unused-arguments
+
+# dependency management
+pip-tools

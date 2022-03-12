@@ -50,7 +50,6 @@ RUN addgroup -g $GID -S pink \
 
 USER pink
 
-# at this point .dockerignore might be more appropriate
 COPY --chown=pink:pink . .
 
 ARG GIT_BRANCH="master"

@@ -1,10 +1,10 @@
 **/__pycache__
 
-.venv
-
+# repo metadata
 .github
-scripts
 LICENSE
+README.md
+scripts
 
 # configs
 *.env
@@ -18,14 +18,17 @@ units
 .gitignore
 .pre-commit-config.yaml
 Dockerfile
-mypy.ini
 pyproject.toml
 
-# tool cache
+# tool cache/data
+.venv
 .git
-.gigignore
 .mypy_cache
 .pytest_cache
+
+# dependency configs (except requirements.txt)
+requirements.in
+requirements-dev.txt
 
 # IDEs
 .vscode

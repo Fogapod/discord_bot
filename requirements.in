@@ -1,0 +1,30 @@
+# python: 3.10
+
+# discord framework/extensions
+discord.py @ git+https://github.com/Rapptz/discord.py@a909c1ff069b1bdb332b7f3b01ef1c4b8a3a3a15
+
+# databases
+edgedb<=0.17.3
+
+# config
+python-dotenv
+
+# api libs for commands
+travitia-talk
+googletrans>=3.1.0a0
+
+# accents
+pink-accents==0.0.4
+
+# image operations
+Pillow
+
+# error reporting
+sentry-sdk
+
+# perfomance
+orjson
+uvloop
+
+# misc
+aiocache
