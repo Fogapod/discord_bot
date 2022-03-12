@@ -8,17 +8,20 @@ scripts
 
 # configs
 *.env
+**/*.ini
+**/*.yml
+**/*.yaml
+**/*.toml
+**/*.json
 
 # deployment configs
 units
 
 # tool configs
+Dockerfile
 .dockerignore
 .flake8
-.gitignore
-.pre-commit-config.yaml
-Dockerfile
-pyproject.toml
+**/.gitignore
 
 # tool cache/data
 .venv
@@ -27,8 +30,9 @@ pyproject.toml
 .pytest_cache
 
 # dependency configs (except requirements.txt)
-requirements.in
-requirements-dev.txt
+**/*.txt
+**/*.in
+!requirements.txt
 
 # IDEs
 .vscode
