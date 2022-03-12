@@ -6,6 +6,8 @@ from discord.ext import commands  # type: ignore[attr-defined]
 from .bot import PINK
 from .hooks import HookHost
 
+__all__ = ("Cog",)
+
 log = logging.getLogger(__name__)
 
 

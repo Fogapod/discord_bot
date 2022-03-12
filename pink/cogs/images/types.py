@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import asyncio
-import enum
 import re
 import warnings
 
 from asyncio import TimeoutError
+from enum import Enum, auto
 from io import BytesIO
 from typing import Any, List, Optional
 
@@ -28,13 +28,13 @@ def emoji_url_with_format(emoji: discord.Emoji, fmt: str) -> str:
     return f"{discord.Asset.BASE}/emojis/{emoji.id}.{fmt}"
 
 
-class ImageType(enum.Enum):
-    EMOTE = 0
-    EMOJI = 1
-    USER = 2
-    URL = 3
-    ATTACHMENT = 4
-    EMBED = 5
+class ImageType(Enum):
+    EMOTE = auto()
+    EMOJI = auto()
+    USER = auto()
+    URL = auto()
+    ATTACHMENT = auto()
+    EMBED = auto()
 
 
 class FetchedImage:
@@ -149,10 +149,9 @@ class Image:
 
         # if there is a referenced message, it is more important than message content
         # for these reasons:
-        #  - it takes more efdort to reply to message than to attach file/paste url
+        #  - it takes more effort to reply to message than paste url
         #  - if this was a mistake, it's easier for user to use command again relying on
-        #    from_history to fetch previous message rather than replying to message
-        #    again
+        #    from_history to fetch previous message rather than replying to message again
         #
         # this implementation is a bit of a mess, there is an `argument` parameter, but
         # we assume that ctx.message is target message in from_history anyway

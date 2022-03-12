@@ -13,7 +13,7 @@ async def run_process(cmd: str, *args: str) -> Tuple[str, str]:
     )
     data = await process.communicate()
 
-    return [stream.decode() if stream is not None else "" for stream in data]  # type: ignore
+    return ["" if stream is None else stream.decode() for stream in data]  # type: ignore
 
 
 async def run_process_shell(program: str) -> Tuple[str, str]:
@@ -24,7 +24,7 @@ async def run_process_shell(program: str) -> Tuple[str, str]:
     )
     data = await process.communicate()
 
-    return [stream.decode() if stream is not None else "" for stream in data]  # type: ignore
+    return ["" if stream is None else stream.decode() for stream in data]  # type: ignore
 
 
 def seconds_to_human_readable(minutes: int) -> str:

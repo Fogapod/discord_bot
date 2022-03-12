@@ -6,8 +6,8 @@ from functools import partial, update_wrapper, wraps
 from typing import Any, Callable, Coroutine, Dict, Iterable, List, Optional, ParamSpec, TypeVar
 
 __all__ = (
-    "Hookable",
     "HookHost",
+    "Hookable",
 )
 
 T = TypeVar("T")

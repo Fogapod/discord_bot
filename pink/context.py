@@ -13,6 +13,8 @@ from .hooks import Hookable
 if TYPE_CHECKING:
     from .bot import PINK
 
+__all__ = ("Context",)
+
 
 class Context(commands.Context, Hookable):
     bot: PINK

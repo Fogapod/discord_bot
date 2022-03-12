@@ -8,7 +8,7 @@ log = logging.getLogger(__name__)
 try:
     import uvloop
 except ImportError:
-    log.error("uvloop is not installed")
+    log.warning("uvloop is not installed")
 else:
     uvloop.install()
 
