@@ -27,7 +27,7 @@ async def run_process_shell(program: str) -> Tuple[str, str]:
     return ["" if stream is None else stream.decode() for stream in data]  # type: ignore
 
 
-def seconds_to_human_readable(minutes: int) -> str:
+def seconds_to_human_readable(seconds: int) -> str:
     ranges = (
         (60, "s"),  # seconds/minute
         (60, "m"),  # minutes/hour
@@ -38,7 +38,7 @@ def seconds_to_human_readable(minutes: int) -> str:
     )
 
     s = ""
-    quotient = minutes
+    quotient = seconds
 
     for count, name in ranges:
         quotient, remainder = divmod(quotient, count)

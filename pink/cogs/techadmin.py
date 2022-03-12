@@ -28,7 +28,7 @@ class TechAdmin(Cog):
     PAGINATOR_PAGES_CAP = 5
 
     async def cog_check(self, ctx: Context) -> None:
-        return await is_owner().predicate(ctx)
+        return await is_owner().predicate(ctx)  # type: ignore[attr-defined]
 
     @commands.command()
     async def load(self, ctx: Context, module: str) -> None:
