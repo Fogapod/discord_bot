@@ -82,20 +82,23 @@ class ResponseTracker(Cog):
     responses = LRU(1024)
 
     @Context.hook()
-    async def on_send(original, ctx: Context, *args: Any, register: bool = True, **kwargs: Any) -> discord.Message:
+    async def on_send(
+        self, original: Any, ctx: Context, *args: Any, register: bool = True, **kwargs: Any
+    ) -> discord.Message:
         message = None
 
         try:
             message = await original(ctx, *args, **kwargs)
         finally:
             if message is not None and register:
-                ResponseTracker.register_response(ctx.message.id, MessageResponse(message))
+                self.register_response(ctx.message.id, MessageResponse(message))
 
         return message
 
     @Context.hook()
     async def on_react(
-        original,
+        self,
+        original: Any,
         ctx: Context,
         emoji: Union[discord.Emoji, str],
         register: bool = True,
@@ -107,7 +110,7 @@ class ResponseTracker(Cog):
             message = await original(ctx, emoji, **kwargs)
         finally:
             if message is not None and register:
-                ResponseTracker.register_response(
+                self.register_response(
                     ctx.message.id,
                     ReactionResponse(message, convert_emoji_reaction(emoji)),
                 )
@@ -150,7 +153,3 @@ class ResponseTracker(Cog):
 
         # race conditions, bad until command cancellation is done
         # asyncio.gather(*[r.remove(bot) for r in responses])
-
-
-def setup(bot: PINK) -> None:
-    bot.add_cog(ResponseTracker(bot))

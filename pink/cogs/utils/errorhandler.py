@@ -5,7 +5,6 @@ import sentry_sdk
 
 from discord.ext import commands  # type: ignore[attr-defined]
 
-from pink.bot import PINK
 from pink.cog import Cog
 from pink.context import Context
 
@@ -86,7 +85,3 @@ class ErrorHandler(Cog):
             sentry_sdk.capture_exception(e)
 
             raise e
-
-
-def setup(bot: PINK) -> None:
-    bot.add_cog(ErrorHandler(bot))

@@ -8,13 +8,13 @@ import edgedb
 
 from discord.ext import commands  # type: ignore[attr-defined]
 
-from .hookable import AsyncHookable
+from .hooks import Hookable
 
 if TYPE_CHECKING:
     from .bot import PINK
 
 
-class Context(commands.Context, AsyncHookable):
+class Context(commands.Context, Hookable):
     bot: PINK
 
     @property
@@ -34,7 +34,7 @@ class Context(commands.Context, AsyncHookable):
     def session(self) -> aiohttp.ClientSession:
         return self.bot.session
 
-    @AsyncHookable.hookable()  # type: ignore[no-untyped-call]
+    @Hookable.hookable()
     async def send(
         self,
         content: Any = None,
@@ -60,7 +60,7 @@ class Context(commands.Context, AsyncHookable):
     async def reply(self, content: Any = None, **kwargs: Any) -> discord.Message:
         return await self.send(content, reference=self.message, **kwargs)
 
-    @AsyncHookable.hookable()  # type: ignore[no-untyped-call]
+    @Hookable.hookable()
     async def edit(
         self,
         message: discord.Message,
@@ -71,7 +71,7 @@ class Context(commands.Context, AsyncHookable):
 
         await message.edit(content=content, **kwargs)
 
-    @AsyncHookable.hookable()  # type: ignore[no-untyped-call]
+    @Hookable.hookable()
     async def react(
         self,
         emoji: Union[discord.Emoji, str],
