@@ -349,9 +349,9 @@ class Accents(Cog):
 
             message_counts_table = "\n".join(f"{name}: {count}" for name, count in message_counts.items())
 
-            await ctx.send(
-                f"Deleted **{len(deleted)}** out of **{limit}** message(s) from:" f"```\n{message_counts_table}```"
-            )
+        await ctx.send(
+            f"Deleted **{len(deleted)}** out of **{limit}** message(s) from:" f"```\n{message_counts_table}```"
+        )
 
     async def _toggle_bot_accent(
         self,

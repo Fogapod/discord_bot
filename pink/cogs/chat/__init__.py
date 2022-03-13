@@ -92,7 +92,7 @@ class Chat(Cog):
         async with ctx.typing():
             result = await self._query(text, SessionSettings(ctx.author.id, channel_id=ctx.channel.id))
 
-            await ctx.send(result)
+        await ctx.send(result)
 
     @commands.command()
     async def session(self, ctx: Context, emotion: Emotion, *accents: PINKAccent) -> None:

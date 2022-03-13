@@ -157,7 +157,7 @@ class TechAdmin(Cog):
 
             paginator = self._make_paginator(result, prefix="```py\n")
 
-            await self._send_paginator(ctx, paginator)
+        await self._send_paginator(ctx, paginator)
 
     @commands.command()
     async def exec(self, ctx: Context, *, code: Code) -> None:
@@ -166,7 +166,7 @@ class TechAdmin(Cog):
         async with ctx.typing():
             paginator = await self._exec(ctx, code.body)
 
-            await self._send_paginator(ctx, paginator)
+        await self._send_paginator(ctx, paginator)
 
     @commands.command(aliases=["edgeql", "edb"])
     async def edgedb(self, ctx: Context, *, code: Code) -> None:
@@ -185,7 +185,7 @@ class TechAdmin(Cog):
 
             paginator = await self._edgedb_table(data)
 
-            await self._send_paginator(ctx, paginator)
+        await self._send_paginator(ctx, paginator)
 
     async def _eval(self, ctx: Context, code: Code) -> str:
         # copied from https://github.com/Fogapod/KiwiBot/blob/49743118661abecaab86388cb94ff8a99f9011a8/modules/owner/module_eval.py

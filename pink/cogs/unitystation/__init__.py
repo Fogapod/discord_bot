@@ -31,11 +31,13 @@ class UnityStation(Cog):
             await self.servers.fetch(ctx)
 
             if server is None:
-                await self._servers(ctx)
+                text = await self._servers()
             else:
-                await self._server(ctx, server)
+                text = await self._server(server)
 
-    async def _server(self, ctx: Context, server_name: str) -> None:
+        await ctx.send(text)
+
+    async def _server(self, server_name: str) -> str:
         server_name = server_name.lower()
 
         servers = self.servers.servers
@@ -65,13 +67,13 @@ class UnityStation(Cog):
 
         main_info = "\n".join(f"{field:<{longest_name}} : {getattr(server, field)}" for field in fields)
 
-        await ctx.send(f"```\n{main_info}\n\nDownloads\n{downloads}```")
+        return f"```\n{main_info}\n\nDownloads\n{downloads}```"
 
-    async def _servers(self, ctx: Context) -> None:
+    async def _servers(self) -> str:
         servers = self.servers.servers
 
         if not servers:
-            return await ctx.send("No servers online")
+            return "No servers online"
 
         data: Dict[str, List[str]] = {
             "name": [],
@@ -108,7 +110,7 @@ class UnityStation(Cog):
 
             body += f"{' | '.join(entries)}\n"
 
-        await ctx.send(f"```\n{header}\n{separator}\n{body}```")
+        return f"```\n{header}\n{separator}\n{body}```"
 
 
 def setup(bot: PINK) -> None:
