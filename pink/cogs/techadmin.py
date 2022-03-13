@@ -25,6 +25,9 @@ from pink.utils import run_process_shell
 
 
 class Code:
+    # i have no idea why + and - are allowed as language name
+    _codeblock_regex = re.compile(r"```(?P<language>[\w+-]*)\n*(?P<body>.*?)\n*```", re.DOTALL)
+
     __slots__ = (
         "language",
         "body",
@@ -38,8 +41,7 @@ class Code:
 
     @classmethod
     async def convert(cls, _: Context, argument: str) -> Code:
-        # i have no idea why + and - are allowed as language name
-        if match := re.match(r"```(?P<language>[\w+-]*)\n?(?P<body>.*?)```", argument):
+        if match := cls._codeblock_regex.match(argument):
             if body := match["body"]:
                 language = match["language"] or None
             else:
