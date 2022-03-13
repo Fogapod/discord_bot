@@ -2,17 +2,20 @@ import logging
 import os
 
 from .bot import PINK
+from .logging import setup_logging
 
 log = logging.getLogger(__name__)
 
 try:
     import uvloop
 except ImportError:
-    log.warning("uvloop is not installed")
+    print("uvloop is not installed")
 else:
     uvloop.install()
 
 if __name__ == "__main__":
+    setup_logging()
+
     if sentry_dsn := os.environ.get("SENTRY_DSN"):
         import sentry_sdk
 

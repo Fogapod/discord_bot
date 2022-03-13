@@ -6,11 +6,13 @@
 #
 aiocache==0.11.1
     # via -r requirements.in
-aiohttp==3.7.4.post0
+aiohttp==3.8.1
     # via
     #   discord-py
     #   travitia-talk
-async-timeout==3.0.1
+aiosignal==1.2.0
+    # via aiohttp
+async-timeout==4.0.2
     # via aiohttp
 attrs==21.4.0
     # via aiohttp
@@ -19,13 +21,17 @@ certifi==2021.10.8
     #   httpx
     #   sentry-sdk
 chardet==3.0.4
-    # via
-    #   aiohttp
-    #   httpx
-discord.py @ git+https://github.com/Rapptz/discord.py@a909c1ff069b1bdb332b7f3b01ef1c4b8a3a3a15
+    # via httpx
+charset-normalizer==2.0.12
+    # via aiohttp
+discord.py @ git+https://github.com/Rapptz/discord.py@9c61e10a55d5b776a8731eb9a6457dfbf3cc9e9f
     # via -r requirements.in
 edgedb==0.17.3
     # via -r requirements.in
+frozenlist==1.3.0
+    # via
+    #   aiohttp
+    #   aiosignal
 googletrans==4.0.0rc1
     # via -r requirements.in
 h11==0.9.0
@@ -69,9 +75,7 @@ sniffio==1.2.0
 travitia-talk==0.0.1
     # via -r requirements.in
 typing-extensions==4.1.1
-    # via
-    #   aiohttp
-    #   edgedb
+    # via edgedb
 urllib3==1.26.8
     # via sentry-sdk
 uvloop==0.16.0

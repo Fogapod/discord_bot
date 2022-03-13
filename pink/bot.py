@@ -97,20 +97,11 @@ class PINK(commands.Bot):
             **kwargs,
         )
 
-        self._default_prefix_re: Optional[re.Pattern[str]] = None
-
         self.prefixes: Dict[int, Prefix] = {}
         self.owner_ids: Set[int] = set()
 
-        self.loop.run_until_complete(self.pre_setup())
-        self.loop.create_task(self._setup())
-
-    # --- custon functions ---
-    async def pre_setup(self) -> None:
-        """
-        First async initialization. Critical bot components must be created here if possible
-        (happens before gateway connection)
-        """
+    # --- overloads ---
+    async def setup_hook(self) -> None:
         self.launched_at = time.monotonic()
 
         self.session = aiohttp.ClientSession(headers={"user-agent": "PINK bot"})
@@ -120,27 +111,15 @@ class PINK(commands.Bot):
             max_size=2,
         )  # type: ignore[no-untyped-call]
 
-    async def _setup(self) -> None:
-        await self.wait_until_ready()
-
-        try:
-            await asyncio.shield(self.setup())
-        except Exception:
-            await self.close()
-
-            raise
-
-    async def setup(self) -> None:
-        """Hapens after bot is ready and does not block anything. Misc setup like filling caches"""
-
-        await self.wait_until_ready()
-
-        await self._get_prefixes()
-        await self._fetch_owners()
+        await self._load_prefixes()
 
         self._load_cogs()
 
-    async def _get_prefixes(self) -> None:
+        asyncio.gather(
+            self._fetch_owners(),
+        )
+
+    async def _load_prefixes(self) -> None:
         self._default_prefix_re = mention_or_prefix_regex(self.user.id, PREFIX)
 
         for guild in await self.edb.query(
@@ -160,32 +139,46 @@ class PINK(commands.Bot):
         else:
             self.owner_ids = set(m.id for m in app_info.team.members)
 
+        log.info(f"bot owners: {' | '.join(map(str, self.owner_ids))}")
+
     def _load_cogs(self) -> None:
-        for cog_path in self._iterate_cogs(Path("pink") / "cogs"):
-            module = ".".join(cog_path.parts)
+        for module in self._iterate_cogs(Path("pink") / "cogs"):
             try:
                 self.load_extension(module)
             except Exception as e:
                 log.error(f"Error loading {module}: {type(e).__name__} - {e}")
                 traceback.print_exc()
             else:
-                print(f"loaded {module}")
+                log.info(f"loaded {module}")
 
-    def _iterate_cogs(self, path: Path) -> Iterator[Path]:
+    def _iterate_cogs(self, path: Path) -> Iterator[str]:
+        """
+        There are 3 ways to declare cogs under cogs/ derectory:
+            - name.py           : file must have setup function
+            - name/__init__.py  : file must have setup function
+            - group/[recursive] : must not have __init__.py file. all folders/files are treated as cogs
+
+        Ignores paths starting with `_` and `.`.
+
+        Returns module names for current folder and subfolders.
+        """
+
+        def to_module(path: Path) -> str:
+            return ".".join(path.parts)
+
         for entry in path.iterdir():
-            if entry.name.startswith("_"):
+            if entry.name.startswith(("_", ".")):
                 continue
 
             if entry.is_dir():
                 # if folder has __init__.py, it is a cog. otherwise it is a group of cogs
                 if (entry / "__init__.py").exists():
-                    yield entry
+                    yield to_module(entry)
                 else:
                     yield from self._iterate_cogs(entry)
             else:
-                yield entry.parent / entry.stem
+                yield to_module(entry.parent / entry.stem)
 
-    # --- overloads ---
     async def close(self) -> None:
         await self.edb.aclose()
         await self.session.close()
@@ -193,10 +186,6 @@ class PINK(commands.Bot):
         await super().close()
 
     async def get_prefix(self, message: discord.Message) -> Union[List[str], str]:
-        if self._default_prefix_re is None:
-            # prefixes are not initialized
-            return []
-
         guild_id = getattr(message.guild, "id", -1)
 
         if settings := self.prefixes.get(guild_id):
@@ -223,8 +212,7 @@ class PINK(commands.Bot):
 
     # --- events ---
     async def on_ready(self) -> None:
-        print(f"Logged in as {self.user}!")
-        print(f"Prefix: {PREFIX}")
+        log.info(f"READY as {self.user} with prefix {PREFIX}")
 
     async def on_message(self, message: discord.Message) -> None:
         if message.author.bot:
