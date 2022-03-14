@@ -74,21 +74,21 @@ class TechAdmin(Cog):
     async def load(self, ctx: Context, module: str) -> None:
         """Load extension"""
 
-        self.bot.load_extension(f"pink.cogs.{module}")
+        await self.bot.load_extension(f"pink.cogs.{module}")
         await ctx.ok()
 
     @commands.command()
     async def unload(self, ctx: Context, module: str) -> None:
         """Unload extension"""
 
-        self.bot.unload_extension(f"pink.cogs.{module}")
+        await self.bot.unload_extension(f"pink.cogs.{module}")
         await ctx.ok()
 
     @commands.command()
     async def reload(self, ctx: Context, module: str) -> None:
         """Reload extension"""
 
-        self.bot.reload_extension(f"pink.cogs.{module}")
+        await self.bot.reload_extension(f"pink.cogs.{module}")
         await ctx.ok()
 
     # https://github.com/Rapptz/RoboDanny/blob/715a5cf8545b94d61823f62db484be4fac1c95b1/cogs/admin.py#L422
@@ -291,5 +291,5 @@ class TechAdmin(Cog):
         return paginator
 
 
-def setup(bot: PINK) -> None:
-    bot.add_cog(TechAdmin(bot))
+async def setup(bot: PINK) -> None:
+    await bot.add_cog(TechAdmin(bot))

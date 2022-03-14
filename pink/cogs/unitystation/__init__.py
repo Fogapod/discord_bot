@@ -20,7 +20,7 @@ class UnityStation(Cog):
     You can learn more about this game by joining their official server: discord.gg/{US_INVITE}
     """
 
-    async def setup(self) -> None:
+    async def cog_load(self) -> None:
         self.servers = ServerList()
 
     @commands.command(aliases=["list", "sv", "ls"])
@@ -113,5 +113,5 @@ class UnityStation(Cog):
         return f"```\n{header}\n{separator}\n{body}```"
 
 
-def setup(bot: PINK) -> None:
-    bot.add_cog(UnityStation(bot))
+async def setup(bot: PINK) -> None:
+    await bot.add_cog(UnityStation(bot))

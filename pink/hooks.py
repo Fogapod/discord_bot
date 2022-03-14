@@ -42,9 +42,11 @@ class HookHost:
 
         return self
 
-    def unregister_hooks(self) -> None:
+    def release_hooks(self) -> None:
         for hook in self.__active_hooks__:
             hook.__hook_target__.remove_hook(hook)  # type: ignore[attr-defined]
+
+        self.__active_hooks__ = []
 
 
 class Hookable:

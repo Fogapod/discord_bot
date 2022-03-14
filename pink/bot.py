@@ -2,10 +2,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import os
 import re
 import time
-import traceback
 
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Set, Type, Union
@@ -17,8 +15,8 @@ import sentry_sdk
 
 from discord.ext import commands  # type: ignore[attr-defined]
 
-from .constants import PREFIX
 from .context import Context
+from .settings import settings
 
 log = logging.getLogger(__name__)
 
@@ -48,7 +46,7 @@ class Prefix:
         return cls(bot, prefix=data.prefix)
 
     async def write(self, ctx: Context) -> None:
-        await ctx.bot.edb.query(
+        await ctx.bot.edb.query(  # type: ignore[no-untyped-call]
             """
             INSERT Prefix {
                 guild_id := <snowflake>$guild_id,
@@ -67,7 +65,7 @@ class Prefix:
 
     @staticmethod
     async def delete(ctx: Context) -> None:
-        await ctx.bot.edb.query(
+        await ctx.bot.edb.query(  # type: ignore[no-untyped-call]
             """
             DELETE Prefix
             FILTER .guild_id = <snowflake>$guild_id
@@ -80,22 +78,11 @@ class Prefix:
 
 
 class PINK(commands.Bot):
-    def __init__(self, **kwargs: Any) -> None:
-        super().__init__(
-            command_prefix=PREFIX,
-            case_insensitive=True,
-            allowed_mentions=discord.AllowedMentions(roles=False, everyone=False, users=True),
-            intents=discord.Intents(
-                guilds=True,
-                members=True,
-                bans=True,
-                emojis=True,
-                messages=True,
-                message_content=True,
-                reactions=True,
-            ),
-            **kwargs,
-        )
+    def __init__(self, *, session: aiohttp.ClientSession, edb: edgedb.AsyncIOPool, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+
+        self.session = session
+        self.edb = edb
 
         self.prefixes: Dict[int, Prefix] = {}
         self.owner_ids: Set[int] = set()
@@ -104,25 +91,18 @@ class PINK(commands.Bot):
     async def setup_hook(self) -> None:
         self.launched_at = time.monotonic()
 
-        self.session = aiohttp.ClientSession(headers={"user-agent": "PINK bot"})
-        self.edb = await edgedb.create_async_pool(
-            dsn=os.environ["EDGEDB_DSN"],
-            min_size=1,
-            max_size=2,
-        )  # type: ignore[no-untyped-call]
-
         await self._load_prefixes()
 
-        self._load_cogs()
+        await self._load_cogs()
 
         asyncio.gather(
             self._fetch_owners(),
         )
 
     async def _load_prefixes(self) -> None:
-        self._default_prefix_re = mention_or_prefix_regex(self.user.id, PREFIX)
+        self._default_prefix_re = mention_or_prefix_regex(self.user.id, settings.PREFIX)
 
-        for guild in await self.edb.query(
+        for guild in await self.edb.query(  # type: ignore[no-untyped-call]
             """
             SELECT Prefix {
                 guild_id,
@@ -141,13 +121,12 @@ class PINK(commands.Bot):
 
         log.info(f"bot owners: {' | '.join(map(str, self.owner_ids))}")
 
-    def _load_cogs(self) -> None:
+    async def _load_cogs(self) -> None:
         for module in self._iterate_cogs(Path("pink") / "cogs"):
             try:
-                self.load_extension(module)
-            except Exception as e:
-                log.error(f"Error loading {module}: {type(e).__name__} - {e}")
-                traceback.print_exc()
+                await self.load_extension(module)
+            except Exception:
+                log.exception(f"loading {module}")
             else:
                 log.info(f"loaded {module}")
 
@@ -179,12 +158,6 @@ class PINK(commands.Bot):
             else:
                 yield to_module(entry.parent / entry.stem)
 
-    async def close(self) -> None:
-        await self.edb.aclose()
-        await self.session.close()
-
-        await super().close()
-
     async def get_prefix(self, message: discord.Message) -> Union[List[str], str]:
         guild_id = getattr(message.guild, "id", -1)
 
@@ -212,17 +185,12 @@ class PINK(commands.Bot):
 
     # --- events ---
     async def on_ready(self) -> None:
-        log.info(f"READY as {self.user} with prefix {PREFIX}")
+        log.info(f"READY as {self.user}[{self.user.id}] with prefix {settings.PREFIX}")
 
     async def on_message(self, message: discord.Message) -> None:
-        if message.author.bot:
-            return
-
+        # TODO: how to make this optional? sentry must not be a hard dependency
         sentry_sdk.set_user({"id": message.author.id, "username": str(message.author)})
         sentry_sdk.set_context("channel", {"id": message.channel.id})
         sentry_sdk.set_context("guild", {"id": None if message.guild is None else message.guild.id})
 
         await self.process_commands(message)
-
-    async def on_command_error(self, _: Context, _e: BaseException) -> None:
-        pass

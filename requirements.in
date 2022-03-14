@@ -1,13 +1,13 @@
 # python: 3.10
 
 # discord framework/extensions
-discord.py @ git+https://github.com/Rapptz/discord.py@9c61e10a55d5b776a8731eb9a6457dfbf3cc9e9f
+discord.py @ git+https://github.com/Rapptz/discord.py@934ab4151add79a2140c7084679b15b6c5eb6f91
 
 # databases
 edgedb<=0.17.3
 
 # config
-python-dotenv
+pydantic[dotenv]
 
 # api libs for commands
 travitia-talk

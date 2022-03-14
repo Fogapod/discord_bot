@@ -1,4 +1,4 @@
-import functools
+import asyncio
 
 import googletrans
 
@@ -13,7 +13,7 @@ from .types import Language
 
 
 class Translator(Cog):
-    async def setup(self) -> None:
+    async def cog_load(self) -> None:
         self.translator = googletrans.Translator(service_urls=googletrans.constants.DEFAULT_SERVICE_URLS)
 
     @commands.group(
@@ -40,9 +40,7 @@ class Translator(Cog):
         await ctx.send(f"**{in_lang}** -> **{out_lang}**```\n{translated.text}```")
 
     async def _raw_translate(self, text: str, out_lang: str) -> googletrans.models.Translated:
-        return await self.bot.loop.run_in_executor(
-            None, functools.partial(self.translator.translate, text, dest=out_lang)
-        )
+        return await asyncio.to_thread(self.translator.translate, text, dest=out_lang)
 
     async def translate(self, text: str, out_lang: str) -> str:
         translated = await self._raw_translate(text, out_lang)
@@ -58,5 +56,5 @@ class Translator(Cog):
         )
 
 
-def setup(bot: PINK) -> None:
-    bot.add_cog(Translator(bot))
+async def setup(bot: PINK) -> None:
+    await bot.add_cog(Translator(bot))

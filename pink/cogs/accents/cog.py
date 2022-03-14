@@ -17,6 +17,7 @@ from pink.bot import PINK
 from pink.cog import Cog
 from pink.cogs.utils.errorhandler import PINKError
 from pink.context import Context
+from pink.hooks import HookHost
 from pink.utils import LRU
 
 from .constants import ALL_ACCENTS
@@ -31,7 +32,7 @@ log = logging.getLogger(__name__)
 _UserAccentsType = Iterable[Accent]
 
 
-class Accents(Cog):
+class Accents(Cog, HookHost):
     """Commands for managing accents."""
 
     MAX_ACCENTS_PER_USER = 10
@@ -45,12 +46,12 @@ class Accents(Cog):
         # guild_id -> user_id -> [Accent]
         self._accents: Dict[int, Dict[int, List[Accent]]] = {}
 
-    async def setup(self) -> None:
+    async def cog_load(self) -> None:
         # TODO: perform cleanup in case name format or bot name ever changes?
         # current name: PINK
         self.accent_wh_name = f"{self.bot.user.name} bot accent webhook"
 
-        for settings in await self.bot.edb.query(
+        for settings in await self.bot.edb.query(  # type: ignore[no-untyped-call]
             """
             SELECT AccentSettings {
                 guild_id,
@@ -72,6 +73,9 @@ class Accents(Cog):
                 self._accents[settings.guild_id] = {}
 
             self._accents[settings.guild_id][settings.user_id] = accents
+
+    async def cog_unload(self) -> None:
+        self.release_hooks()
 
     def get_user_accents(self, member: discord.Member) -> _UserAccentsType:
         if member.guild.id not in self._accents:
@@ -185,7 +189,7 @@ class Accents(Cog):
 
         # json cast because tuples are not supported
         # https://github.com/edgedb/edgedb/issues/2334#issuecomment-793041555
-        await ctx.bot.edb.query(
+        await ctx.bot.edb.query(  # type: ignore[no-untyped-call]
             """
             INSERT AccentSettings {
                 guild_id := <snowflake>$guild_id,
@@ -227,7 +231,7 @@ class Accents(Cog):
 
         # json cast because tuples are not supported
         # https://github.com/edgedb/edgedb/issues/2334#issuecomment-793041555
-        await self.bot.edb.query(
+        await self.bot.edb.query(  # type: ignore[no-untyped-call]
             """
             UPDATE AccentSettings
             FILTER .guild_id = <snowflake>$guild_id AND .user_id = <snowflake>$user_id

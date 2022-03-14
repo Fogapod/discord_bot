@@ -7,6 +7,7 @@ import discord
 from pink.bot import PINK
 from pink.cog import Cog
 from pink.context import Context
+from pink.hooks import HookHost
 from pink.utils import LRU
 
 _EmojiType = Union[discord.Reaction, discord.Emoji, discord.PartialEmoji, str]
@@ -78,8 +79,11 @@ class ReactionResponse(RemovableResponse):
         return f"<{type(self).__name__} channel={self.channel_id} message={self.message_id} emoji={self.emoji}>"
 
 
-class ResponseTracker(Cog):
+class ResponseTracker(Cog, HookHost):
     responses = LRU(1024)
+
+    async def cog_unload(self) -> None:
+        self.release_hooks()
 
     @Context.hook()
     async def on_send(

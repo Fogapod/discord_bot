@@ -202,5 +202,5 @@ class Fun(Cog):
             await webhook.delete()
 
 
-def setup(bot: PINK) -> None:
-    bot.add_cog(Fun(bot))
+async def setup(bot: PINK) -> None:
+    await bot.add_cog(Fun(bot))

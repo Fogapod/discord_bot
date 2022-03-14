@@ -5,11 +5,12 @@ from discord.ext import commands  # type: ignore[attr-defined]
 
 from pink.bot import PINK, Prefix
 from pink.cog import Cog
-from pink.constants import PREFIX
 from pink.context import Context
+from pink.settings import settings
 from pink.utils import seconds_to_human_readable
 
-PINK_ART = r"""   ___ _____    __
+PINK_ART = r"""\
+   ___ _____    __
   / _ \\_   \/\ \ \/\ /\
  / /_)/ / /\/  \/ / //_/
 / ___/\/ /_/ /\  / __ \
@@ -32,7 +33,7 @@ class Meta(Cog):
         bot.help_command = CustomHelp()
         bot.help_command.cog = self
 
-    def cog_unload(self) -> None:
+    async def cog_unload(self) -> None:
         self.bot.help_command = self.old_help_command
 
     @commands.command(aliases=["pink"])
@@ -80,7 +81,7 @@ class Meta(Cog):
 
 This bot was originally made for PotatoStation server of UnityStation.
 
-Prefix: @mention or {PREFIX}
+Prefix: @mention or {settings.PREFIX}
 Source code: github.com/Fogapod/pink {revision}
 {authors}
 Support server: discord.gg / {invite}
@@ -98,7 +99,7 @@ Uptime: {running_for}
         """Get local prefix (if any)."""
 
         if ctx.guild.id not in ctx.bot.prefixes:
-            return await ctx.send(f"Custom prefix not set, default is @mention or {PREFIX}")
+            return await ctx.send(f"Custom prefix not set, default is @mention or {settings.PREFIX}")
 
         await ctx.send(f"Local prefix: {ctx.bot.prefixes[ctx.guild.id].prefix}")
 
@@ -131,5 +132,5 @@ Uptime: {running_for}
         await ctx.ok()
 
 
-def setup(bot: PINK) -> None:
-    bot.add_cog(Meta(bot))
+async def setup(bot: PINK) -> None:
+    await bot.add_cog(Meta(bot))

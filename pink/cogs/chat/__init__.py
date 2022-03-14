@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import os
 import time
 
 from typing import Dict, Optional, Sequence
@@ -15,6 +14,7 @@ from pink.bot import PINK
 from pink.cog import Cog
 from pink.context import Context
 from pink.errors import PINKError
+from pink.settings import settings
 
 from .types import Emotion
 
@@ -22,6 +22,10 @@ try:
     from pink.cogs.accents.types import PINKAccent
 except ImportError:
     raise Exception("This cog relies on the existance of accents cog")
+
+assert settings.TRAVITIA_API_TOKEN is not None, "travitia token unset"
+
+TRAVITIA_API_TOKEN = settings.TRAVITIA_API_TOKEN
 
 
 class SessionSettings:
@@ -62,14 +66,14 @@ class Chat(Cog):
     def __init__(self, bot: PINK):
         super().__init__(bot)
 
-        self.chatbot = tt.ChatBot(os.environ["TRAVITIA_API_TOKEN"])
+        self.chatbot = tt.ChatBot(TRAVITIA_API_TOKEN)
         self.emotion = tt.Emotion.neutral
 
         self.sessions: Dict[int, SessionSettings] = {}
 
         self.cleanup_sessions.start()
 
-    def cog_unload(self) -> None:
+    async def cog_unload(self) -> None:
         self.bot.loop.create_task(self.chatbot.close())
 
         self.cleanup_sessions.stop()
@@ -141,11 +145,11 @@ class Chat(Cog):
 
         expired = []
 
-        for user_id, settings in self.sessions.items():
-            if settings.lock.locked():
+        for user_id, session_settings in self.sessions.items():
+            if session_settings.lock.locked():
                 continue
 
-            if (now - settings.last_reply) > self.SESSION_TIMEOUT:
+            if (now - session_settings.last_reply) > self.SESSION_TIMEOUT:
                 expired.append(user_id)
 
         for user_id in expired:
@@ -185,5 +189,5 @@ class Chat(Cog):
             settings.last_reply = time.time()
 
 
-def setup(bot: PINK) -> None:
-    bot.add_cog(Chat(bot))
+async def setup(bot: PINK) -> None:
+    await bot.add_cog(Chat(bot))

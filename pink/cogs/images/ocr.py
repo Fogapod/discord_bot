@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import asyncio
 import itertools
 import math
-import os
 
 from io import BytesIO
 from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple, Union
@@ -14,6 +14,7 @@ from pink_accents import Accent
 
 from pink.cogs.utils.errorhandler import PINKError
 from pink.context import Context
+from pink.settings import settings
 
 from .types import StaticImage
 
@@ -22,10 +23,14 @@ _VerticesType = Tuple[_VertexType, _VertexType, _VertexType, _VertexType]
 
 OCR_API_URL = "https://content-vision.googleapis.com/v1/images:annotate"
 
-# avoid making this a hard dependency by not reading it in constants.py
-# since it is not used anywhere else now
-PINK_PROXY = os.environ["PINK_PROXY"]
-PINK_PROXY_TOKEN = f"Bearer {os.environ['PINK_PROXY_TOKEN']}"
+
+assert settings.OCR_API_TOKEN is not None, "ocr api token unset"
+assert settings.PINK_PROXY is not None, "proxy unset"
+assert settings.PINK_PROXY_TOKEN is not None, "proxy token unset"
+
+OCR_API_TOKEN = settings.OCR_API_TOKEN
+PINK_PROXY = settings.PINK_PROXY
+PINK_PROXY_TOKEN = f"Bearer {settings.PINK_PROXY_TOKEN}"
 
 FONT = ImageFont.truetype("DejaVuSans.ttf")
 
@@ -319,7 +324,7 @@ async def ocr(ctx: Context, image_url: str) -> Dict[str, Any]:
     async with ctx.session.post(
         OCR_API_URL,
         params={
-            "key": os.environ["OCR_API_TOKEN"],
+            "key": OCR_API_TOKEN,
         },
         json={
             "requests": [
@@ -520,7 +525,7 @@ async def ocr_translate(ctx: Context, image: StaticImage, language: Union[str, A
     if not fields:
         raise PINKError("could not translate anything on image", formatted=False)
 
-    result = await ctx.bot.loop.run_in_executor(None, _draw_trocr, src, fields)
+    result = await asyncio.to_thread(_draw_trocr, src, fields)
 
     stats = f"Words: {current_word}\nLines: {len(fields)}"
     if notes:

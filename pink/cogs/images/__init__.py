@@ -1,3 +1,4 @@
+import asyncio
 import os
 
 from typing import Union
@@ -180,7 +181,7 @@ class Images(Cog):
         velocity = 10
 
         async with ctx.channel.typing():
-            filename = await self.bot.loop.run_in_executor(None, draw_flies, src, fly_src, steps, velocity, amount)
+            filename = await asyncio.to_thread(draw_flies, src, fly_src, steps, velocity, amount)
 
             # optimize gif using gifsicle
             await run_process("gifsicle", *GIFSICLE_ARGUMENTS + [filename])
@@ -190,5 +191,5 @@ class Images(Cog):
         os.remove(filename)
 
 
-def setup(bot: PINK) -> None:
-    bot.add_cog(Images(bot))
+async def setup(bot: PINK) -> None:
+    await bot.add_cog(Images(bot))

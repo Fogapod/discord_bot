@@ -24,7 +24,7 @@ chardet==3.0.4
     # via httpx
 charset-normalizer==2.0.12
     # via aiohttp
-discord.py @ git+https://github.com/Rapptz/discord.py@9c61e10a55d5b776a8731eb9a6457dfbf3cc9e9f
+discord.py @ git+https://github.com/Rapptz/discord.py@934ab4151add79a2140c7084679b15b6c5eb6f91
     # via -r requirements.in
 edgedb==0.17.3
     # via -r requirements.in
@@ -62,8 +62,10 @@ pillow==9.0.1
     # via -r requirements.in
 pink-accents==0.0.4
     # via -r requirements.in
-python-dotenv==0.19.2
+pydantic[dotenv]==1.9.0
     # via -r requirements.in
+python-dotenv==0.19.2
+    # via pydantic
 rfc3986==1.5.0
     # via httpx
 sentry-sdk==1.5.7
@@ -75,7 +77,9 @@ sniffio==1.2.0
 travitia-talk==0.0.1
     # via -r requirements.in
 typing-extensions==4.1.1
-    # via edgedb
+    # via
+    #   edgedb
+    #   pydantic
 urllib3==1.26.8
     # via sentry-sdk
 uvloop==0.16.0
