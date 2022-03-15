@@ -8,7 +8,7 @@ __all__ = ("settings",)
 class Settings(BaseSettings):
     TOKEN: str
     PREFIX: str = ","
-    OWNERS: set[int]
+    OWNERS: set[int] = set()
     OWNERS_MODE: Literal["combine", "overwrite"] = "combine"
 
     EDGEDB_HOST: str = "localhost"
