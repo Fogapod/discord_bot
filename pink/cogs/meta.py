@@ -1,6 +1,8 @@
 import os
 import time
 
+import discord
+
 from discord.ext import commands  # type: ignore[attr-defined]
 
 from pink.bot import PINK, Prefix
@@ -15,6 +17,8 @@ PINK_ART = r"""\
  / /_)/ / /\/  \/ / //_/
 / ___/\/ /_/ /\  / __ \
 \/   \____/\_\ \/\/  \/"""
+
+AUTHORS = (386551253532147712, 253384991940149249)
 
 
 class CustomHelp(commands.DefaultHelpCommand):
@@ -66,8 +70,11 @@ class Meta(Cog):
         else:
             revision = ""
 
-        owners = [await self.bot.fetch_user(oid) for oid in self.bot.owner_ids]
-        authors = f"Author{'s' if len(owners) > 1 else ''}: {', '.join(str(o) for o in owners)}"
+        author_names = [await self._maybe_get_name(oid) for oid in AUTHORS]
+        authors = f"Authors: {', '.join(author_names)}"
+
+        owner_names = [await self._maybe_get_name(oid) for oid in self.bot.owner_ids]
+        owners = f"Active owner{'s' if len(owner_names) > 1 else ''}: {', '.join(owner_names)}"
 
         invite = "TNXn8R7"
 
@@ -84,11 +91,18 @@ This bot was originally made for PotatoStation server of UnityStation.
 Prefix: @mention or {settings.PREFIX}
 Source code: github.com/Fogapod/pink {revision}
 {authors}
-Support server: discord.gg / {invite}
+{owners}
+Support: discord.gg / {invite}
 
 Uptime: {running_for}
 ```"""
         )
+
+    async def _maybe_get_name(self, user_id: int) -> str:
+        try:
+            return str(await self.bot.fetch_user(user_id))
+        except discord.NotFound:
+            return "Deleted User"
 
     @commands.group(
         invoke_without_command=True,

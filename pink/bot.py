@@ -113,11 +113,15 @@ class PINK(commands.Bot):
             self.prefixes[guild.guild_id] = Prefix.from_edb(self, guild)
 
     async def _fetch_owners(self) -> None:
-        app_info = await self.application_info()
-        if app_info.team is None:
-            self.owner_ids = set((app_info.owner.id,))
-        else:
-            self.owner_ids = set(m.id for m in app_info.team.members)
+        if owners := settings.OWNERS:
+            if settings.OWNERS_MODE == "combine":
+                app_info = await self.application_info()
+                if team := app_info.team:
+                    owners |= set(m.id for m in team.members)
+                else:
+                    owners.add(app_info.owner.id)
+
+        self.owner_ids = owners
 
         log.info(f"bot owners: {' | '.join(map(str, self.owner_ids))}")
 
