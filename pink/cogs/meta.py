@@ -11,8 +11,7 @@ from pink.context import Context
 from pink.settings import settings
 from pink.utils import seconds_to_human_readable
 
-PINK_ART = r"""\
-   ___ _____    __
+PINK_ART = r"""   ___ _____    __
   / _ \\_   \/\ \ \/\ /\
  / /_)/ / /\/  \/ / //_/
 / ___/\/ /_/ /\  / __ \
