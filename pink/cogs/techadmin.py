@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import asyncio
 import copy
 import io
@@ -203,40 +204,58 @@ class TechAdmin(Cog):
         }
 
         # insert return
-        code_no_last_line, _, code_last_line = code.body.rpartition("\n")
+        code_no_last_line, maybe_nl, code_last_line = code.body.rpartition("\n")
         if not code_last_line.startswith(("return ", "raise ")):
             # special syntax for not inserting final return
             if code_last_line.startswith("!"):
                 code_last_line = code_last_line[1:]
             else:
-                code_last_line = f"return {code_last_line}"
+                # ignore code that is already invalid. this may also fail if there is a multiline expression since we
+                # only take last line, we do not want to put return there either
+                if self._is_valid_syntax(code_last_line):
+                    code_last_line_with_return = f"return {code_last_line}"
+                    # may fail if this is assignment and probably some other cases
+                    if self._is_valid_syntax(code_last_line_with_return):
+                        code_last_line = code_last_line_with_return
 
-        to_compile = "async def func():\n" + textwrap.indent(f"{code_no_last_line}\n{code_last_line}", "  ")
+        indented_source = textwrap.indent(f"{code_no_last_line}{maybe_nl}{code_last_line}", "    ")
+        wrapped_source = f"""\
+async def __pink_eval__():
+{indented_source}\
+"""
 
+        # NOTE: docs exclicitly say exception value can be passed to format_exception_only since 3.10
         try:
-            exec(to_compile, glob)
+            exec(wrapped_source, glob)
         except Exception as e:
-            return f"{type(e).__name__}: {e}"
-
-        func = glob["func"]
+            return "".join(traceback.format_exception_only(e))  # type: ignore[arg-type]
 
         fake_stdout = io.StringIO()
 
         try:
             with redirect_stdout(fake_stdout):
-                returned = await func()
-        except Exception:
-            return f"{fake_stdout.getvalue()}{traceback.format_exc()}"
-        else:
-            from_stdout = fake_stdout.getvalue()
+                returned = await glob["__pink_eval__"]()
+        except Exception as e:
+            return f"{fake_stdout.getvalue()}{''.join(traceback.format_exception_only(e))}"  # type: ignore[arg-type]
 
-            if returned is None:
-                if from_stdout:
-                    return f"{from_stdout}"
+        from_stdout = fake_stdout.getvalue()
 
-                return "Evaluated"
-            else:
-                return f"{from_stdout}{returned}"
+        if returned is None:
+            if from_stdout:
+                return f"{from_stdout}"
+
+            return "Evaluated"
+
+        return f"{from_stdout}{returned}"
+
+    @staticmethod
+    def _is_valid_syntax(source: str) -> bool:
+        try:
+            ast.parse(source)
+        except SyntaxError:
+            return False
+
+        return True
 
     async def _exec(self, _: Context, arguments: str) -> commands.Paginator:
         stdout, stderr = await run_process_shell(arguments)
