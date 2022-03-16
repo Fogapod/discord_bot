@@ -23,7 +23,7 @@ class Translator(Cog):
         ignore_extra=False,
     )
     async def _translate(self, ctx: Context, language: Language, *, text: str) -> None:
-        """Translate text into specified language"""
+        """Translate text into target language"""
 
         translated = await self._raw_translate(text, language)
 

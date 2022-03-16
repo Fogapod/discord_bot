@@ -73,7 +73,7 @@ class Meta(Cog):
         authors = f"Authors: {', '.join(author_names)}"
 
         owner_names = [await self._maybe_get_name(oid) for oid in self.bot.owner_ids]
-        owners = f"Active owner{'s' if len(owner_names) > 1 else ''}: {', '.join(owner_names)}"
+        owners = f"Active owner{'s' if len(owner_names) != 1 else ''}: {', '.join(owner_names)}"
 
         invite = "TNXn8R7"
 

@@ -182,6 +182,11 @@ class PINK(commands.Bot):
         # allow empty match in DMs
         return ""
 
+    async def is_owner(self, user: discord.User) -> bool:
+        """Just self.owner_ids. No fancy tricks with app info fetching"""
+
+        return user.id in self.owner_ids
+
     async def get_context(
         self,
         message: discord.Message,
