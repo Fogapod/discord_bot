@@ -71,6 +71,10 @@ class TechAdmin(Cog):
     async def cog_check(self, ctx: Context) -> None:
         return await is_owner().predicate(ctx)  # type: ignore[attr-defined]
 
+    async def cog_load(self) -> None:
+        # this is not ideal because if TechAdmin itself is reloaded, this value is lost
+        self._last_reloaded_module: Optional[str] = None
+
     @commands.command()
     async def load(self, ctx: Context, module: str) -> None:
         """Load extension"""
@@ -85,9 +89,17 @@ class TechAdmin(Cog):
         await self.bot.unload_extension(f"pink.cogs.{module}")
         await ctx.ok()
 
-    @commands.command()
+    @commands.command(aliases=["re"])
     async def reload(self, ctx: Context, module: str) -> None:
         """Reload extension"""
+
+        if module == "~":
+            if self._last_reloaded_module is None:
+                return await ctx.send("No previous reloaded module")
+
+            module = self._last_reloaded_module
+        else:
+            self._last_reloaded_module = module
 
         await self.bot.reload_extension(f"pink.cogs.{module}")
         await ctx.ok()
@@ -242,7 +254,7 @@ async def __pink_eval__():
 
         if returned is None:
             if from_stdout:
-                return f"{from_stdout}"
+                return from_stdout
 
             return "Evaluated"
 
