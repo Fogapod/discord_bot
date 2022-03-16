@@ -206,3 +206,15 @@ class PINK(commands.Bot):
         sentry_sdk.set_context("guild", {"id": None if message.guild is None else message.guild.id})
 
         await self.process_commands(message)
+
+    # --- custom functions ---
+    async def maybe_get_user(self, user_id: int) -> Optional[discord.User]:
+        """Tries to get user from cache or fetch if not present. Is not cached"""
+
+        if user := self.get_user(user_id):
+            return user
+
+        try:
+            return await self.fetch_user(user_id)
+        except discord.NotFound:
+            return None

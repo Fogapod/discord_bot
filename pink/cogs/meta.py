@@ -1,8 +1,6 @@
 import os
 import time
 
-import discord
-
 from discord.ext import commands  # type: ignore[attr-defined]
 
 from pink.bot import PINK, Prefix
@@ -11,12 +9,15 @@ from pink.context import Context
 from pink.settings import settings
 from pink.utils import seconds_to_human_readable
 
+# art by: patorjk.com/software/taag
 PINK_ART = r"""   ___ _____    __
   / _ \\_   \/\ \ \/\ /\
  / /_)/ / /\/  \/ / //_/
 / ___/\/ /_/ /\  / __ \
 \/   \____/\_\ \/\/  \/"""
 
+REPO = "github.com/Fogapod/pink"
+SUPPORT = "TNXn8R7"
 AUTHORS = (386551253532147712, 253384991940149249)
 
 
@@ -69,39 +70,29 @@ class Meta(Cog):
         else:
             revision = ""
 
-        author_names = [await self._maybe_get_name(oid) for oid in AUTHORS]
-        authors = f"Authors: {', '.join(author_names)}"
+        owner_mentions = []
+        for owner_id in dict.fromkeys([*AUTHORS, *self.bot.owner_ids]).keys():
+            if owner := await self.bot.maybe_get_user(owner_id):
+                if owner.id in AUTHORS and owner.id not in self.bot.owner_ids:
+                    owner_mentions.append(f"{owner}[inactive]")
+                else:
+                    # put active and resolved owners at the beginning
+                    owner_mentions.insert(0, str(owner))
+            else:
+                owner_mentions.append(f"[{owner_id}]")
 
-        owner_names = [await self._maybe_get_name(oid) for oid in self.bot.owner_ids]
-        owners = f"Active owner{'s' if len(owner_names) != 1 else ''}: {', '.join(owner_names)}"
+        fields = {
+            "prefix": f"@mention or {settings.PREFIX}",
+            "source": f"{REPO} {revision}",
+            "support": f"discord.gg / {SUPPORT}",
+            "owners": " ".join(owner_mentions),
+            "uptime": seconds_to_human_readable(int(time.monotonic() - ctx.bot.launched_at)),
+        }
 
-        invite = "TNXn8R7"
+        longest_filed = len(max(*list(fields.keys()), key=lambda s: len(s)))
+        info = "\n".join(f"{k:>{longest_filed}} : {v}" for k, v in fields.items())
 
-        running_for = seconds_to_human_readable(int(time.monotonic() - ctx.bot.launched_at))
-
-        return await ctx.send(
-            f"""```
-{PINK_ART}
-
-[PINK art by: patorjk.com/software/taag]
-
-This bot was originally made for PotatoStation server of UnityStation.
-
-Prefix: @mention or {settings.PREFIX}
-Source code: github.com/Fogapod/pink {revision}
-{authors}
-{owners}
-Support: discord.gg / {invite}
-
-Uptime: {running_for}
-```"""
-        )
-
-    async def _maybe_get_name(self, user_id: int) -> str:
-        try:
-            return str(await self.bot.fetch_user(user_id))
-        except discord.NotFound:
-            return "Deleted User"
+        await ctx.send(f"```\n{PINK_ART}\n\n{info}```")
 
     @commands.group(
         invoke_without_command=True,
