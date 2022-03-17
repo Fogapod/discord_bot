@@ -42,7 +42,7 @@ class Code:
 
     @classmethod
     async def convert(cls, _: Context, argument: str) -> Code:
-        if match := cls._codeblock_regex.match(argument):
+        if match := cls._codeblock_regex.fullmatch(argument):
             if body := match["body"]:
                 language = match["language"] or None
             else:
@@ -58,7 +58,7 @@ class Code:
         if not self.has_codeblock:
             return self.body
 
-        # this is not completely accurate because it always inserts \n between language and body
+        # this is not completely accurate because it always inserts \n between language and body. also newlines around body are stripped
         return f"```{'' if self.language is None else self.language}\n{self.body}```"
 
 
