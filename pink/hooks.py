@@ -3,7 +3,7 @@ from __future__ import annotations
 import inspect
 
 from functools import partial, update_wrapper, wraps
-from typing import Any, Callable, Coroutine, Dict, Iterable, List, Optional, ParamSpec, TypeVar
+from typing import Any, Callable, Iterable, Optional, ParamSpec, TypeVar
 
 __all__ = (
     "HookHost",
@@ -13,10 +13,9 @@ __all__ = (
 T = TypeVar("T")
 P = ParamSpec("P")
 
-Coro = Coroutine[Any, Any, T]
 
 # TODO: Protocol
-_HookType = Callable[..., Coro[Any]]
+_HookType = Callable[..., Any]
 
 
 class HookHost:
@@ -24,21 +23,19 @@ class HookHost:
 
     __slots__ = ("__active_hooks__",)
 
-    __active_hooks__: List[_HookType]
+    __active_hooks__: list[_HookType]
 
     def __new__(cls, *args: Any, **kwargs: Any) -> HookHost:
         self = super().__new__(cls, *args, **kwargs)
 
-        hooks = []
+        self.__active_hooks__ = []
 
         for base in cls.__mro__:
             for value in base.__dict__.values():
-                if inspect.iscoroutinefunction(value):
+                if inspect.isfunction(value):
                     if hasattr(value, "__hook_target__"):
-                        value.__hook_self_instance__ = self
-                        hooks.append(value)
-
-        self.__active_hooks__ = hooks
+                        value.__hook_self_instance__ = self  # type: ignore[attr-defined]
+                        self.__active_hooks__.append(value)
 
         return self
 
@@ -55,7 +52,15 @@ class Hookable:
     because of the way self argument is injected.
     """
 
-    __hooks__: Dict[str, List[_HookType]] = {}
+    __hooks__: dict[str, list[_HookType]]
+
+    def __init_subclass__(cls) -> None:
+        cls.__hooks__ = {}
+
+        for value in cls.__dict__.values():
+            if inspect.isfunction(value):
+                if hasattr(value, "__original__"):
+                    cls.__hooks__[value.__name__] = []
 
     def _hooks_for(self, name: str) -> Iterable[_HookType]:
         return self.__hooks__.get(name, ())
@@ -67,11 +72,11 @@ class Hookable:
         """Make method hookable"""
 
         # TODO: Concatenate[Any, P] for self arg once mypy supports it
-        def decorator(func: Callable[P, Coro[T]]) -> Callable[P, Coro[T]]:
-            name = func.__name__
+        def decorator(fn: Callable[P, T]) -> Callable[P, T]:
+            name = fn.__name__
 
-            @wraps(func)
-            def wrapped(self: Any, *args: P.args, **kwargs: P.kwargs) -> Coro[T]:
+            @wraps(fn)
+            def wrapped(self: Any, *args: P.args, **kwargs: P.kwargs) -> T:
                 handler: _HookType = getattr(self, name).__original__
 
                 # thanks aiohttp
@@ -81,7 +86,7 @@ class Hookable:
 
                 return handler(self, *args, **kwargs)
 
-            wrapped.__original__ = func  # type: ignore[attr-defined]
+            wrapped.__original__ = fn  # type: ignore[attr-defined]
 
             return wrapped  # type: ignore
 
@@ -91,14 +96,17 @@ class Hookable:
     def hook(cls, name: Optional[str] = None) -> Callable[[Callable[P, T]], Callable[P, T]]:
         """Makes decorated method a hook for given method of original hookable"""
 
-        def decorator(func: Callable[P, T]) -> Callable[P, T]:
-            if not inspect.iscoroutinefunction(func):
+        if cls is Hookable:
+            raise RuntimeError("Cannot create hooks for Hookable itself. Subclass it")
+
+        def decorator(fn: Callable[P, T]) -> Callable[P, T]:
+            if not inspect.iscoroutinefunction(fn):
                 raise TypeError("Not a coroutine")
 
             nonlocal name
 
             if name is None:
-                if (name := func.__name__).startswith("on_"):
+                if (name := fn.__name__).startswith("on_"):
                     name = name[3:]
 
             original = getattr(cls, name, None)
@@ -108,13 +116,12 @@ class Hookable:
             if not hasattr(original, "__original__"):
                 raise ValueError(f"Function is not hookable: {name}")
 
-            func.__hook_name__ = name  # type: ignore[attr-defined]
-            func.__hook_target__ = cls  # type: ignore[attr-defined]
+            fn.__hook_name__ = name  # type: ignore[attr-defined]
+            fn.__hook_target__ = cls  # type: ignore[attr-defined]
 
-            cls.__hooks__.setdefault(name, [])
-            cls.__hooks__[name].append(func)  # type: ignore[arg-type]
+            cls.__hooks__[name].append(fn)
 
-            return func
+            return fn
 
         return decorator
 
