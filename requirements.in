@@ -27,4 +27,5 @@ orjson
 uvloop
 
 # misc
-aiocache
+# fix for multiple memory cache instances, see https://github.com/aio-libs/aiocache/pull/562
+aiocache @ git+https://github.com/Fogapod/aiocache@d20f4f7b94a8213544dc13dd9b931d9015203c15

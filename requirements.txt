@@ -4,7 +4,7 @@
 #
 #    pip-compile --output-file=requirements.txt requirements.in
 #
-aiocache==0.11.1
+aiocache @ git+https://github.com/Fogapod/aiocache@d20f4f7b94a8213544dc13dd9b931d9015203c15
     # via -r requirements.in
 aiohttp==3.8.1
     # via
@@ -68,7 +68,7 @@ python-dotenv==0.19.2
     # via pydantic
 rfc3986==1.5.0
     # via httpx
-sentry-sdk==1.5.7
+sentry-sdk==1.5.8
     # via -r requirements.in
 sniffio==1.2.0
     # via
@@ -80,7 +80,7 @@ typing-extensions==4.1.1
     # via
     #   edgedb
     #   pydantic
-urllib3==1.26.8
+urllib3==1.26.9
     # via sentry-sdk
 uvloop==0.16.0
     # via -r requirements.in

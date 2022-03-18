@@ -6,13 +6,10 @@ import logging
 import time
 
 from dataclasses import InitVar, dataclass, field
-from typing import Any, List, Mapping
+from typing import Any, ClassVar, List, Mapping
 
 import aiohttp
 
-# does not work
-# aiocache_logger = logging.getLogger("aiocache")
-# aiocache_logger.setLevel(logging.WARNING)
 from aiocache import SimpleMemoryCache
 
 from pink.context import Context
@@ -25,7 +22,9 @@ DownloadAddressResponse = collections.namedtuple("DownloadAddressResponse", ["st
 
 
 class DownloadAddress:
-    _cache = SimpleMemoryCache(ttl=60)
+    _cache: ClassVar[SimpleMemoryCache] = SimpleMemoryCache(ttl=60)
+    _locks: ClassVar[SimpleMemoryCache] = SimpleMemoryCache(ttl=60)
+    _locks_lock = asyncio.Lock()
 
     def __init__(self, name: str, url: str):
         self.name = name
@@ -34,13 +33,22 @@ class DownloadAddress:
         self.response = DownloadAddressResponse(0, "not fetched")
 
     async def check(self, ctx: Context) -> None:
+        # cached by earlier requests
         if response := await self._cache.get(self.url):
             self.response = response
 
             return
 
-        # TODO: locks because at this point there could be multiple coroutines trying
-        # to fetch same URL if servers use same game version
+        # not in cache - try to be the only one to fetch this url
+        async with self._locks_lock:
+            if fut := await self._locks.get(self.url):
+                # we are not first, just wait for response
+                self.response = await fut
+                return
+            else:
+                # we are first, lock url
+                fut = asyncio.Future()
+                await self._locks.add(self.url, fut)
 
         try:
             async with ctx.session.head(self.url, timeout=aiohttp.ClientTimeout(total=10)) as r:
@@ -51,6 +59,8 @@ class DownloadAddress:
             response = DownloadAddressResponse(-1, type(e).__name__)
 
         self.response = response
+
+        fut.set_result(response)
 
         await self._cache.set(self.url, response)
 
