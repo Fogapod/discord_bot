@@ -12,6 +12,7 @@ import PIL
 from PIL import Image
 
 from pink.cogs.utils.errorhandler import PINKError
+from pink.decorators import in_executor
 
 DEG_TO_RAD_RATIO = pi / 180
 
@@ -219,6 +220,7 @@ class FlyDrawer:
         return filename
 
 
+@in_executor()
 def draw_flies(
     src: PIL.Image,
     fly_src: PIL.Image,

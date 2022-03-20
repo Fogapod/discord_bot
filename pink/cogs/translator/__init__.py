@@ -1,5 +1,3 @@
-import asyncio
-
 import googletrans
 
 from discord.ext import commands  # type: ignore[attr-defined]
@@ -7,6 +5,7 @@ from discord.ext import commands  # type: ignore[attr-defined]
 from pink.bot import PINK
 from pink.cog import Cog
 from pink.context import Context
+from pink.decorators import in_executor
 
 from .constants import LANGUAGES, REVERSE_LANGCODE_ALIASES
 from .types import Language
@@ -39,8 +38,9 @@ class Translator(Cog):
 
         await ctx.send(f"**{in_lang}** -> **{out_lang}**```\n{translated.text}```")
 
-    async def _raw_translate(self, text: str, out_lang: str) -> googletrans.models.Translated:
-        return await asyncio.to_thread(self.translator.translate, text, dest=out_lang)
+    @in_executor()
+    def _raw_translate(self, text: str, out_lang: str) -> googletrans.models.Translated:
+        return self.translator.translate(text, dest=out_lang)
 
     async def translate(self, text: str, out_lang: str) -> str:
         translated = await self._raw_translate(text, out_lang)

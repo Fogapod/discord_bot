@@ -24,9 +24,6 @@ class Settings(BaseSettings):
     TRAVITIA_API_TOKEN: Optional[str] = None
     OCR_API_TOKEN: Optional[str] = None
 
-    PINK_PROXY: Optional[str] = None
-    PINK_PROXY_TOKEN: Optional[str] = None
-
     class Config:
         env_file = ".env"
         env_prefix = "PINK_BOT_"

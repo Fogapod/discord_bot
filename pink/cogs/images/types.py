@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import re
 import warnings
 
@@ -17,6 +18,7 @@ from discord.ext import commands  # type: ignore[attr-defined]
 from PIL.Image import DecompressionBombWarning
 
 from pink.context import Context
+from pink.decorators import in_executor
 from pink.errors import PINKError
 from pink.regexes import CLEAN_URL_REGEX, EMOTE_REGEX, ID_REGEX
 
@@ -43,8 +45,9 @@ class FetchedImage:
     def __init__(self, data: bytes):
         self.bytes = data
 
-    async def to_pil_image(self, _: Context, *, max_dimensions: int = 10000) -> PIL.Image:
-        """Returns Pillow image created from bytes. Should be closed manually"""
+    @in_executor()
+    def to_pil(self, *, max_dimensions: int = 10000) -> PIL.Image:
+        """Returns Pillow image created from bytes. Should be closed manually. Maybe."""
 
         try:
             img = PIL.Image.open(BytesIO(self.bytes))
@@ -61,6 +64,10 @@ class FetchedImage:
                 raise PINKError(f"Image is too large: **{img.size}pix**")
 
         return img
+
+    @in_executor()
+    def to_base64(self) -> bytes:
+        return base64.b64encode(self.bytes)
 
     def __repr__(self) -> str:
         return f"<{type(self).__name__} bytes={len(self.bytes)}>"
@@ -466,10 +473,15 @@ class Image:
 
             raise commands.BadArgument(error)
 
-    async def to_pil_image(self, ctx: Context) -> PIL.Image:
+    async def to_pil(self, ctx: Context) -> PIL.Image:
         fetched = await self.fetch(ctx)
 
-        return await fetched.to_pil_image(ctx)
+        return await fetched.to_pil()
+
+    async def to_base64(self, ctx: Context) -> bytes:
+        fetched = await self.fetch(ctx)
+
+        return await fetched.to_base64()
 
     def __repr__(self) -> str:
         return f"<{type(self).__name__} url={self.url} type={self.type.name}>"

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import itertools
 import math
 
@@ -14,9 +13,10 @@ from pink_accents import Accent
 
 from pink.cogs.utils.errorhandler import PINKError
 from pink.context import Context
+from pink.decorators import in_executor
 from pink.settings import settings
 
-from .types import StaticImage
+from .types import Image, StaticImage
 
 _VertexType = Dict[str, int]
 _VerticesType = Tuple[_VertexType, _VertexType, _VertexType, _VertexType]
@@ -25,12 +25,7 @@ OCR_API_URL = "https://content-vision.googleapis.com/v1/images:annotate"
 
 
 assert settings.OCR_API_TOKEN is not None, "ocr api token unset"
-assert settings.PINK_PROXY is not None, "proxy unset"
-assert settings.PINK_PROXY_TOKEN is not None, "proxy token unset"
-
 OCR_API_TOKEN = settings.OCR_API_TOKEN
-PINK_PROXY = settings.PINK_PROXY
-PINK_PROXY_TOKEN = f"Bearer {settings.PINK_PROXY_TOKEN}"
 
 FONT = ImageFont.truetype("DejaVuSans.ttf")
 
@@ -309,17 +304,8 @@ def _language_iterator(blocks: Sequence[Any]) -> Iterator[Optional[str]]:
                 yield paragraph_language or block_language
 
 
-async def ocr(ctx: Context, image_url: str) -> Dict[str, Any]:
-    async with ctx.session.post(
-        f"{PINK_PROXY}",
-        headers=dict(authorization=PINK_PROXY_TOKEN),
-        json=dict(url=image_url, ttl=3600),
-    ) as r:
-        if r.status != 200:
-            await ctx.reply(f"Unable to reach proxy: {r.status}\n" f"Will try raw URL but it will most likely fail")
-        else:
-            json = await r.json()
-            image_url = f"{PINK_PROXY}/{json['id']}"
+async def ocr(ctx: Context, image: Image) -> Dict[str, Any]:
+    b64 = await image.to_base64(ctx)
 
     async with ctx.session.post(
         OCR_API_URL,
@@ -330,11 +316,7 @@ async def ocr(ctx: Context, image_url: str) -> Dict[str, Any]:
             "requests": [
                 {
                     "features": [{"type": "TEXT_DETECTION"}],
-                    "image": {
-                        "source": {
-                            "imageUri": image_url,
-                        }
-                    },
+                    "image": {"content": b64.decode()},
                 }
             ]
         },
@@ -357,7 +339,7 @@ async def ocr(ctx: Context, image_url: str) -> Dict[str, Any]:
             raise PINKError(f"Error in underlying API[{r.status}]: " f'{json.get("message", "unknown error")}')
         json = await r.json()
 
-    if len((responses := json["responses"])) == 0:
+    if not (responses := json["responses"]):
         return {}
 
     maybe_annotations = responses[0]
@@ -371,6 +353,7 @@ async def ocr(ctx: Context, image_url: str) -> Dict[str, Any]:
     return maybe_annotations
 
 
+@in_executor()
 def _draw_trocr(src: PIL.Image, fields: Sequence[TextField]) -> BytesIO:
     FIELD_CAP = 150
 
@@ -475,9 +458,9 @@ async def _apply_translation(
 
 
 async def ocr_translate(ctx: Context, image: StaticImage, language: Union[str, Accent]) -> Tuple[BytesIO, str]:
-    src = await image.to_pil_image(ctx)
+    src = await image.to_pil(ctx)
 
-    annotations = await ocr(ctx, image.url)
+    annotations = await ocr(ctx, image)
 
     word_annotations = annotations["textAnnotations"][1:]
     block_annotations = annotations["fullTextAnnotation"]["pages"][0]["blocks"]
@@ -525,7 +508,7 @@ async def ocr_translate(ctx: Context, image: StaticImage, language: Union[str, A
     if not fields:
         raise PINKError("could not translate anything on image", formatted=False)
 
-    result = await asyncio.to_thread(_draw_trocr, src, fields)
+    result = await _draw_trocr(src, fields)
 
     stats = f"Words: {current_word}\nLines: {len(fields)}"
     if notes:

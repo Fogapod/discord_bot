@@ -1,4 +1,3 @@
-import asyncio
 import os
 
 from typing import Union
@@ -116,7 +115,7 @@ class Images(Cog):
             if image is None:
                 image = await Image.from_history(ctx)
 
-            annotations = await ocr(ctx, image.url)
+            annotations = await ocr(ctx, image)
 
         await ctx.send(f"```\n{annotations['fullTextAnnotation']['text']}```")
 
@@ -163,10 +162,10 @@ class Images(Cog):
         if image is None:
             image = await StaticImage.from_history(ctx)
 
-        src = await image.to_pil_image(ctx)
+        src = await image.to_pil(ctx)
 
         if fly_image is not None:
-            fly_src = await fly_image.to_pil_image(ctx)
+            fly_src = await fly_image.to_pil(ctx)
         else:
             fly_src = None
 
@@ -181,7 +180,7 @@ class Images(Cog):
         velocity = 10
 
         async with ctx.channel.typing():
-            filename = await asyncio.to_thread(draw_flies, src, fly_src, steps, velocity, amount)
+            filename = await draw_flies(src, fly_src, steps, velocity, amount)
 
             # optimize gif using gifsicle
             await run_process("gifsicle", *GIFSICLE_ARGUMENTS + [filename])

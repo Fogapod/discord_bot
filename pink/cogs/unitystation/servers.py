@@ -54,7 +54,7 @@ class DownloadAddress:
             async with ctx.session.head(self.url, timeout=aiohttp.ClientTimeout(total=10)) as r:
                 response = DownloadAddressResponse(r.status, None)
         except Exception as e:
-            log.error("fetching %s: %s: %s", repr(self), type(e).__name__, str(e))
+            log.error("fetching %r: %s: %s", self, type(e).__name__, str(e))
 
             response = DownloadAddressResponse(-1, type(e).__name__)
 
