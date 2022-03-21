@@ -27,7 +27,7 @@ from pink.utils import run_process_shell
 
 class Code:
     # i have no idea why + and - are allowed as language name
-    _codeblock_regex = re.compile(r"```(?P<language>[\w+-]*)\n*(?P<body>.*?)\n*```", re.DOTALL)
+    _codeblock_regex = re.compile(r"```(?P<language>[\w+-]*)\n*(?P<body>.*?)\n*```[^`]*", re.DOTALL)
 
     __slots__ = (
         "language",
