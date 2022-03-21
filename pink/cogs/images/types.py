@@ -20,9 +20,11 @@ from PIL.Image import DecompressionBombWarning
 from pink.context import Context
 from pink.decorators import in_executor
 from pink.errors import PINKError
-from pink.regexes import CLEAN_URL_REGEX, EMOTE_REGEX, ID_REGEX
+from pink.regexes import EMOTE_REGEX, ID_REGEX
 
 warnings.simplefilter("error", DecompressionBombWarning)
+
+CLEAN_URL_REGEX = re.compile(r"\A<|>\Z")
 
 
 # discord cdn generates all formats for emojis. discord.py decided to not support this
