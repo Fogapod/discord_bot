@@ -405,8 +405,9 @@ def _draw_trocr(src: PIL.Image, fields: Sequence[TextField]) -> BytesIO:
 
     result = BytesIO()
     src.save(result, format="PNG")
+    result.seek(0)
 
-    return BytesIO(result.getvalue())
+    return result
 
 
 def _apply_accents(ctx: Context, lines: List[str], accent: Accent) -> List[str]:

@@ -24,7 +24,7 @@ chardet==3.0.4
     # via httpx
 charset-normalizer==2.0.12
     # via aiohttp
-discord.py @ git+https://github.com/Rapptz/discord.py@1192d842e10cc96591eadf854f88faaa73788982
+discord.py @ git+https://github.com/Rapptz/discord.py@eca472759338d87ad616a44191b7a2ccf55bbabf
     # via -r requirements.in
 edgedb==0.17.3
     # via -r requirements.in

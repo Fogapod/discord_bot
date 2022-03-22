@@ -28,6 +28,6 @@ repos:
         additional_dependencies:
           - "travitia_talk"
           - "pink_accents==0.0.4"
-          - "discord.py @ git+https://github.com/Rapptz/discord.py@1192d842e10cc96591eadf854f88faaa73788982"
+          - "discord.py @ git+https://github.com/Rapptz/discord.py@eca472759338d87ad616a44191b7a2ccf55bbabf"
           - "edgedb<=0.17.3"
           - "types-orjson"
