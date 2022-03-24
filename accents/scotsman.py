@@ -1,4 +1,5 @@
 from _shared import DISCORD_MESSAGE_END
+
 from pink_accents import Accent
 
 
@@ -535,7 +536,7 @@ class Scotsman(Accent):
         r"town": "toun",
         r"tough": "hard",
         r"traitors": "quislings",
-        r"traitor": "quisling,traitor",
+        r"traitor": ("quisling", "traitor"),
         r"troubles": "trauchles",
         r"trouble": "trauchle",
         r"turds": "jobbies",
@@ -615,7 +616,7 @@ class Scotsman(Accent):
         r"shitsec": "shitesec",
         r"alright": "awricht",
         r"crazy": "doolally",
-        r"idiot": "eejit,numpty,mongo,neep",
+        r"idiot": ("eejit", "numpty", "mongo", "neep"),
         r"idiots": ("eejits", "numptys", "mongos", "neeps"),
         r"ugly": "hackit",
         r"tired": "knackert",
@@ -625,12 +626,12 @@ class Scotsman(Accent):
         r"fucking": "fookin`,feckin",
         r"fucker": "fooker",
         r"fuckers": "fookers",
-        r"mom": "maw,mam",
-        r"moms": "maws,mams",
+        r"mom": ("maw", "mam"),
+        r"moms": ("maws", "mams"),
         r"throw": "chuck",
         r"throwing": ("chuckin", "chuckin'"),
         r"threw": "chucked",
-        r"fucked": "fooked,shagged",
+        r"fucked": ("fooked", "shagged"),
         r"ass": "arse",
         r"asses": "arses",
         r"bothered": "arsed",
@@ -638,12 +639,34 @@ class Scotsman(Accent):
         r"dicks": "boabys",
         r"something": "suhin",
         r"somethings": "suhins",
-        r"boys": "lads,laddies",
-        r"girls": "lasses,lassies,burds",
+        r"boys": ("lads", "laddies"),
+        r"girls": ("lasses", "lassies", "burds"),
     }
 
     PATTERNS = {
         DISCORD_MESSAGE_END: {
-            " ye daft cunt": lambda s: 0.4 + (0.6 * s / 9),
+            # dynamic probability is broken
+            " ye daft cunt": 0.5,  # lambda s: 0.4 + (0.6 * s / 9),
         }
     }
+
+
+if __name__ == "__main__":
+    with open("scotsman", "w") as f:
+        for k, v in Scotsman.WORDS.items():
+            if isinstance(v, tuple):
+                print(
+                    f"""\
+Replacement::new(
+    Source::Raw(r"\\b{k}\\b"),
+    Box::new(MultiTarget {{
+        replacement: vec![{", ".join(f'Box::new("{name}")' for name in v)}],
+    }}),
+),""",
+                    file=f,
+                )
+            else:
+                print(
+                    f"""Replacement::new(Source::Raw(r"\\b{k}\\b"), Box::new("{v}"),),""",
+                    file=f,
+                )
