@@ -1,0 +1,16 @@
+[package]
+name = "pink_accents"
+version = "0.0.0"
+edition = "2021"
+
+[lib]
+name = "pink_accents"
+crate-type = ["lib"]
+
+[dependencies]
+fancy-regex = { version = "0.8.0", features = ["perf-dfa", "perf-literal"] }
+rand = "0.8.5"
+
+[profile.release]
+codegen-units = 1
+lto = true

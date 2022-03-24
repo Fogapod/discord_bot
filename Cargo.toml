@@ -8,10 +8,16 @@ name = "pink_accents_rs"
 crate-type = ["cdylib"]
 
 [dependencies]
+pink_accents = { path = "./pink_accents" }
 pyo3 = { version = "0.16.2", features = ["extension-module"] }
-fancy-regex = { version = "0.8.0", features = ["perf-dfa", "perf-literal"] }
 lazy_static = "1.4.0"
 parking_lot = "0.12.0"
+
+[workspace]
+
+members = [
+    "pink_accents",
+]
 
 [profile.release]
 codegen-units = 1

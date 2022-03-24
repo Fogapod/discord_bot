@@ -1,9 +1,5 @@
-mod accent;
-mod capture;
-mod replacement;
-mod scotsman;
-
-use crate::accent::Accent;
+use pink_accents::accent::Accent;
+use pink_accents::scotsman::Scotsman;
 
 use std::collections::HashMap;
 
@@ -26,7 +22,7 @@ fn apply_accent(accent: &str, text: &str, severity: i32) -> String {
 fn pink_accents_rs(_py: Python, m: &PyModule) -> PyResult<()> {
     ACCENTS
         .write()
-        .insert("scotsman".to_string(), Box::new(scotsman::Scotsman::new()));
+        .insert("scotsman".to_string(), Box::new(Scotsman::new().unwrap()));
 
     m.add_function(wrap_pyfunction!(apply_accent, m)?)?;
     Ok(())
