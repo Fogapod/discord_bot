@@ -1,7 +1,17 @@
 [package]
 name = "pink_accents"
 version = "0.0.0"
+authors = ["Fogapod <fogaprod@gmail.com>"]
 edition = "2021"
+description = "Define and apply accents to text using regex pattern matching"
+homepage = "https://github.com/Fogapod/pink/tree/rust-accents/pink_accents"
+repository = "https://github.com/Fogapod/pink/tree/rust-accents/pink_accentsb"
+license = "FSFAP"
+keywords = ["accents", "text", "regex"]
+categories = ["text-processing"]
+exclude = [
+    ".github/*",
+]
 
 [lib]
 name = "pink_accents"
