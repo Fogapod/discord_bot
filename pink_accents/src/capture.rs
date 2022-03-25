@@ -9,7 +9,7 @@ impl<'text> Capture<'text> {
         Self { caps, severity }
     }
 
-    fn original(&'text self) -> &'text str {
+    pub fn original(&self) -> &'text str {
         &self.caps[0]
     }
 }

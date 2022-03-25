@@ -13,13 +13,10 @@ exclude = [
     ".github/*",
 ]
 
-[lib]
-name = "pink_accents"
-crate-type = ["lib"]
-
 [dependencies]
 fancy-regex = { version = "0.8.0", features = ["perf-dfa", "perf-literal"] }
 rand = "0.8.5"
+rand_distr = "0.4.3"
 
 [profile.release]
 codegen-units = 1

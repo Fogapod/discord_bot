@@ -16,7 +16,7 @@ impl Accent for Scotsman {
 impl Scotsman {
     pub fn new() -> Result<Self, String> {
         let replacements = vec![
-            Replacement::new(Source::Raw(r"$( <!```)\z"), Box::new(" ye daft cunt")),
+            Replacement::new(Source::Raw(r"(?<!```)\z"), Box::new(" ye daft cunt")),
             Replacement::new(Source::Raw(r"\babout\b"), Box::new("aboot")),
             Replacement::new(Source::Raw(r"\babove\b"), Box::new("`boon")),
             Replacement::new(Source::Raw(r"\baccounts\b"), Box::new("accoonts")),
