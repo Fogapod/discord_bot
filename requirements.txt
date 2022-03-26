@@ -24,7 +24,7 @@ chardet==3.0.4
     # via httpx
 charset-normalizer==2.0.12
     # via aiohttp
-discord.py @ git+https://github.com/Rapptz/discord.py@eca472759338d87ad616a44191b7a2ccf55bbabf
+discord.py @ git+https://github.com/Rapptz/discord.py@985f5732c0ad720e5008ec36019bec6fc15cfc3a
     # via -r requirements.in
 edgedb==0.17.3
     # via -r requirements.in
@@ -66,7 +66,7 @@ pink-accents==0.0.4
     # via -r requirements.in
 pydantic[dotenv]==1.9.0
     # via -r requirements.in
-python-dotenv==0.19.2
+python-dotenv==0.20.0
     # via pydantic
 rfc3986==1.5.0
     # via httpx

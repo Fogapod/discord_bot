@@ -28,6 +28,7 @@ Dockerfile
 .git
 .mypy_cache
 .pytest_cache
+target
 
 # dependency configs (except requirements.txt)
 **/*.txt
