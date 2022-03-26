@@ -17,7 +17,7 @@ def main() -> None:
     sqlite_conn = sqlite3.connect("db.sqlite")
     sqlite_conn.row_factory = sqlite3.Row
 
-    edgedb_conn = edgedb.connect(os.environ["EDGEDB_DSN"])
+    edgedb_conn = edgedb.connect(os.environ["EDGEDB_DSN"])  # type: ignore
 
     accents: Dict[Tuple[int, int], List[Any]] = {}
     for accent in sqlite_conn.execute("SELECT guild_id, user_id, accent, severity FROM user_accent"):

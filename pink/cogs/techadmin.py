@@ -16,7 +16,7 @@ import discord
 import edgedb
 import orjson
 
-from discord.ext import commands  # type: ignore[attr-defined]
+from discord.ext import commands
 
 from pink.bot import PINK
 from pink.checks import is_owner
@@ -69,7 +69,7 @@ class TechAdmin(Cog):
     PAGINATOR_PAGES_CAP = 5
 
     async def cog_check(self, ctx: Context) -> None:
-        return await is_owner().predicate(ctx)  # type: ignore[attr-defined]
+        return await is_owner().predicate(ctx)
 
     async def cog_load(self) -> None:
         # this is not ideal because if TechAdmin itself is reloaded, this value is lost
@@ -126,7 +126,7 @@ class TechAdmin(Cog):
     def _make_paginator(self, text: str, prefix: str = "```") -> commands.Paginator:
         paginator = commands.Paginator(prefix=prefix)
         # https://github.com/Rapptz/discord.py/blob/5c868ed871184b26a46319c45a799c190e635892/discord/ext/commands/help.py#L125
-        max_page_size = paginator.max_size - len(paginator.prefix) - len(paginator.suffix) - 2
+        max_page_size = paginator.max_size - len(paginator.prefix) - len(paginator.suffix) - 2  # type: ignore
 
         def wrap_with_limit(text: str, limit: int) -> Iterator[str]:
             limit -= 1
@@ -171,7 +171,7 @@ class TechAdmin(Cog):
 
         async with ctx.typing():
             result = await self._eval(ctx, code)
-            result = result.replace(self.bot.http.token, "TOKEN_LEAKED")
+            result = result.replace(self.bot.http.token, "TOKEN_LEAKED")  # type: ignore
 
             paginator = self._make_paginator(result, prefix="```py\n")
 
@@ -193,7 +193,7 @@ class TechAdmin(Cog):
         async with ctx.typing():
             try:
                 # https://github.com/edgedb/edgedb-python/issues/107
-                data = orjson.loads(await ctx.edb.query_json(code.body))  # type: ignore[no-untyped-call]
+                data = orjson.loads(await ctx.edb.query_json(code.body))
             except edgedb.EdgeDBError as e:
                 return await ctx.send(f"Error: **{type(e).__name__}**: `{e}`")
 
@@ -253,7 +253,7 @@ async def __pink_eval__():
             with redirect_stdout(fake_stdout):
                 returned = await glob["__pink_eval__"]()
         except Exception as e:
-            return f"{fake_stdout.getvalue()}{''.join(traceback.format_exception_only(e))}"  # type: ignore[arg-type]
+            return f"{fake_stdout.getvalue()}{''.join(traceback.format_exception_only(e))}"  # type: ignore
 
         from_stdout = fake_stdout.getvalue()
 
@@ -282,7 +282,7 @@ async def __pink_eval__():
         else:
             result = stdout
 
-        result = result.replace(self.bot.http.token, "TOKEN_LEAKED")
+        result = result.replace(self.bot.http.token, "TOKEN_LEAKED")  # type: ignore
 
         return self._make_paginator(result, prefix="```bash\n")
 

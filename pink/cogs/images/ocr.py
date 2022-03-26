@@ -169,6 +169,8 @@ class TextField:
             upper = vertices[0].get("y")
             right = vertices[1].get("x")
             lower = vertices[2].get("y")
+        else:
+            raise RuntimeError(f"Bad angle: {angle}. Must be between 0 and 360")
 
         if left is None:
             left = 0
@@ -423,7 +425,7 @@ def _apply_accents(ctx: Context, lines: List[str], accent: Accent) -> List[str]:
     return [
         # trocr fully depends on newlines, apply accents to each line separately and
         # replace any newlines with spaces to make sure text order is preserved
-        accent_cog.apply_accents_to_text(line, [accent]).replace("\n", " ")
+        accent_cog.apply_accents_to_text(line, [accent]).replace("\n", " ")  # type: ignore
         for line in lines
     ]
 
@@ -451,7 +453,7 @@ async def _apply_translation(
             formatted=False,
         )
 
-    translated = await translator_cog.translate("\n".join(need_trasnslation.values()), language)
+    translated = await translator_cog.translate("\n".join(need_trasnslation.values()), language)  # type: ignore
 
     translated_lines = translated.split("\n")
     if len(translated_lines) != len(need_trasnslation):

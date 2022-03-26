@@ -1,11 +1,16 @@
 import discord
 
-from discord.ext import commands  # type: ignore[attr-defined]
+from discord.ext import commands
 
 from pink.bot import PINK
 from pink.cog import Cog
 from pink.context import Context
 from pink.settings import BaseSettings, settings
+
+
+class NotServerMyServer(commands.CommandError):
+    def __init__(self) -> None:
+        super().__init__("Not ServerMyServer")
 
 
 class CogSettings(BaseSettings):
@@ -20,11 +25,6 @@ class CogSettings(BaseSettings):
 cog_settings = settings.subsettings(CogSettings)
 
 
-class NotServerMyServer(commands.CommandError):
-    def __init__(self) -> None:
-        super().__init__("Not ServerMyServer")
-
-
 class ServerMyServer(Cog):
     """All logic related to ServerMyServer"""
 
@@ -35,7 +35,7 @@ class ServerMyServer(Cog):
         return True
 
     async def _member_log(self, text: str) -> None:
-        channel = self.bot.get_channel(cog_settings.user_log_channel)
+        channel: discord.TextChannel = self.bot.get_channel(cog_settings.user_log_channel)  # type: ignore
 
         await channel.send(text)
 
@@ -57,13 +57,13 @@ class ServerMyServer(Cog):
     async def all_(self, ctx: Context) -> None:
         """Toggles @all role for you"""
 
-        all_role = ctx.guild.get_role(cog_settings.all_role)
+        all_role: discord.Role = ctx.guild.get_role(self.settings.all_role)  # type: ignore
         reason = "asked"
 
-        if ctx.author.get_role(all_role.id) is None:
-            await ctx.author.add_roles(all_role, reason=reason)
+        if ctx.author.get_role(all_role.id) is None:  # type: ignore
+            await ctx.author.add_roles(all_role, reason=reason)  # type: ignore
         else:
-            await ctx.author.remove_roles(all_role, reason=reason)
+            await ctx.author.remove_roles(all_role, reason=reason)  # type: ignore
 
         await ctx.ok()
 

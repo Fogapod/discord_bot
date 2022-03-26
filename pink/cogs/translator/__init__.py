@@ -1,6 +1,6 @@
 import googletrans
 
-from discord.ext import commands  # type: ignore[attr-defined]
+from discord.ext import commands
 
 from pink.bot import PINK
 from pink.cog import Cog

@@ -5,7 +5,7 @@ import collections
 import logging
 import time
 
-from dataclasses import InitVar, dataclass, field
+from dataclasses import dataclass, field
 from typing import Any, ClassVar, List, Mapping
 
 import aiohttp
@@ -81,29 +81,29 @@ class DownloadAddress:
         return f"<{type(self).__name__} url={self.url} response={self.response}>"
 
 
-@dataclass
+@dataclass(slots=True)
 class Server:
-    name: InitVar[str]
+    name: str
     fork: str
     version: str
     map: str
     gamemode: str
     time: str
-    players: InitVar[int]
+    players: int
     fps: int
     ip: str
     port: str
     address: str = field(init=False)
     downloads: List[DownloadAddress]
 
-    def __post_init__(self, name: str, players: str) -> None:
+    def __post_init__(self) -> None:
         # newlines are allowed in server names
-        self.name = name.replace("\n", " ")
+        self.name = self.name.replace("\n", " ")
 
-        if players == "unknown":
+        if self.players == "unknown":
             self.players = -1
         else:
-            self.players = int(players)
+            self.players = int(self.players)
 
         self.address = f"{self.ip}:{self.port}"
 

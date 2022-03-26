@@ -1,6 +1,6 @@
 from typing import Dict, List, Optional
 
-from discord.ext import commands  # type: ignore[attr-defined]
+from discord.ext import commands
 
 from pink.bot import PINK
 from pink.cog import Cog
@@ -21,14 +21,14 @@ class UnityStation(Cog):
     """
 
     async def cog_load(self) -> None:
-        self.servers = ServerList()
+        self.servers_ = ServerList()
 
     @commands.command(aliases=["list", "sv", "ls"])
     async def servers(self, ctx: Context, *, server: Optional[str] = None) -> None:
         """List hub servers"""
 
         async with ctx.typing():
-            await self.servers.fetch(ctx)
+            await self.servers_.fetch(ctx)
 
             if server is None:
                 text = await self._servers()
@@ -40,7 +40,7 @@ class UnityStation(Cog):
     async def _server(self, server_name: str) -> str:
         server_name = server_name.lower()
 
-        servers = self.servers.servers
+        servers = self.servers_.servers
 
         for server in servers:
             if server.name.lower().startswith(server_name):
@@ -70,7 +70,7 @@ class UnityStation(Cog):
         return f"```\n{main_info}\n\nDownloads\n{downloads}```"
 
     async def _servers(self) -> str:
-        servers = self.servers.servers
+        servers = self.servers_.servers
 
         if not servers:
             return "No servers online"

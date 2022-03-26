@@ -57,8 +57,7 @@ class Excited(Accent):
 
     REPLACEMENTS = [Replacement(r"[a-z]", excited, adjust_case=False)]
 
-    # mypy does not understand properties at all
-    @Accent.severity.setter  # type: ignore
+    @Accent.severity.setter
     def severity(self, value: int) -> None:
         # support negative severity
         if not isinstance(value, int):

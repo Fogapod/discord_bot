@@ -4,7 +4,7 @@ from typing import Union
 
 import discord
 
-from discord.ext import commands  # type: ignore[attr-defined]
+from discord.ext import commands
 
 from pink.bot import PINK
 from pink.cog import Cog
@@ -27,7 +27,7 @@ except ImportError:
 
 from pink_accents import Accent
 
-from .ocr import ocr, ocr_translate
+from .ocr import ocr as do_ocr, ocr_translate
 
 
 class LanguageOrAccent(commands.Converter):
@@ -88,7 +88,7 @@ class Images(Cog):
         i: StaticImage = None,  # type: ignore
     ) -> None:
         if i is None:
-            i = await StaticImage.from_history(ctx)
+            i = await StaticImage.from_history(ctx)  # type: ignore
 
         await ctx.send(i, accents=[])
 
@@ -99,7 +99,7 @@ class Images(Cog):
         i: AnimatedImage = None,  # type: ignore
     ) -> None:
         if i is None:
-            i = await AnimatedImage.from_history(ctx)
+            i = await AnimatedImage.from_history(ctx)  # type: ignore
 
         await ctx.send(i, accents=[])
 
@@ -115,7 +115,7 @@ class Images(Cog):
             if image is None:
                 image = await Image.from_history(ctx)
 
-            annotations = await ocr(ctx, image)
+            annotations = await do_ocr(ctx, image)
 
         await ctx.send(f"```\n{annotations['fullTextAnnotation']['text']}```")
 
@@ -139,9 +139,9 @@ class Images(Cog):
 
         async with ctx.typing():
             if image is None:
-                image = await StaticImage.from_history(ctx)
+                image = await StaticImage.from_history(ctx)  # type: ignore
 
-            result, stats = await ocr_translate(ctx, image, language)
+            result, stats = await ocr_translate(ctx, image, language)  # type: ignore
 
         await ctx.send(
             stats,
@@ -160,7 +160,7 @@ class Images(Cog):
         """Animates flies on image"""
 
         if image is None:
-            image = await StaticImage.from_history(ctx)
+            image = await StaticImage.from_history(ctx)  # type: ignore
 
         src = await image.to_pil(ctx)
 

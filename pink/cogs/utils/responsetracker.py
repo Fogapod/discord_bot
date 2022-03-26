@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import contextlib
 
-from typing import Any, Union
+from typing import TYPE_CHECKING, Any, Union
 
 import discord
 
@@ -10,16 +12,17 @@ from pink.context import Context
 from pink.hooks import HookHost
 from pink.utils import LRU
 
-_EmojiType = Union[discord.Reaction, discord.Emoji, discord.PartialEmoji, str]
+if TYPE_CHECKING:
+    _EmojiType = discord.message.EmojiInputType | discord.Reaction
 
 
-# https://github.com/Rapptz/discord.py/blob/5d75a0e7d613948245d1eb0353fb660f4664c9ed/discord/message.py#L56
+# https://github.com/Rapptz/discord.py/blob/8993b7f5feca57cf6ed7d7c86d2a24daeeadd581/discord/message.py#L109-L122
 def convert_emoji_reaction(emoji: _EmojiType) -> str:
     if isinstance(emoji, discord.Reaction):
         emoji = emoji.emoji
 
     if isinstance(emoji, discord.Emoji):
-        return "%s:%s" % (emoji.name, emoji.id)
+        return f"{emoji.name}:{emoji.id}"
     if isinstance(emoji, discord.PartialEmoji):
         return emoji._as_reaction()
     if isinstance(emoji, str):
@@ -27,9 +30,7 @@ def convert_emoji_reaction(emoji: _EmojiType) -> str:
         # No existing emojis have <> in them, so this should be okay.
         return emoji.strip("<>")
 
-    raise discord.errors.InvalidArgument(
-        "emoji argument must be str, Emoji, or Reaction not {.__class__.__name__}.".format(emoji)
-    )
+    raise TypeError(f"emoji argument must be str, Emoji, or Reaction not {emoji.__class__.__name__}.")
 
 
 class RemovableResponse:

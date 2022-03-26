@@ -1,7 +1,7 @@
 import os
 import time
 
-from discord.ext import commands  # type: ignore[attr-defined]
+from discord.ext import commands
 
 from pink.bot import PINK, Prefix
 from pink.cog import Cog
@@ -100,10 +100,12 @@ class Meta(Cog):
     async def prefix(self, ctx: Context) -> None:
         """Get local prefix (if any)."""
 
-        if ctx.guild.id not in ctx.bot.prefixes:
+        guild_id: int = ctx.guild.id  # type: ignore
+
+        if guild_id not in ctx.bot.prefixes:
             return await ctx.send(f"Custom prefix not set, default is @mention or {settings.bot.prefix}")
 
-        await ctx.send(f"Local prefix: {ctx.bot.prefixes[ctx.guild.id].prefix}")
+        await ctx.send(f"Local prefix: {ctx.bot.prefixes[guild_id].prefix}")
 
     @prefix.command()
     @commands.has_permissions(manage_guild=True)
@@ -115,7 +117,7 @@ class Meta(Cog):
         settings = Prefix(ctx.bot, prefix=prefix.lower())
         await settings.write(ctx)
 
-        ctx.bot.prefixes[ctx.guild.id] = settings
+        ctx.bot.prefixes[ctx.guild.id] = settings  # type: ignore
 
         await ctx.ok()
 
@@ -126,10 +128,12 @@ class Meta(Cog):
         Remove local prefix override
         """
 
-        if ctx.guild.id in ctx.bot.prefixes:
+        guild_id: int = ctx.guild.id  # type: ignore
+
+        if guild_id in ctx.bot.prefixes:
             await Prefix.delete(ctx)
 
-            del ctx.bot.prefixes[ctx.guild.id]
+            del ctx.bot.prefixes[guild_id]
 
         await ctx.ok()
 

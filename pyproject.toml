@@ -60,3 +60,20 @@ module = [
 ]
 ignore_errors = true
 no_implicit_reexport = false
+
+[tool.pyright]
+pythonVersion = "3.10"
+typeCheckingMode = "basic"
+include = [
+    "pink",
+    "accents",
+    "scripts",
+]
+exclude = [
+    "**/__pycache__",
+    ".venv",
+    ".git",
+    "target",
+    "accents/experiments.py",
+]
+reportUnnecessaryTypeIgnoreComment = "warning"

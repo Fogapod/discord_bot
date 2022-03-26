@@ -6,7 +6,7 @@ import aiohttp
 import discord
 import edgedb
 
-from discord.ext import commands  # type: ignore[attr-defined]
+from discord.ext import commands
 
 from .hooks import Hookable
 

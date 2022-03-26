@@ -1,4 +1,4 @@
-from discord.ext import commands  # type: ignore[attr-defined]
+from discord.ext import commands
 
 from pink.context import Context
 

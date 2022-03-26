@@ -13,7 +13,7 @@ import discord
 import edgedb
 import sentry_sdk
 
-from discord.ext import commands  # type: ignore[attr-defined]
+from discord.ext import commands
 
 from .context import Context
 from .settings import settings
@@ -39,14 +39,14 @@ class Prefix:
         # custom prefix or mention
         # this way prefix logic is simplified and it hopefully runs faster at a cost of
         # storing duplicate mention regexes
-        self.prefix_re = mention_or_prefix_regex(bot.user.id, self.prefix)
+        self.prefix_re = mention_or_prefix_regex(bot.user.id, self.prefix)  # type: ignore
 
     @classmethod
     def from_edb(cls, bot: PINK, data: edgedb.Object) -> Prefix:
         return cls(bot, prefix=data.prefix)
 
     async def write(self, ctx: Context) -> None:
-        await ctx.bot.edb.query(  # type: ignore[no-untyped-call]
+        await ctx.bot.edb.query(
             """
             INSERT Prefix {
                 guild_id := <snowflake>$guild_id,
@@ -59,18 +59,18 @@ class Prefix:
                 }
             )
             """,
-            guild_id=ctx.guild.id,
+            guild_id=ctx.guild.id,  # type: ignore
             prefix=self.prefix,
         )
 
     @staticmethod
     async def delete(ctx: Context) -> None:
-        await ctx.bot.edb.query(  # type: ignore[no-untyped-call]
+        await ctx.bot.edb.query(
             """
             DELETE Prefix
             FILTER .guild_id = <snowflake>$guild_id
             """,
-            guild_id=ctx.guild.id,
+            guild_id=ctx.guild.id,  # type: ignore
         )
 
     def __repr__(self) -> str:
@@ -100,9 +100,9 @@ class PINK(commands.Bot):
         )
 
     async def _load_prefixes(self) -> None:
-        self._default_prefix_re = mention_or_prefix_regex(self.user.id, settings.bot.prefix)
+        self._default_prefix_re = mention_or_prefix_regex(self.user.id, settings.bot.prefix)  # type: ignore
 
-        for guild in await self.edb.query(  # type: ignore[no-untyped-call]
+        for guild in await self.edb.query(
             """
             SELECT Prefix {
                 guild_id,
@@ -193,11 +193,11 @@ class PINK(commands.Bot):
         *,
         cls: Optional[Type[commands.Context]] = None,
     ) -> Context:
-        return await super().get_context(message, cls=cls or Context)
+        return await super().get_context(message, cls=cls or Context)  # type: ignore
 
     # --- events ---
     async def on_ready(self) -> None:
-        log.info(f"READY as {self.user}[{self.user.id}] with prefix {settings.bot.prefix}")
+        log.info(f"READY as {self.user}[{self.user.id}] with prefix {settings.bot.prefix}")  # type: ignore
 
     async def on_message(self, message: discord.Message) -> None:
         # TODO: how to make this optional? sentry must not be a hard dependency

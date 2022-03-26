@@ -8,19 +8,22 @@ import warnings
 from asyncio import TimeoutError
 from enum import Enum, auto
 from io import BytesIO
-from typing import Any, List, Optional
+from typing import TYPE_CHECKING, Any, List, Optional
 
 import aiohttp
 import discord
 import PIL
 
-from discord.ext import commands  # type: ignore[attr-defined]
+from discord.ext import commands
 from PIL.Image import DecompressionBombWarning
 
 from pink.context import Context
 from pink.decorators import in_executor
 from pink.errors import PINKError
 from pink.regexes import EMOTE_REGEX, ID_REGEX
+
+if TYPE_CHECKING:
+    from discord.asset import ValidAssetFormatTypes
 
 warnings.simplefilter("error", DecompressionBombWarning)
 
@@ -125,7 +128,7 @@ class Image:
         allow_animated: bool = False,
     ) -> Image:
         if (resolved := reference.resolved) is None:
-            resolved = await ctx.channel.fetch_message(reference.message_id)
+            resolved = await ctx.channel.fetch_message(reference.message_id)  # type: ignore
 
         if isinstance(resolved, discord.Message):  # and not discord.DeletedMessage
             if (
@@ -193,7 +196,7 @@ class Image:
 
             return image
 
-        def pick_format(target_animated: bool) -> Optional[str]:
+        def pick_format(target_animated: bool) -> Optional[ValidAssetFormatTypes]:
             if allow_static and allow_animated:
                 return cls.DEFAULT_ANIMATED_FORMAT if target_animated else cls.DEFAULT_STATIC_FORMAT
 
@@ -260,7 +263,7 @@ class Image:
         except commands.UserNotFound:
             pass
         else:
-            if (avatar_format := pick_format(user.avatar.is_animated())) is None:
+            if (avatar_format := pick_format(user.display_avatar.is_animated())) is None:
                 raise commands.BadArgument(
                     f"Static images are not allowed, {user} has static avatar",
                 )
@@ -337,9 +340,10 @@ class Image:
         # check embeds (user posted url / bot posted rich embed)
         for embed in msg.embeds:
             if embed.image:
+                image_url: str = embed.image.url  # type: ignore
                 if (
                     cls._check_extension(
-                        embed.image.url,
+                        image_url,
                         allow_static=allow_static,
                         allow_animated=allow_animated,
                     )
@@ -347,7 +351,7 @@ class Image:
                 ):
                     return Image(
                         kind=ImageType.EMBED,
-                        url=embed.image.url,
+                        url=image_url,
                     )
 
             # bot condition because we do not want image from
@@ -355,15 +359,17 @@ class Image:
             if not embed.thumbnail or (msg.author.bot and embed.type == "rich"):
                 continue
 
+            thumbnail_url: str = embed.thumbnail.url  # type: ignore
+
             # avoid case when image embed was created from url that is
             # used as argument or flag
             if msg.id == ctx.message.id:
-                if embed.thumbnail.url in msg.content:
+                if thumbnail_url in msg.content:
                     continue
 
             if (
                 cls._check_extension(
-                    embed.thumbnail.url,
+                    thumbnail_url,
                     allow_static=allow_static,
                     allow_animated=allow_animated,
                 )
@@ -373,7 +379,7 @@ class Image:
 
             return Image(
                 kind=ImageType.EMBED,
-                url=embed.thumbnail.url,
+                url=thumbnail_url,
             )
 
         return None

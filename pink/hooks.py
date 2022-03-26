@@ -41,7 +41,7 @@ class HookHost:
 
     def release_hooks(self) -> None:
         for hook in self.__active_hooks__:
-            hook.__hook_target__.remove_hook(hook)  # type: ignore[attr-defined]
+            hook.__hook_target__.remove_hook(hook)
 
         self.__active_hooks__ = []
 
@@ -86,7 +86,7 @@ class Hookable:
 
                 return handler(self, *args, **kwargs)
 
-            wrapped.__original__ = fn  # type: ignore[attr-defined]
+            wrapped.__original__ = fn
 
             return wrapped  # type: ignore
 
@@ -116,8 +116,8 @@ class Hookable:
             if not hasattr(original, "__original__"):
                 raise ValueError(f"Function is not hookable: {name}")
 
-            fn.__hook_name__ = name  # type: ignore[attr-defined]
-            fn.__hook_target__ = cls  # type: ignore[attr-defined]
+            fn.__hook_name__ = name
+            fn.__hook_target__ = cls
 
             cls.__hooks__[name].append(fn)
 
@@ -127,7 +127,7 @@ class Hookable:
 
     @classmethod
     def remove_hook(cls, hook: _HookType) -> None:
-        name = hook.__hook_name__  # type: ignore[attr-defined]
+        name = hook.__hook_name__
         if name in cls.__hooks__:
             try:
                 cls.__hooks__[name].remove(hook)

@@ -8,13 +8,13 @@ from typing import Dict, Optional, Sequence
 import discord
 import travitia_talk as tt
 
-from discord.ext import commands, tasks  # type: ignore[attr-defined]
+from discord.ext import commands, tasks
 
 from pink.bot import PINK
 from pink.cog import Cog
 from pink.context import Context
 from pink.errors import PINKError
-from pink.settings import BaseSettings, settings
+from pink.settings import BaseSettings, settings as settings_
 
 from .types import Emotion
 
@@ -31,7 +31,7 @@ class CogSettings(BaseSettings):
         section = "cog.chat"
 
 
-cog_settings = settings.subsettings(CogSettings)
+cog_settings = settings_.subsettings(CogSettings)
 
 
 class SessionSettings:
@@ -69,11 +69,13 @@ class Chat(Cog):
     SESSION_RATELIMIT = 3
     SESSION_TIMEOUT = 60
 
+    settings_cls: CogSettings
+
     def __init__(self, bot: PINK):
         super().__init__(bot)
 
         self.chatbot = tt.ChatBot(cog_settings.travitia_api_token)
-        self.emotion = tt.Emotion.neutral
+        self.global_emotion: tt.Emotion = tt.Emotion.neutral
 
         self.sessions: Dict[int, SessionSettings] = {}
 
@@ -89,9 +91,9 @@ class Chat(Cog):
         """Manage chatbot emotion globally"""
 
         if emotion is None:
-            return await ctx.send(f"Current emotion is **{self.emotion.value}**")
+            return await ctx.send(f"Current emotion is **{self.global_emotion.value}**")
 
-        self.emotion = emotion
+        self.global_emotion = emotion  # type: ignore
 
         await ctx.ok()
 
@@ -122,7 +124,7 @@ class Chat(Cog):
         settings = SessionSettings(
             ctx.author.id,
             channel_id=ctx.channel.id,
-            emotion=emotion,
+            emotion=emotion,  # type: ignore
             accents=accents,
         )
 

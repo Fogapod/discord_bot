@@ -55,7 +55,7 @@ def merge_configs(base: Type[BaseConfig], overrides: Optional[Type[BaseConfig]])
 
 
 class ModelMeta(abc.ABCMeta):
-    def __new__(mcls, name: str, bases: tuple[type, ...], namespace: dict[str, Any], **kwargs: Any) -> type:
+    def __new__(cls, name: str, bases: tuple[type, ...], namespace: dict[str, Any], **kwargs: Any) -> type:
         config = BaseConfig
 
         for base in reversed(bases):
@@ -69,15 +69,15 @@ class ModelMeta(abc.ABCMeta):
         all_fields_optional = True
 
         # an ugly hack. this is only constructed to be passed to typing.get_type_hints
-        cls_for_annotation_inspection = super().__new__(mcls, name, (), namespace, **kwargs)
+        cls_for_annotation_inspection = super().__new__(cls, name, (), namespace, **kwargs)
 
         for ann_name, ann_type in typing.get_type_hints(cls_for_annotation_inspection).items():
             default_value = namespace.get(ann_name, Missing)
 
             fields.append(Field(ann_name, ann_type, default_value))
 
-        cls = super().__new__(
-            mcls,
+        ncls = super().__new__(
+            cls,
             name,
             bases,
             {
@@ -89,7 +89,7 @@ class ModelMeta(abc.ABCMeta):
             **kwargs,
         )
 
-        return cls
+        return ncls
 
 
 class BaseModel(metaclass=ModelMeta):
@@ -167,14 +167,15 @@ class BaseSettings(BaseModel):
     def subsettings(self, settings: Type[SettingsT]) -> SettingsT:
         data = self.__data__
 
-        subsections = settings.__config__.section.split(".")
-        for subsection in subsections:
-            data = data[subsection]
+        if (section := settings.__config__.section) is not None:
+            subsections = section.split(".")
+            for subsection in subsections:
+                data = data[subsection]
 
-        if env_prefix := settings.__config__.env_prefix:
-            settings.__config__.env_prefix = f"{env_prefix}_{'_'.join(subsections).upper()}"
-        else:
-            settings.__config__.env_prefix = "_".join(subsections).upper()
+            if env_prefix := settings.__config__.env_prefix:
+                settings.__config__.env_prefix = f"{env_prefix}_{'_'.join(subsections).upper()}"
+            else:
+                settings.__config__.env_prefix = "_".join(subsections).upper()
 
         return settings(data=data)
 
@@ -182,7 +183,7 @@ class BaseSettings(BaseModel):
         settings_file: str = "settings.toml"
         loader = Loader.TOML
         env_prefix = ""
-        section = ""
+        section: Optional[str] = None
 
     def __repr__(self) -> str:
         return f"<{type(self).__name__} data={self.__data__}>"
