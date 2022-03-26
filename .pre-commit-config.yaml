@@ -22,12 +22,12 @@ repos:
         additional_dependencies: ["flake8-bugbear", "flake8-unused-arguments"]
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.941
+    rev: v0.942
     hooks:
       - id: mypy
         additional_dependencies:
           - "travitia_talk"
           - "pink_accents==0.0.4"
-          - "discord.py @ git+https://github.com/Rapptz/discord.py@eca472759338d87ad616a44191b7a2ccf55bbabf"
+          - "discord.py @ git+https://github.com/Rapptz/discord.py@985f5732c0ad720e5008ec36019bec6fc15cfc3a"
           - "edgedb<=0.17.3"
           - "types-orjson"

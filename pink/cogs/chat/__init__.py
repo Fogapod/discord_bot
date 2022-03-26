@@ -14,7 +14,7 @@ from pink.bot import PINK
 from pink.cog import Cog
 from pink.context import Context
 from pink.errors import PINKError
-from pink.settings import settings
+from pink.settings import BaseSettings, settings
 
 from .types import Emotion
 
@@ -23,9 +23,15 @@ try:
 except ImportError:
     raise Exception("This cog relies on the existance of accents cog")
 
-assert settings.TRAVITIA_API_TOKEN is not None, "travitia token unset"
 
-TRAVITIA_API_TOKEN = settings.TRAVITIA_API_TOKEN
+class CogSettings(BaseSettings):
+    travitia_api_token: str
+
+    class Config(BaseSettings.Config):
+        section = "cog.chat"
+
+
+cog_settings = settings.subsettings(CogSettings)
 
 
 class SessionSettings:
@@ -66,7 +72,7 @@ class Chat(Cog):
     def __init__(self, bot: PINK):
         super().__init__(bot)
 
-        self.chatbot = tt.ChatBot(TRAVITIA_API_TOKEN)
+        self.chatbot = tt.ChatBot(cog_settings.travitia_api_token)
         self.emotion = tt.Emotion.neutral
 
         self.sessions: Dict[int, SessionSettings] = {}

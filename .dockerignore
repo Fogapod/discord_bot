@@ -8,7 +8,6 @@ scripts
 
 # configs
 *.env
-**/*.ini
 **/*.yml
 **/*.yaml
 **/*.toml
@@ -28,6 +27,7 @@ Dockerfile
 .git
 .mypy_cache
 .pytest_cache
+target
 
 # dependency configs (except requirements.txt)
 **/*.txt

@@ -100,7 +100,7 @@ class PINK(commands.Bot):
         )
 
     async def _load_prefixes(self) -> None:
-        self._default_prefix_re = mention_or_prefix_regex(self.user.id, settings.PREFIX)
+        self._default_prefix_re = mention_or_prefix_regex(self.user.id, settings.bot.prefix)
 
         for guild in await self.edb.query(  # type: ignore[no-untyped-call]
             """
@@ -113,10 +113,10 @@ class PINK(commands.Bot):
             self.prefixes[guild.guild_id] = Prefix.from_edb(self, guild)
 
     async def _fetch_owners(self) -> None:
-        owners = settings.OWNERS.copy()
+        owners = settings.owners.ids.copy()
 
-        if settings.OWNERS_MODE == "combine":
-            owners = settings.OWNERS
+        if settings.owners.mode == "combine":
+            owners = settings.owners.ids
 
             app_info = await self.application_info()
             if team := app_info.team:
@@ -197,7 +197,7 @@ class PINK(commands.Bot):
 
     # --- events ---
     async def on_ready(self) -> None:
-        log.info(f"READY as {self.user}[{self.user.id}] with prefix {settings.PREFIX}")
+        log.info(f"READY as {self.user}[{self.user.id}] with prefix {settings.bot.prefix}")
 
     async def on_message(self, message: discord.Message) -> None:
         # TODO: how to make this optional? sentry must not be a hard dependency

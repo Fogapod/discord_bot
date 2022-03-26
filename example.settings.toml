@@ -1,0 +1,30 @@
+[bot]
+token = "NTU2NTI4MDcwNjMxMjI3NDAy.XI1xJF.xl6iW44dagmEjnZVjzBHTL_w-pM"
+prefix = "!"
+
+[database]
+host = "localhost"
+port = 10700
+user = "pink"
+password = "pass"
+database = "pink"
+
+[sentry]
+dsn = "https://ABCD@o546834.example.com/123"
+
+[owners]
+# owners are fetched from application info. use this to to add extra owners or override application owners completely
+ids = [439205512425504771, 456789]
+# either "combine"  or "overwrite"
+mode = "combine"
+
+[cog.servermyserver]
+server = 391987311468085248
+user_log_channel = 399649344443383810
+all_role = 518862360681906186
+
+[cog.chat]
+travitia_api_token = "?3.?fD?ABC4AB9[,'J[(J"
+
+[cog.images]
+ocr_api_token = "aaa"

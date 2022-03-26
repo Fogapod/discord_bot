@@ -10,7 +10,7 @@ Environment=PWD=/srv/pink
 Restart=on-failure
 TimeoutStopSec=70
 ExecStartPre=/bin/rm -f %t/container-pink.service.pid %t/container-pink.service.ctr-id
-ExecStart=/usr/bin/podman run --conmon-pidfile %t/container-pink.service.pid --cidfile %t/container-pink.service.ctr-id --cgroups=no-conmon --label "io.containers.autoupdate=registry" -d --replace --name %n --rm -v ${PWD}/.env:/code/.env --hostname pink_prod fogapod/pink
+ExecStart=/usr/bin/podman run --conmon-pidfile %t/container-pink.service.pid --cidfile %t/container-pink.service.ctr-id --cgroups=no-conmon --label "io.containers.autoupdate=registry" -d --replace --name %n --rm -v ${PWD}/settings.toml:/code/settings.toml --hostname pink_prod fogapod/pink
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/container-pink.service.ctr-id -t 10
 ExecStopPost=/usr/bin/podman rm --ignore -f --cidfile %t/container-pink.service.ctr-id
 PIDFile=%t/container-pink.service.pid

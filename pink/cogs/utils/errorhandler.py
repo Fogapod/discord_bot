@@ -77,6 +77,8 @@ class ErrorHandler(Cog):
             await e.handle(ctx)
         elif isinstance(e, commands.MaxConcurrencyReached):
             await ctx.reply(e)
+        elif isinstance(e, commands.CommandError):
+            await ctx.reply(e)
         elif isinstance(e, discord.HTTPException):
             await ctx.reply(f"HTTP[{e.status}] ({e.code}): **{e.text}**")
         else:
