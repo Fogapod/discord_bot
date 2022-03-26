@@ -41,10 +41,16 @@ class ServerMyServer(Cog):
 
     @Cog.listener()
     async def on_member_join(self, member: discord.Member) -> None:
+        if member.guild.id != cog_settings.server:
+            return
+
         await self._member_log(f"**{member}**[{member.id}] joined")
 
     @Cog.listener()
     async def on_member_leave(self, member: discord.Member) -> None:
+        if member.guild.id != cog_settings.server:
+            return
+
         await self._member_log(f"**{member}**[{member.id}] left")
 
     @commands.command(name="all")
