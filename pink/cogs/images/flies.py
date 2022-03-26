@@ -5,6 +5,7 @@ import random
 import time
 
 from math import cos, pi, sin
+from pathlib import Path
 from typing import Dict, List, Sequence, Tuple
 
 import PIL
@@ -158,7 +159,7 @@ class FlyDrawer:
             if self.fly_src:
                 img = self.fly_src.rotate(angle, expand=True)
             else:
-                img = Image.open(f"templates/flies/{name}.png")
+                img = Image.open(Path(__file__).parent / "templates" / "flies" / f"{name}.png")
 
             self._cached_flies[name] = img
 

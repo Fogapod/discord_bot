@@ -8,7 +8,6 @@ scripts
 
 # configs
 *.env
-**/*.ini
 **/*.yml
 **/*.yaml
 **/*.toml
