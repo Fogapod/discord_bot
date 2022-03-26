@@ -8,6 +8,8 @@ use pyo3::prelude::*;
 use lazy_static::lazy_static;
 use parking_lot::RwLock;
 
+// TODO: look into other options, this is slow
+// https://github.com/mov-rax-rax/providence/blob/split/crates/state/src/shared.rs
 lazy_static! {
     static ref ACCENTS: RwLock<HashMap<String, Box<dyn Accent>>> = RwLock::new(HashMap::new());
 }
