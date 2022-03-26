@@ -14,18 +14,24 @@ from pink_accents import Accent
 from pink.cogs.utils.errorhandler import PINKError
 from pink.context import Context
 from pink.decorators import in_executor
-from pink.settings import settings
+from pink.settings import BaseSettings, settings
 
 from .types import Image, StaticImage
+
+
+class CogSettings(BaseSettings):
+    ocr_api_token: str
+
+    class Config(BaseSettings.Config):
+        section = "cog.images"
+
+
+cog_settings = settings.subsettings(CogSettings)
 
 _VertexType = Dict[str, int]
 _VerticesType = Tuple[_VertexType, _VertexType, _VertexType, _VertexType]
 
 OCR_API_URL = "https://content-vision.googleapis.com/v1/images:annotate"
-
-
-assert settings.OCR_API_TOKEN is not None, "ocr api token unset"
-OCR_API_TOKEN = settings.OCR_API_TOKEN
 
 FONT = ImageFont.truetype("DejaVuSans.ttf")
 
@@ -310,7 +316,7 @@ async def ocr(ctx: Context, image: Image) -> Dict[str, Any]:
     async with ctx.session.post(
         OCR_API_URL,
         params={
-            "key": OCR_API_TOKEN,
+            "key": cog_settings.ocr_api_token,
         },
         json={
             "requests": [

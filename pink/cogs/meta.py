@@ -29,13 +29,11 @@ class CustomHelp(commands.DefaultHelpCommand):
 class Meta(Cog):
     """Bot related utility commands"""
 
-    def __init__(self, bot: PINK):
-        super().__init__(bot)
+    async def cog_load(self) -> None:
+        self.old_help_command = self.bot.help_command
 
-        self.old_help_command = bot.help_command
-
-        bot.help_command = CustomHelp()
-        bot.help_command.cog = self
+        self.bot.help_command = CustomHelp()
+        self.bot.help_command.cog = self
 
     async def cog_unload(self) -> None:
         self.bot.help_command = self.old_help_command
@@ -82,7 +80,7 @@ class Meta(Cog):
                 owner_mentions.append(f"[{owner_id}]")
 
         fields = {
-            "prefix": f"@mention or {settings.PREFIX}",
+            "prefix": f"@mention or {settings.bot.prefix}",
             "source": f"{REPO} {revision}",
             "support": f"discord.gg / {SUPPORT}",
             "owners": " ".join(owner_mentions),
@@ -103,7 +101,7 @@ class Meta(Cog):
         """Get local prefix (if any)."""
 
         if ctx.guild.id not in ctx.bot.prefixes:
-            return await ctx.send(f"Custom prefix not set, default is @mention or {settings.PREFIX}")
+            return await ctx.send(f"Custom prefix not set, default is @mention or {settings.bot.prefix}")
 
         await ctx.send(f"Local prefix: {ctx.bot.prefixes[ctx.guild.id].prefix}")
 
