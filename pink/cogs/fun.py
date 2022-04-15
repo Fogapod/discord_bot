@@ -151,15 +151,6 @@ class Fun(Cog):
 
         await ctx.send(text)
 
-    @commands.command()
-    async def joke(self, ctx: Context) -> None:
-        """Summon the funny"""
-
-        async with ctx.session.get("https://official-joke-api.appspot.com/jokes/random") as r:
-            data = await r.json()
-
-        await ctx.send(f"{data['setup']}\n||{data['punchline']}||")
-
     @commands.command(aliases=["pretend"])
     @commands.bot_has_permissions(manage_webhooks=True)
     async def impersonate(self, ctx: Context, user: Union[discord.Member, discord.User], *, text: str) -> None:
