@@ -51,7 +51,6 @@ class Accents(Cog, HookHost):
         self.accent_wh_name = f"{self.bot.user.name} bot accent webhook"
 
         for settings in await self.bot.pg.fetch("SELECT guild_id, user_id, name, severity FROM accents"):
-            accents = []
             if (accent_cls := ALL_ACCENTS.get(settings["name"].lower())) is None:
                 log.error(
                     f"unknown accent: " f"guild={settings['guild_id']} user={settings['user_id']} {settings['name']}"
@@ -59,12 +58,10 @@ class Accents(Cog, HookHost):
 
                 continue
 
-            accents.append(accent_cls(settings["severity"]))
+            self._accents.setdefault(settings["guild_id"], {})
+            self._accents[settings["guild_id"]].setdefault(settings["user_id"], [])
 
-            if settings["guild_id"] not in self._accents:
-                self._accents[settings["guild_id"]] = {}
-
-            self._accents[settings["guild_id"]][settings["user_id"]] = accents
+            self._accents[settings["guild_id"]][settings["user_id"]].append(accent_cls(settings["severity"]))
 
     async def cog_unload(self) -> None:
         self.release_hooks()
