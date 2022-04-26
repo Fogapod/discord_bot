@@ -6,7 +6,7 @@ import sqlite3
 
 from typing import Any, Dict, List, Tuple
 
-import edgedb
+import edgedb  # type: ignore
 
 from dotenv import load_dotenv
 

@@ -13,8 +13,6 @@ from contextlib import redirect_stdout
 from typing import Any, Dict, Iterator, Optional, Sequence, Union
 
 import discord
-import edgedb
-import orjson
 
 from discord.ext import commands  # type: ignore[attr-defined]
 
@@ -186,24 +184,24 @@ class TechAdmin(Cog):
 
         await self._send_paginator(ctx, paginator)
 
-    @commands.command(aliases=["edgeql", "edb"])
-    async def edgedb(self, ctx: Context, *, code: Code) -> None:
-        """Run EdgeQL code against bot database"""
+    # @commands.command(aliases=["edgeql", "edb"])
+    # async def edgedb(self, ctx: Context, *, code: Code) -> None:
+    #     """Run EdgeQL code against bot database"""
 
-        async with ctx.typing():
-            try:
-                # https://github.com/edgedb/edgedb-python/issues/107
-                data = orjson.loads(await ctx.edb.query_json(code.body))  # type: ignore[no-untyped-call]
-            except edgedb.EdgeDBError as e:
-                return await ctx.send(f"Error: **{type(e).__name__}**: `{e}`")
+    #     async with ctx.typing():
+    #         try:
+    #             # https://github.com/edgedb/edgedb-python/issues/107
+    #             data = orjson.loads(await ctx.edb.query_json(code.body))  # type: ignore[no-untyped-call]
+    #         except edgedb.EdgeDBError as e:
+    #             return await ctx.send(f"Error: **{type(e).__name__}**: `{e}`")
 
-            if not data:
-                await ctx.ok()
-                return
+    #         if not data:
+    #             await ctx.ok()
+    #             return
 
-            paginator = await self._edgedb_table(data)
+    #         paginator = await self._edgedb_table(data)
 
-        await self._send_paginator(ctx, paginator)
+    #     await self._send_paginator(ctx, paginator)
 
     async def _eval(self, ctx: Context, code: Code) -> str:
         # copied from https://github.com/Fogapod/KiwiBot/blob/49743118661abecaab86388cb94ff8a99f9011a8/modules/owner/module_eval.py

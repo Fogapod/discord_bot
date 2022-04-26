@@ -25,9 +25,11 @@ repos:
     rev: v0.942
     hooks:
       - id: mypy
+        args: []
         additional_dependencies:
+          - "uvloop"
+          - "python-dotenv"
           - "travitia_talk"
           - "pink_accents==0.0.4"
           - "discord.py @ git+https://github.com/Rapptz/discord.py@985f5732c0ad720e5008ec36019bec6fc15cfc3a"
-          - "edgedb<=0.17.3"
-          - "types-orjson"
+          - "asyncpg-stubs @ git+https://github.com/bryanforbes/asyncpg-stubs@bb92f810baaa157c3750610a2ac946dfd903a5b8"

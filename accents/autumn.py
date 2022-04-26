@@ -1,6 +1,6 @@
 import random
 
-from _shared import DISCORD_MESSAGE_END
+from _shared import DISCORD_MESSAGE_END  # type: ignore[import]
 from pink_accents import Accent, Match
 
 

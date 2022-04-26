@@ -8,7 +8,6 @@ import random
 from typing import TYPE_CHECKING, Any, DefaultDict, Dict, Iterable, List, Optional, Type
 
 import discord
-import orjson
 
 from discord.ext import commands  # type: ignore[attr-defined]
 from pink_accents import Accent
@@ -51,28 +50,21 @@ class Accents(Cog, HookHost):
         # current name: PINK
         self.accent_wh_name = f"{self.bot.user.name} bot accent webhook"
 
-        for settings in await self.bot.edb.query(  # type: ignore[no-untyped-call]
-            """
-            SELECT AccentSettings {
-                guild_id,
-                user_id,
-                accents,
-            }
-            """
-        ):
+        for settings in await self.bot.pg.fetch("SELECT guild_id, user_id, name, severity FROM accents"):
             accents = []
-            for accent in settings.accents:
-                if (accent_cls := ALL_ACCENTS.get(accent.name.lower())) is None:
-                    log.error(f"unknown accent: " f"guild={settings.guild_id} user={settings.user_id} {accent}")
+            if (accent_cls := ALL_ACCENTS.get(settings["name"].lower())) is None:
+                log.error(
+                    f"unknown accent: " f"guild={settings['guild_id']} user={settings['user_id']} {settings['name']}"
+                )
 
-                    continue
+                continue
 
-                accents.append(accent_cls(accent.severity))
+            accents.append(accent_cls(settings["severity"]))
 
-            if settings.guild_id not in self._accents:
-                self._accents[settings.guild_id] = {}
+            if settings["guild_id"] not in self._accents:
+                self._accents[settings["guild_id"]] = {}
 
-            self._accents[settings.guild_id][settings.user_id] = accents
+            self._accents[settings["guild_id"]][settings["user_id"]] = accents
 
     async def cog_unload(self) -> None:
         self.release_hooks()
@@ -187,26 +179,16 @@ class Accents(Cog, HookHost):
 
         self.set_user_accents(member, all_accents)
 
-        # json cast because tuples are not supported
-        # https://github.com/edgedb/edgedb/issues/2334#issuecomment-793041555
-        await ctx.bot.edb.query(  # type: ignore[no-untyped-call]
-            """
-            INSERT AccentSettings {
-                guild_id := <snowflake>$guild_id,
-                user_id  := <snowflake>$user_id,
-                accents  := <array<tuple<str, int16>>><json>$accents,
-            } UNLESS CONFLICT ON .exclusive_hack
-            ELSE (
-                UPDATE AccentSettings
-                SET {
-                    accents := <array<tuple<str, int16>>><json>$accents,
-                }
+        for accent in all_accents:
+            await self.bot.pg.fetchrow(
+                "INSERT INTO accents (guild_id, user_id, name, severity) VALUES ($1, $2, $3, $4) "
+                "ON CONFLICT (guild_id, user_id, name) DO UPDATE "
+                "SET name = EXCLUDED.name",
+                ctx.guild.id,
+                member.id,
+                accent.name,
+                accent.severity,
             )
-            """,
-            guild_id=ctx.guild.id,
-            user_id=member.id,
-            accents=orjson.dumps([(a.name, a.severity) for a in all_accents]).decode(),
-        )
 
     async def _remove_accents(self, ctx: Context, member: discord.Member, accents: _UserAccentsType) -> None:
         if not accents:
@@ -229,20 +211,16 @@ class Accents(Cog, HookHost):
 
         self.set_user_accents(member, updated)
 
-        # json cast because tuples are not supported
-        # https://github.com/edgedb/edgedb/issues/2334#issuecomment-793041555
-        await self.bot.edb.query(  # type: ignore[no-untyped-call]
-            """
-            UPDATE AccentSettings
-            FILTER .guild_id = <snowflake>$guild_id AND .user_id = <snowflake>$user_id
-            SET {
-                accents := <array<tuple<str, int16>>><json>$accents,
-            }
-            """,
-            guild_id=ctx.guild.id,
-            user_id=member.id,
-            accents=orjson.dumps([(a.name, a.severity) for a in updated]).decode(),
-        )
+        for accent in updated:
+            await self.bot.pg.fetchrow(
+                "INSERT INTO accents (guild_id, user_id, name, severity) VALUES ($1, $2, $3, $4) "
+                "ON CONFLICT (guild_id, user_id, name) DO UPDATE "
+                "SET name = EXCLUDED.name",
+                ctx.guild.id,
+                member.id,
+                accent.name,
+                accent.severity,
+            )
 
     async def _update_nick(self, ctx: Context) -> None:
         new_nick = ctx.me.name

@@ -9,8 +9,8 @@ from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Set, Type, Union
 
 import aiohttp
+import asyncpg
 import discord
-import edgedb
 import sentry_sdk
 
 from discord.ext import commands  # type: ignore[attr-defined]
@@ -42,47 +42,32 @@ class Prefix:
         self.prefix_re = mention_or_prefix_regex(bot.user.id, self.prefix)
 
     @classmethod
-    def from_edb(cls, bot: PINK, data: edgedb.Object) -> Prefix:
-        return cls(bot, prefix=data.prefix)
+    def from_pg(cls, bot: PINK, data: asyncpg.Record) -> Prefix:
+        return cls(bot, prefix=data["prefix"])
 
     async def write(self, ctx: Context) -> None:
-        await ctx.bot.edb.query(  # type: ignore[no-untyped-call]
-            """
-            INSERT Prefix {
-                guild_id := <snowflake>$guild_id,
-                prefix := <str>$prefix,
-            } UNLESS CONFLICT ON .guild_id
-            ELSE (
-                UPDATE Prefix
-                SET {
-                    prefix := <str>$prefix,
-                }
-            )
-            """,
-            guild_id=ctx.guild.id,
-            prefix=self.prefix,
+        await ctx.pg.fetchrow(
+            "INSERT INTO prefixes (guild_id, prefix) VALUES ($1, $2) "
+            "ON CONFLICT (guild_id) DO UPDATE "
+            "SET prefix = EXCLUDED.prefix",
+            ctx.guild.id,
+            self.prefix,
         )
 
     @staticmethod
     async def delete(ctx: Context) -> None:
-        await ctx.bot.edb.query(  # type: ignore[no-untyped-call]
-            """
-            DELETE Prefix
-            FILTER .guild_id = <snowflake>$guild_id
-            """,
-            guild_id=ctx.guild.id,
-        )
+        await ctx.pg.fetchrow("DELETE FROM prefixes WHERE guild_id = $1", ctx.guild.id)
 
     def __repr__(self) -> str:
         return f"<{type(self).__name__} prefix={self.prefix}>"
 
 
 class PINK(commands.Bot):
-    def __init__(self, *, session: aiohttp.ClientSession, edb: edgedb.AsyncIOPool, **kwargs: Any) -> None:
+    def __init__(self, *, session: aiohttp.ClientSession, pg: asyncpg.Pool[asyncpg.Record], **kwargs: Any) -> None:
         super().__init__(**kwargs)
 
         self.session = session
-        self.edb = edb
+        self.pg = pg
 
         self.prefixes: Dict[int, Prefix] = {}
         self.owner_ids: Set[int] = set()
@@ -102,15 +87,8 @@ class PINK(commands.Bot):
     async def _load_prefixes(self) -> None:
         self._default_prefix_re = mention_or_prefix_regex(self.user.id, settings.bot.prefix)
 
-        for guild in await self.edb.query(  # type: ignore[no-untyped-call]
-            """
-            SELECT Prefix {
-                guild_id,
-                prefix,
-            }
-            """
-        ):
-            self.prefixes[guild.guild_id] = Prefix.from_edb(self, guild)
+        for guild in await self.pg.fetch("SELECT guild_id, prefix FROM prefixes"):
+            self.prefixes[guild["guild_id"]] = Prefix.from_pg(self, guild)
 
     async def _fetch_owners(self) -> None:
         owners = settings.owners.ids.copy()

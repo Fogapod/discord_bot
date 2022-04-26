@@ -11,3 +11,7 @@ flake8-unused-arguments
 
 # dependency management
 pip-tools
+
+# typing
+# https://github.com/MagicStack/asyncpg/issues/569
+asyncpg-stubs @ git+https://github.com/bryanforbes/asyncpg-stubs@bb92f810baaa157c3750610a2ac946dfd903a5b8

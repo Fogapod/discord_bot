@@ -3,8 +3,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Optional, Union
 
 import aiohttp
+import asyncpg
 import discord
-import edgedb
 
 from discord.ext import commands  # type: ignore[attr-defined]
 
@@ -29,8 +29,8 @@ class Context(commands.Context, Hookable):
         self._prefix = None if value is None else value.rstrip()
 
     @property
-    def edb(self) -> edgedb.AsyncIOPool:
-        return self.bot.edb
+    def pg(self) -> asyncpg.Pool[asyncpg.Record]:
+        return self.bot.pg
 
     @property
     def session(self) -> aiohttp.ClientSession:

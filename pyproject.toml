@@ -52,11 +52,3 @@ module = [
     "aiocache.*",
 ]
 ignore_missing_imports = true
-
-# mypy does not like cythonized code and spits out attr-defined for everything
-[[tool.mypy.overrides]]
-module = [
-    "edgedb.*",
-]
-ignore_errors = true
-no_implicit_reexport = false

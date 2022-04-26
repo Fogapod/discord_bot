@@ -2,8 +2,8 @@ import asyncio
 import logging
 
 import aiohttp
+import asyncpg
 import discord
-import edgedb
 
 from .bot import PINK
 from .logging import setup_logging
@@ -33,7 +33,7 @@ async def main() -> None:
         log.warning("skipped sentry initialization")
 
     session = aiohttp.ClientSession(headers={"user-agent": "PINK bot"})
-    edb = edgedb.create_async_pool(  # type: ignore[no-untyped-call]
+    pg = asyncpg.create_pool(
         host=settings.database.host,
         port=settings.database.port,
         user=settings.database.user,
@@ -41,10 +41,10 @@ async def main() -> None:
         database=settings.database.database,
     )
 
-    async with session, edb:
+    async with session, pg:
         pink = PINK(
             session=session,
-            edb=edb,
+            pg=pg,
             command_prefix=settings.bot.prefix,
             case_insensitive=True,
             allowed_mentions=discord.AllowedMentions(roles=False, everyone=False, users=True),
