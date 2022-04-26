@@ -6,22 +6,22 @@ import discord
 
 from discord.ext import commands  # type: ignore[attr-defined]
 
-from pink.bot import PINK
-from pink.cog import Cog
-from pink.context import Context
-from pink.utils import run_process
+from src.bot import PINK
+from src.cog import Cog
+from src.context import Context
+from src.utils import run_process
 
 from .constants import GIFSICLE_ARGUMENTS
 from .flies import draw_flies
 from .types import AnimatedImage, Image, StaticImage
 
 try:
-    from pink.cogs.translator.types import Language
+    from src.cogs.translator.types import Language
 except ImportError:
     raise Exception("This cog relies on the existance of translator cog")
 
 try:
-    from pink.cogs.accents.types import PINKAccent
+    from src.cogs.accents.types import PINKAccent
 except ImportError:
     raise Exception("This cog relies on the existance of accents cog")
 

@@ -16,11 +16,11 @@ import discord
 
 from discord.ext import commands  # type: ignore[attr-defined]
 
-from pink.bot import PINK
-from pink.checks import is_owner
-from pink.cog import Cog
-from pink.context import Context
-from pink.utils import run_process_shell
+from src.bot import PINK
+from src.checks import is_owner
+from src.cog import Cog
+from src.context import Context
+from src.utils import run_process_shell
 
 
 class Code:

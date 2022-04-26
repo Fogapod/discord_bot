@@ -5,8 +5,8 @@ import sentry_sdk
 
 from discord.ext import commands  # type: ignore[attr-defined]
 
-from pink.cog import Cog
-from pink.context import Context
+from src.cog import Cog
+from src.context import Context
 
 log = logging.getLogger(__name__)
 

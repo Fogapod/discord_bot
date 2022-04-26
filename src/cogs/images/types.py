@@ -17,10 +17,10 @@ import PIL
 from discord.ext import commands  # type: ignore[attr-defined]
 from PIL.Image import DecompressionBombWarning
 
-from pink.context import Context
-from pink.decorators import in_executor
-from pink.errors import PINKError
-from pink.regexes import EMOTE_REGEX, ID_REGEX
+from src.context import Context
+from src.decorators import in_executor
+from src.errors import PINKError
+from src.regexes import EMOTE_REGEX, ID_REGEX
 
 warnings.simplefilter("error", DecompressionBombWarning)
 

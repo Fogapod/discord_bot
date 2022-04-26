@@ -4,11 +4,11 @@ from typing import Any, Union
 
 import discord
 
-from pink.bot import PINK
-from pink.cog import Cog
-from pink.context import Context
-from pink.hooks import HookHost
-from pink.utils import LRU
+from src.bot import PINK
+from src.cog import Cog
+from src.context import Context
+from src.hooks import HookHost
+from src.utils import LRU
 
 _EmojiType = Union[discord.Reaction, discord.Emoji, discord.PartialEmoji, str]
 

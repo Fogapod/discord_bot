@@ -2,10 +2,10 @@ import googletrans
 
 from discord.ext import commands  # type: ignore[attr-defined]
 
-from pink.bot import PINK
-from pink.cog import Cog
-from pink.context import Context
-from pink.decorators import in_executor
+from src.bot import PINK
+from src.cog import Cog
+from src.context import Context
+from src.decorators import in_executor
 
 from .constants import LANGUAGES, REVERSE_LANGCODE_ALIASES
 from .types import Language

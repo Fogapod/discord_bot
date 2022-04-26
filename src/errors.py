@@ -3,7 +3,7 @@
 __all__ = ("PINKError",)
 
 try:
-    from pink.cogs.utils.errorhandler import PINKError
+    from src.cogs.utils.errorhandler import PINKError
 except ImportError:
     print("utils.errorhandler cog is required")
 

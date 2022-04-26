@@ -60,4 +60,4 @@ ENV GIT_BRANCH=${GIT_BRANCH}
 ENV GIT_COMMIT=${GIT_COMMIT}
 ENV GIT_DIRTY=${GIT_DIRTY}
 
-ENTRYPOINT ["python", "-m", "pink"]
+ENTRYPOINT ["python", "-m", "src"]

@@ -107,7 +107,7 @@ class PINK(commands.Bot):
         log.info(f"bot owners: {' | '.join(map(str, self.owner_ids))}")
 
     async def _load_cogs(self) -> None:
-        for module in self._iterate_cogs(Path("pink") / "cogs"):
+        for module in self._iterate_cogs(Path("src") / "cogs"):
             try:
                 await self.load_extension(module)
             except Exception:

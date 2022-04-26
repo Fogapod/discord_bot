@@ -3,11 +3,11 @@ import time
 
 from discord.ext import commands  # type: ignore[attr-defined]
 
-from pink.bot import PINK, Prefix
-from pink.cog import Cog
-from pink.context import Context
-from pink.settings import settings
-from pink.utils import seconds_to_human_readable
+from src.bot import PINK, Prefix
+from src.cog import Cog
+from src.context import Context
+from src.settings import settings
+from src.utils import seconds_to_human_readable
 
 # art by: patorjk.com/software/taag
 PINK_ART = r"""   ___ _____    __

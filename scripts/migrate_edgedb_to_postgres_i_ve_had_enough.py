@@ -6,7 +6,7 @@ import edgedb  # type: ignore
 
 sys.path.append(".")
 
-from pink.settings import settings  # noqa
+from src.settings import settings  # noqa
 
 
 async def main() -> None:

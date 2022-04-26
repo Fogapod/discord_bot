@@ -2,7 +2,7 @@ import travitia_talk as tt
 
 from discord.ext import commands  # type: ignore[attr-defined]
 
-from pink.context import Context
+from src.context import Context
 
 
 class Emotion(commands.Converter):

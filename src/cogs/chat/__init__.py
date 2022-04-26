@@ -10,16 +10,16 @@ import travitia_talk as tt
 
 from discord.ext import commands, tasks  # type: ignore[attr-defined]
 
-from pink.bot import PINK
-from pink.cog import Cog
-from pink.context import Context
-from pink.errors import PINKError
-from pink.settings import BaseSettings, settings
+from src.bot import PINK
+from src.cog import Cog
+from src.context import Context
+from src.errors import PINKError
+from src.settings import BaseSettings, settings
 
 from .types import Emotion
 
 try:
-    from pink.cogs.accents.types import PINKAccent
+    from src.cogs.accents.types import PINKAccent
 except ImportError:
     raise Exception("This cog relies on the existance of accents cog")
 

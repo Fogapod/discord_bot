@@ -2,9 +2,9 @@ from typing import Dict, List, Optional
 
 from discord.ext import commands  # type: ignore[attr-defined]
 
-from pink.bot import PINK
-from pink.cog import Cog
-from pink.context import Context
+from src.bot import PINK
+from src.cog import Cog
+from src.context import Context
 
 from .servers import ServerList
 

@@ -1,4 +1,4 @@
-from pink.bot import PINK
+from src.bot import PINK
 
 
 async def setup(bot: PINK) -> None:

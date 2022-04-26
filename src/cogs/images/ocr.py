@@ -11,10 +11,10 @@ import PIL
 from PIL import ImageDraw, ImageFilter, ImageFont
 from pink_accents import Accent
 
-from pink.cogs.utils.errorhandler import PINKError
-from pink.context import Context
-from pink.decorators import in_executor
-from pink.settings import BaseSettings, settings
+from src.cogs.utils.errorhandler import PINKError
+from src.context import Context
+from src.decorators import in_executor
+from src.settings import BaseSettings, settings
 
 from .types import Image, StaticImage
 

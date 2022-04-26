@@ -12,8 +12,8 @@ import aiohttp
 
 from aiocache import SimpleMemoryCache
 
-from pink.context import Context
-from pink.errors import PINKError
+from src.context import Context
+from src.errors import PINKError
 
 log = logging.getLogger(__name__)
 
