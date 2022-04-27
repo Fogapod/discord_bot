@@ -10,8 +10,9 @@ import textwrap
 import traceback
 
 from contextlib import redirect_stdout
-from typing import Any, Dict, Iterator, Optional, Sequence, Union
+from typing import Any, Iterator, Optional, Union
 
+import asyncpg
 import discord
 
 from discord.ext import commands  # type: ignore[attr-defined]
@@ -63,7 +64,6 @@ class Code:
 class TechAdmin(Cog):
     """Commands for bot administrators"""
 
-    EDB_VALUE_LEN_CAP = 30
     PAGINATOR_PAGES_CAP = 5
 
     async def cog_check(self, ctx: Context) -> None:
@@ -77,14 +77,14 @@ class TechAdmin(Cog):
     async def load(self, ctx: Context, module: str) -> None:
         """Load extension"""
 
-        await self.bot.load_extension(f"pink.cogs.{module}")
+        await self.bot.load_extension(f"src.cogs.{module}")
         await ctx.ok()
 
     @commands.command()
     async def unload(self, ctx: Context, module: str) -> None:
         """Unload extension"""
 
-        await self.bot.unload_extension(f"pink.cogs.{module}")
+        await self.bot.unload_extension(f"src.cogs.{module}")
         await ctx.ok()
 
     @commands.command(aliases=["re"])
@@ -99,7 +99,7 @@ class TechAdmin(Cog):
         else:
             self._last_reloaded_module = module
 
-        await self.bot.reload_extension(f"pink.cogs.{module}")
+        await self.bot.reload_extension(f"src.cogs.{module}")
 
         # try deleting message for easier testing with frequent reloads
         try:
@@ -184,24 +184,29 @@ class TechAdmin(Cog):
 
         await self._send_paginator(ctx, paginator)
 
-    # @commands.command(aliases=["edgeql", "edb"])
-    # async def edgedb(self, ctx: Context, *, code: Code) -> None:
-    #     """Run EdgeQL code against bot database"""
+    @commands.command(aliases=["select"])
+    async def sql(self, ctx: Context, *, code: Code) -> None:
+        """Run SQL code against bot database"""
 
-    #     async with ctx.typing():
-    #         try:
-    #             # https://github.com/edgedb/edgedb-python/issues/107
-    #             data = orjson.loads(await ctx.edb.query_json(code.body))  # type: ignore[no-untyped-call]
-    #         except edgedb.EdgeDBError as e:
-    #             return await ctx.send(f"Error: **{type(e).__name__}**: `{e}`")
+        # same parameters as eval
+        query = code.body.format(ctx=ctx, message=ctx.message, guild=ctx.guild, author=ctx.author, channel=ctx.channel)
 
-    #         if not data:
-    #             await ctx.ok()
-    #             return
+        if ctx.invoked_with == "select":
+            query = f"SELECT {query}"
 
-    #         paginator = await self._edgedb_table(data)
+        async with ctx.typing():
+            try:
+                data = await ctx.pg.fetch(query)
+            except asyncpg.PostgresError as e:
+                return await ctx.send(f"Error: **{type(e).__name__}**: `{e}`")
 
-    #     await self._send_paginator(ctx, paginator)
+            if not data:
+                await ctx.ok()
+                return
+
+            paginator = await self._sql_table(data)
+
+        await self._send_paginator(ctx, paginator)
 
     async def _eval(self, ctx: Context, code: Code) -> str:
         # copied from https://github.com/Fogapod/KiwiBot/blob/49743118661abecaab86388cb94ff8a99f9011a8/modules/owner/module_eval.py
@@ -284,36 +289,22 @@ async def __pink_eval__():
 
         return self._make_paginator(result, prefix="```bash\n")
 
-    async def _edgedb_table(self, result: Union[Sequence[Dict[str, Any]], Sequence[Any]]) -> commands.Paginator:
-        if not isinstance(result[0], dict):
-            paginator = commands.Paginator(prefix="```python\n")
-            paginator.add_line(str(result))
-            return paginator
-
-        columns = result[0].keys()
+    async def _sql_table(self, result: list[asyncpg.Record]) -> commands.Paginator:
+        # convert to list because otherwise iterator is exhausted
+        columns = list(result[0].keys())
         col_widths = [len(c) for c in columns]
 
         for row in result:
-            for i, column in enumerate(columns):
-                col_widths[i] = min(
-                    (
-                        max((col_widths[i], len(str(row[column])))),
-                        self.EDB_VALUE_LEN_CAP,
-                    )
-                )
+            for i, value in enumerate(row.values()):
+                col_widths[i] = max((col_widths[i], len(str(value))))
 
         header = " | ".join(f"{column:^{col_widths[i]}}" for i, column in enumerate(columns))
         separator = "-+-".join("-" * width for width in col_widths)
 
         def sanitize_value(value: Any) -> str:
-            value = str(value).replace("\n", "\\n")
+            return str(value).replace("\n", "\\n")
 
-            if len(value) > self.EDB_VALUE_LEN_CAP:
-                value = f"{value[:self.EDB_VALUE_LEN_CAP - 2]}.."
-
-            return value
-
-        paginator = commands.Paginator(prefix="```python\n")
+        paginator = commands.Paginator(prefix="```sql\n")
         paginator.add_line(header)
         paginator.add_line(separator)
 
