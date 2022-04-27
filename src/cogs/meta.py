@@ -20,6 +20,8 @@ REPO = "github.com/Fogapod/pink"
 SUPPORT = "TNXn8R7"
 AUTHORS = (386551253532147712, 253384991940149249)
 
+MAX_PREFIX_LEN = 256
+
 
 class CustomHelp(commands.DefaultHelpCommand):
     def get_destination(self) -> Context:
@@ -117,6 +119,10 @@ class Meta(Cog):
         """
         Set custom prefix for server
         """
+
+        if len(prefix) > MAX_PREFIX_LEN:
+            await ctx.reply(f"Max prefix len exceeded[{MAX_PREFIX_LEN}]: {prefix[:MAX_PREFIX_LEN]}")
+            return
 
         settings = Prefix(ctx.bot, prefix=prefix.lower())
         await settings.write(ctx)
