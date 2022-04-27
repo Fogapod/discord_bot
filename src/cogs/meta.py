@@ -92,6 +92,12 @@ class Meta(Cog):
 
         await ctx.send(f"```\n{PINK_ART}\n\n{info}```")
 
+    @commands.command(aliases=["src"])
+    async def source(self, ctx: Context) -> None:
+        """Get bot source code"""
+
+        await ctx.send(f"No per command or per cog source because lazy\n\n<https://{REPO}>")
+
     @commands.group(
         invoke_without_command=True,
         ignore_extra=False,
