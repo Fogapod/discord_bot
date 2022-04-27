@@ -188,35 +188,37 @@ class Accents(Cog, HookHost):
             )
 
     async def _remove_accents(self, ctx: Context, member: discord.Member, accents: _UserAccentsType) -> None:
+        # a special case. empty iterable means remove everything
         if not accents:
-            updated = []
-        else:
-            user_accent_map = {a.name: a for a in self.get_user_accents(member)}
-
-            something_changed = False
-
-            for accent_to_remove in set(accents):
-                if accent_to_remove.name in user_accent_map:
-                    del user_accent_map[accent_to_remove.name]
-
-                    something_changed = True
-
-            if not something_changed:
-                raise PINKError("Nothing to do")
-
-            updated = list(user_accent_map.values())
-
-        self.set_user_accents(member, updated)
-
-        for accent in updated:
             await self.bot.pg.fetchrow(
-                "INSERT INTO accents (guild_id, user_id, name, severity) VALUES ($1, $2, $3, $4) "
-                "ON CONFLICT (guild_id, user_id, name) DO UPDATE "
-                "SET name = EXCLUDED.name",
+                "DELETE FROM accents WHERE guild_id = $1 AND user_id = $2", ctx.guild.id, member.id
+            )
+
+            self.set_user_accents(member, [])
+
+            return
+
+        name_to_accent = {a.name: a for a in self.get_user_accents(member)}
+
+        to_remove = []
+
+        for accent_to_remove in set(accents):
+            if accent_to_remove.name in name_to_accent:
+                to_remove.append(accent_to_remove)
+
+                del name_to_accent[accent_to_remove.name]
+
+        if not to_remove:
+            raise PINKError("Nothing to do")
+
+        self.set_user_accents(member, name_to_accent.values())
+
+        for accent in to_remove:
+            await self.bot.pg.fetchrow(
+                "DELETE FROM accents WHERE guild_id = $1 AND user_id = $2 AND name = $3",
                 ctx.guild.id,
                 member.id,
                 accent.name,
-                accent.severity,
             )
 
     async def _update_nick(self, ctx: Context) -> None:
