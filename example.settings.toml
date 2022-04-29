@@ -14,7 +14,7 @@ dsn = "https://ABCD@o546834.example.com/123"
 
 [owners]
 # owners are fetched from application info. use this to to add extra owners or override application owners completely
-ids = [439205512425504771, 456789]
+ids = [439205512425504771, 80528701850124288]
 # either "combine"  or "overwrite"
 mode = "combine"
 

@@ -1,3 +1,5 @@
+from typing import Optional
+
 import googletrans
 
 from discord.ext import commands  # type: ignore[attr-defined]
@@ -21,8 +23,25 @@ class Translator(Cog):
         invoke_without_command=True,
         ignore_extra=False,
     )
-    async def _translate(self, ctx: Context, language: Language, *, text: str) -> None:
-        """Translate text into target language"""
+    async def _translate(self, ctx: Context, language: Language, *, text: Optional[str] = None) -> None:
+        """
+        Translate text into target language.
+
+        Can translate referenced message.
+        """
+
+        # reference is more important, so overwrite text if present
+        if ctx.message.reference is not None:
+            message = ctx.message.reference.resolved
+            if message is None:
+                await ctx.reply("referenced message is unavailable for some weird reason")
+                return
+
+            text = message.content
+
+        if text is None:
+            await ctx.send_help(ctx.command)
+            return
 
         translated = await self._raw_translate(text, language)
 
