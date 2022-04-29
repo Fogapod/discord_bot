@@ -4,7 +4,7 @@ import itertools
 import math
 
 from io import BytesIO
-from typing import Any, Dict, Iterator, List, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 import PIL
 
@@ -273,41 +273,43 @@ class TextField:
         return f"<TextField text='{self.text}' coords={self.coords} angle={self.angle}>"
 
 
-def _language_iterator(blocks: Sequence[Any]) -> Iterator[Optional[str]]:
-    """Extracts language for each paragraph in Google OCR output"""
+# language iterator is broken. it returns languages for words instead of lines
+#
+# def _language_iterator(blocks: Sequence[Any]) -> Iterator[Optional[str]]:
+#     """Extracts language for each paragraph in Google OCR output"""
 
-    def extract_language(data: Any) -> Optional[str]:
-        if (properties := data.get("property")) is None:
-            return None
+#     def extract_language(data: Any) -> Optional[str]:
+#         if (properties := data.get("property")) is None:
+#             return None
 
-        if (languages := properties.get("detectedLanguages")) is None:
-            return None
+#         if (languages := properties.get("detectedLanguages")) is None:
+#             return None
 
-        return sorted(languages, key=lambda l: l.get("confidence", 1))[-1]["languageCode"]
+#         return sorted(languages, key=lambda l: l.get("confidence", 1))[-1]["languageCode"]
 
-    for block in blocks:
-        block_language = extract_language(block)
+#     for block in blocks:
+#         block_language = extract_language(block)
 
-        for paragraph in block["paragraphs"]:
-            paragraph_language = extract_language(paragraph)
+#         for paragraph in block["paragraphs"]:
+#             paragraph_language = extract_language(paragraph)
 
-            yield paragraph_language or block_language
+#             yield paragraph_language or block_language
 
-            # line grouping differs between simple annotations and paragraph grouping in
-            # full annotations. "EOL_SURE_SPACE" indicates line break matching simple
-            # annotations
-            for word in paragraph["words"]:
-                last_symbol = word["symbols"][-1]
-                if (symbol_properties := last_symbol.get("property")) is None:
-                    continue
+#             # line grouping differs between simple annotations and paragraph grouping in
+#             # full annotations. "EOL_SURE_SPACE" indicates line break matching simple
+#             # annotations
+#             for word in paragraph["words"]:
+#                 last_symbol = word["symbols"][-1]
+#                 if (symbol_properties := last_symbol.get("property")) is None:
+#                     continue
 
-                if (detected_break := symbol_properties.get("detectedBreak")) is None:
-                    continue
+#                 if (detected_break := symbol_properties.get("detectedBreak")) is None:
+#                     continue
 
-                if detected_break["type"] != "EOL_SURE_SPACE":
-                    continue
+#                 if detected_break["type"] != "EOL_SURE_SPACE":
+#                     continue
 
-                yield paragraph_language or block_language
+#                 yield paragraph_language or block_language or extract_language(word)
 
 
 async def ocr(ctx: Context, image: Image) -> Dict[str, Any]:
@@ -432,24 +434,27 @@ async def _apply_translation(
     ctx: Context,
     lines: List[str],
     language: str,
-    block_annotations: Any,
+    _block_annotations: Any,
 ) -> List[str]:
     if (translator_cog := ctx.bot.get_cog("Translator")) is None:
         raise RuntimeError("No translator cog loaded")
 
-    # TODO: group by input languages to improve translation?
-    need_trasnslation = {}
-    paragraph_languages = _language_iterator(block_annotations)
+    # # TODO: group by input languages to improve translation?
+    # need_trasnslation = {}
+    # paragraph_languages = _language_iterator(block_annotations)
 
-    for i, line in enumerate(lines):
-        if next(paragraph_languages) is not None:
-            need_trasnslation[i] = line
+    # for i, line in enumerate(lines):
+    #     if next(paragraph_languages) is not None:
+    #         need_trasnslation[i] = line
 
-    if not need_trasnslation:
-        raise PINKError(
-            "nothing to translate on image " "(either entire text is in target language or language is undetected)",
-            formatted=False,
-        )
+    # if not need_trasnslation:
+    #     raise PINKError(
+    #         "nothing to translate on image (either entire text is in target language or language is undetected)",
+    #         formatted=False,
+    #     )
+
+    # until language iterator is fixed we translate everything
+    need_trasnslation = {i: line for i, line in enumerate(lines)}
 
     translated = await translator_cog.translate("\n".join(need_trasnslation.values()), language)
 
