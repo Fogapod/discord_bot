@@ -79,14 +79,15 @@ class TechAdmin(Cog):
         self._last_reloaded_extension: Optional[str] = last_reloaded
 
     # TODO: a converter
+    # TODO: resolve cogs inside groups properly (folders without __ini__.py)
     @staticmethod
-    def _resolve_extension(ctx: Context, thing: str) -> str:
-        if (command := ctx.bot.get_command(thing)) is not None:
+    def _resolve_extension(ctx: Context, name: str) -> str:
+        if (command := ctx.bot.get_command(name)) is not None:
             extension = command.cog.__module__
-        elif (cog := ctx.bot.get_cog(thing)) is not None:
+        elif (cog := ctx.bot.get_cog(name)) is not None:
             extension = cog.__module__
         else:
-            extension = f"{COG_MODULE_PREFIX}{thing.lstrip(COG_MODULE_PREFIX)}"
+            extension = f"{COG_MODULE_PREFIX}{name.lstrip(COG_MODULE_PREFIX)}"
 
         # in some cases folder cogs are located in module_name/cog.py
         return extension.rstrip(".cog")
@@ -122,7 +123,7 @@ class TechAdmin(Cog):
             extension = self._resolve_extension(ctx, thing)
             self._last_reloaded_extension = extension
 
-            # keep keep ourselves as last reloaded cog in bot. set cog attribute as well in case reload fails somehow
+            # keep ourselves as last reloaded cog in bot. set cog attribute as well in case reload fails somehow
             if extension == self.__module__:
                 ctx.bot.__i_am_sorry_this_is_needed_for_reload_will_delete_later_i_promise = extension
 
