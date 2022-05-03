@@ -10,7 +10,7 @@ import textwrap
 import traceback
 
 from contextlib import redirect_stdout
-from typing import Any, Iterator, Optional, Union
+from typing import Any, Optional, Union
 
 import asyncpg
 import discord
@@ -25,7 +25,6 @@ from src.utils import run_process_shell
 
 
 class Code:
-    # i have no idea why + and - are allowed as language name
     _codeblock_regex = re.compile(r"```(?P<language>[\w+-]*)\n*(?P<body>.*?)\n*```[^`]*", re.DOTALL)
 
     __slots__ = (
@@ -63,8 +62,6 @@ class Code:
 
 class TechAdmin(Cog):
     """Commands for bot administrators"""
-
-    PAGINATOR_PAGES_CAP = 5
 
     async def cog_check(self, ctx: Context) -> None:
         return await is_owner().predicate(ctx)  # type: ignore[attr-defined]
@@ -121,43 +118,6 @@ class TechAdmin(Cog):
         await self.bot.invoke(new_ctx)
         await ctx.ok()
 
-    def _make_paginator(self, text: str, prefix: str = "```") -> commands.Paginator:
-        paginator = commands.Paginator(prefix=prefix)
-        # https://github.com/Rapptz/discord.py/blob/5c868ed871184b26a46319c45a799c190e635892/discord/ext/commands/help.py#L125
-        max_page_size = paginator.max_size - len(paginator.prefix) - len(paginator.suffix) - 2
-
-        def wrap_with_limit(text: str, limit: int) -> Iterator[str]:
-            limit -= 1
-
-            line_len = 0
-
-            for i, c in enumerate(text):
-                if c == "\n" or line_len > limit:
-                    yield text[i - line_len : i]
-
-                    line_len = 0
-                else:
-                    line_len += 1
-
-            if line_len != 0:
-                yield text[-line_len:]
-
-        for line in wrap_with_limit(text, max_page_size):
-            paginator.add_line(line)
-
-        return paginator
-
-    async def _send_paginator(self, ctx: Context, paginator: commands.Paginator) -> None:
-        if len(paginator.pages) > self.PAGINATOR_PAGES_CAP:
-            pages = paginator.pages[-self.PAGINATOR_PAGES_CAP :]
-
-            await ctx.send(f"Sending last **{len(pages)}** of **{len(paginator.pages)}** pages")
-        else:
-            pages = paginator.pages
-
-        for page in pages:
-            await ctx.send(page)
-
     @commands.command()
     async def eval(self, ctx: Context, *, code: Code) -> None:
         """
@@ -171,18 +131,16 @@ class TechAdmin(Cog):
             result = await self._eval(ctx, code)
             result = result.replace(self.bot.http.token, "TOKEN_LEAKED")
 
-            paginator = self._make_paginator(result, prefix="```py\n")
-
-        await self._send_paginator(ctx, paginator)
+        await ctx.send(f"```py\n{result}```")
 
     @commands.command()
     async def exec(self, ctx: Context, *, code: Code) -> None:
         """Execute shell command"""
 
         async with ctx.typing():
-            paginator = await self._exec(ctx, code.body)
+            result = await self._exec(ctx, code.body)
 
-        await self._send_paginator(ctx, paginator)
+        await ctx.send(result.replace(self.bot.http.token, "TOKEN_LEAKED"))
 
     @commands.command(aliases=["select"])
     async def sql(self, ctx: Context, *, code: Code) -> None:
@@ -204,9 +162,10 @@ class TechAdmin(Cog):
                 await ctx.ok()
                 return
 
-            paginator = await self._sql_table(data)
+            result = await self._sql_table(data)
 
-        await self._send_paginator(ctx, paginator)
+        # replacing token because of variable formatting
+        await ctx.send(result.replace(self.bot.http.token, "TOKEN_LEAKED"))
 
     async def _eval(self, ctx: Context, code: Code) -> str:
         # copied from https://github.com/Fogapod/KiwiBot/blob/49743118661abecaab86388cb94ff8a99f9011a8/modules/owner/module_eval.py
@@ -224,21 +183,26 @@ class TechAdmin(Cog):
         }
 
         # insert return
-        code_no_last_line, maybe_nl, code_last_line = code.body.rpartition("\n")
-        if not code_last_line.startswith(("return ", "raise ")):
+        code_no_last_line, maybe_nl, last_line = code.body.rpartition("\n")
+
+        last_line_and_indent = re.fullmatch(r"(\s*)(.*)", last_line)
+        assert last_line_and_indent is not None
+        last_line_indent, last_line = last_line_and_indent[1], last_line_and_indent[2]
+
+        if not last_line.startswith(("return ", "raise ", "yield ")):
             # special syntax for not inserting final return
-            if code_last_line.startswith("!"):
-                code_last_line = code_last_line[1:]
+            if last_line.startswith("!"):
+                last_line = last_line[1:]
             else:
                 # ignore code that is already invalid. this may also fail if there is a multiline expression since we
                 # only take last line, we do not want to put return there either
-                if self._is_valid_syntax(code_last_line):
-                    code_last_line_with_return = f"return {code_last_line}"
+                if self._is_valid_syntax(last_line):
+                    last_line_with_return = f"return {last_line}"
                     # may fail if this is assignment and probably some other cases
-                    if self._is_valid_syntax(code_last_line_with_return):
-                        code_last_line = code_last_line_with_return
+                    if self._is_valid_syntax(last_line_with_return):
+                        last_line = last_line_with_return
 
-        indented_source = textwrap.indent(f"{code_no_last_line}{maybe_nl}{code_last_line}", "    ")
+        indented_source = textwrap.indent(f"{code_no_last_line}{maybe_nl}{last_line_indent}{last_line}", "    ")
         wrapped_source = f"""\
 async def __pink_eval__():
 {indented_source}\
@@ -277,7 +241,7 @@ async def __pink_eval__():
 
         return True
 
-    async def _exec(self, _: Context, arguments: str) -> commands.Paginator:
+    async def _exec(self, _: Context, arguments: str) -> str:
         stdout, stderr = await run_process_shell(arguments)
 
         if stderr:
@@ -285,11 +249,9 @@ async def __pink_eval__():
         else:
             result = stdout
 
-        result = result.replace(self.bot.http.token, "TOKEN_LEAKED")
+        return result
 
-        return self._make_paginator(result, prefix="```bash\n")
-
-    async def _sql_table(self, result: list[asyncpg.Record]) -> commands.Paginator:
+    async def _sql_table(self, result: list[asyncpg.Record]) -> str:
         # convert to list because otherwise iterator is exhausted
         columns = list(result[0].keys())
         col_widths = [len(c) for c in columns]
@@ -304,16 +266,12 @@ async def __pink_eval__():
         def sanitize_value(value: Any) -> str:
             return str(value).replace("\n", "\\n")
 
-        paginator = commands.Paginator(prefix="```sql\n")
-        paginator.add_line(header)
-        paginator.add_line(separator)
+        body = "\n".join(
+            " | ".join(f"{sanitize_value(value):<{col_widths[i]}}" for i, value in enumerate(row.values()))
+            for row in result
+        )
 
-        for row in result:
-            paginator.add_line(
-                " | ".join(f"{sanitize_value(value):<{col_widths[i]}}" for i, value in enumerate(row.values()))
-            )
-
-        return paginator
+        return f"```sql\n{header}\n{separator}\n{body}```"
 
 
 async def setup(bot: PINK) -> None:

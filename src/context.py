@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from io import StringIO
 from typing import TYPE_CHECKING, Any, Optional, Union
 
 import aiohttp
@@ -52,12 +53,20 @@ class Context(commands.Context, Hookable):
             if TYPE_CHECKING:
                 assert isinstance(target, discord.abc.Messageable)
 
-        if content is not None:
-            # hardcoded 2000 limit because error handling is tricky with 50035
-            # and this project is EOL
-            content = str(content)[:2000]
+        try:
+            return await target.send(content, **kwargs)
+        except discord.HTTPException as e:
+            # message content too long (default limit is 2000)
+            if e.code == 50035:
+                if len(files := kwargs.pop("files", [])) == 10:
+                    # custom error perhaps?
+                    return await target.send(str(content)[:2000], **kwargs)
 
-        return await target.send(content, **kwargs)
+                files.append(discord.File(StringIO(str(content)), filename="message.txt"))
+
+                return await target.send(files=files, **kwargs)
+
+            raise
 
     async def reply(self, content: Any = None, **kwargs: Any) -> discord.Message:
         return await self.send(content, reference=self.message, **kwargs)

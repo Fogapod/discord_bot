@@ -30,7 +30,7 @@ RUN apk add --no-cache \
     && apk add --no-cache --virtual .build-deps \
     # git pip packages
     git \
-    # uvloop ./configure uses it???
+    # used in uvloop ./configure
     file \
     # uvloop
     make \
@@ -41,8 +41,8 @@ RUN apk add --no-cache \
     && pip install -U -r requirements.txt \
     && apk del --purge .build-deps
 
-ARG UID=1000
-ARG GID=1000
+ARG UID=1188
+ARG GID=1188
 
 RUN addgroup -g $GID -S pink \
     && adduser -u $UID -S pink -G pink \
