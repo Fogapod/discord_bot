@@ -20,6 +20,12 @@ log = logging.getLogger(__name__)
 
 DownloadAddressResponse = collections.namedtuple("DownloadAddressResponse", ["status", "error"])
 
+CONTABO_RETRIES = 3
+
+
+class ContaboError(Exception):
+    ...
+
 
 class DownloadAddress:
     _cache: ClassVar[SimpleMemoryCache] = SimpleMemoryCache(ttl=60)
@@ -53,6 +59,8 @@ class DownloadAddress:
         try:
             async with ctx.session.head(self.url, timeout=aiohttp.ClientTimeout(total=10)) as r:
                 response = DownloadAddressResponse(r.status, None)
+        except aiohttp.ClientConnectionError:
+            response = DownloadAddressResponse(-1, "contabo issue")
         except Exception as e:
             log.error("fetching %r: %s: %s", self, type(e).__name__, str(e))
 
@@ -153,15 +161,24 @@ class ServerList:
         if time.monotonic() - self._fetch_time < self.FETCH_INTERVAL:
             return
 
-        async with ctx.session.get(
-            "https://api.unitystation.org/serverlist",
-            timeout=aiohttp.ClientTimeout(total=30),
-        ) as r:
-            if r.status != 200:
-                raise PINKError(f"Bad API response status code: **{r.status}**")
+        # TODO: remove after moving away from contabo
+        for _ in range(CONTABO_RETRIES):
+            try:
+                async with ctx.session.get(
+                    "https://api.unitystation.org/serverlist",
+                    timeout=aiohttp.ClientTimeout(total=30),
+                ) as r:
+                    if r.status != 200:
+                        raise PINKError(f"Bad API response status code: **{r.status}**")
 
-            # they send json with html mime type
-            data = await r.json(content_type=None)
+                    # they send json with html mime type
+                    data = await r.json(content_type=None)
+            except aiohttp.ClientConnectionError:
+                await asyncio.sleep(0.2)
+            else:
+                break
+        else:
+            raise ContaboError()
 
         self._fetch_time = time.monotonic()
 
