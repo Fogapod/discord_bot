@@ -23,6 +23,8 @@ from src.cog import Cog
 from src.context import Context
 from src.utils import run_process_shell
 
+COG_MODULE_PREFIX = "src.cogs."
+
 
 class Code:
     _codeblock_regex = re.compile(r"```(?P<language>[\w+-]*)\n*(?P<body>.*?)\n*```[^`]*", re.DOTALL)
@@ -67,42 +69,75 @@ class TechAdmin(Cog):
         return await is_owner().predicate(ctx)  # type: ignore[attr-defined]
 
     async def cog_load(self) -> None:
+        # take possible provious reload from bot (means this cog was reloaded)
+        stupid_var_name = f"_{type(self).__name__}__i_am_sorry_this_is_needed_for_reload_will_delete_later_i_promise"
+
+        if (last_reloaded := getattr(self.bot, stupid_var_name, None)) is not None:
+            delattr(self.bot, stupid_var_name)
+
         # this is not ideal because if TechAdmin itself is reloaded, this value is lost
-        self._last_reloaded_module: Optional[str] = None
+        self._last_reloaded_extension: Optional[str] = last_reloaded
+
+    # TODO: a converter
+    @staticmethod
+    def _resolve_extension(ctx: Context, thing: str) -> str:
+        if (command := ctx.bot.get_command(thing)) is not None:
+            extension = command.cog.__module__
+        elif (cog := ctx.bot.get_cog(thing)) is not None:
+            extension = cog.__module__
+        else:
+            extension = f"{COG_MODULE_PREFIX}{thing.lstrip(COG_MODULE_PREFIX)}"
+
+        # in some cases folder cogs are located in module_name/cog.py
+        return extension.rstrip(".cog")
 
     @commands.command()
-    async def load(self, ctx: Context, module: str) -> None:
+    async def load(self, ctx: Context, *, thing: str) -> None:
         """Load extension"""
 
-        await self.bot.load_extension(f"src.cogs.{module}")
-        await ctx.ok()
+        extension = self._resolve_extension(ctx, thing)
+        await self.bot.load_extension(extension)
+
+        await ctx.send(f"loaded `{extension}`")
 
     @commands.command()
-    async def unload(self, ctx: Context, module: str) -> None:
+    async def unload(self, ctx: Context, *, thing: str) -> None:
         """Unload extension"""
 
-        await self.bot.unload_extension(f"src.cogs.{module}")
-        await ctx.ok()
+        extension = self._resolve_extension(ctx, thing)
+        await self.bot.unload_extension(extension)
+
+        await ctx.send(f"unloaded `{extension}`")
 
     @commands.command(aliases=["re"])
-    async def reload(self, ctx: Context, module: str) -> None:
+    async def reload(self, ctx: Context, *, thing: Optional[str]) -> None:
         """Reload extension"""
 
-        if module == "~":
-            if self._last_reloaded_module is None:
+        if thing is None:
+            if self._last_reloaded_extension is None:
                 return await ctx.send("No previous reloaded module")
 
-            module = self._last_reloaded_module
+            extension = self._last_reloaded_extension
         else:
-            self._last_reloaded_module = module
+            extension = self._resolve_extension(ctx, thing)
+            self._last_reloaded_extension = extension
 
-        await self.bot.reload_extension(f"src.cogs.{module}")
+            # keep keep ourselves as last reloaded cog in bot. set cog attribute as well in case reload fails somehow
+            if extension == self.__module__:
+                ctx.bot.__i_am_sorry_this_is_needed_for_reload_will_delete_later_i_promise = extension
+
+        await self.bot.reload_extension(extension)
 
         # try deleting message for easier testing with frequent reloads
         try:
             await ctx.message.delete()
         except discord.Forbidden:
-            await ctx.ok()
+            # cleanup where we can. otherwise leave bot message as well
+            delete_after = None
+        else:
+            delete_after = 10
+
+        await ctx.send(f"reloaded `{extension}`", delete_after=delete_after)
 
     # https://github.com/Rapptz/RoboDanny/blob/715a5cf8545b94d61823f62db484be4fac1c95b1/cogs/admin.py#L422
     @commands.command(aliases=["doas", "da"])

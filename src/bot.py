@@ -107,7 +107,7 @@ class PINK(commands.Bot):
         log.info(f"bot owners: {' | '.join(map(str, self.owner_ids))}")
 
     async def _load_cogs(self) -> None:
-        for module in self._iterate_cogs(Path("src") / "cogs"):
+        for module in self._iterate_cogs():
             try:
                 await self.load_extension(module)
             except Exception:
@@ -115,7 +115,7 @@ class PINK(commands.Bot):
             else:
                 log.info(f"loaded {module}")
 
-    def _iterate_cogs(self, path: Path) -> Iterator[str]:
+    def _iterate_cogs(self, path: Optional[Path] = None) -> Iterator[str]:
         """
         There are 3 ways to declare cogs under cogs/ derectory:
             - name.py           : file must have setup function
@@ -126,6 +126,9 @@ class PINK(commands.Bot):
 
         Returns module names for current folder and subfolders.
         """
+
+        if path is None:
+            path = Path("src") / "cogs"
 
         def to_module(path: Path) -> str:
             return ".".join(path.parts)

@@ -1,5 +1,8 @@
+import inspect
 import os
 import time
+
+from typing import Optional
 
 from discord.ext import commands  # type: ignore[attr-defined]
 
@@ -95,10 +98,36 @@ class Meta(Cog):
         await ctx.send(f"```\n{PINK_ART}\n\n{info}```")
 
     @commands.command(aliases=["src"])
-    async def source(self, ctx: Context) -> None:
-        """Get bot source code"""
+    async def source(self, ctx: Context, *, thing: Optional[str]) -> None:
+        """Get source code of command, module or entire bot"""
 
-        await ctx.send(f"No per command or per cog source because lazy\n\n<https://{REPO}>")
+        if thing is None:
+            await ctx.send(f"<https://{REPO}>")
+            return
+
+        if thing == "help":
+            obj = type(self.bot.help_command)
+        elif (command := ctx.bot.get_command(thing)) is not None:
+            obj = command.callback
+        elif (cog := ctx.bot.get_cog(thing)) is not None:
+            obj = type(cog)
+        else:
+            await ctx.reply("Command or cog not found")
+            return
+
+        lines, starting_line = inspect.getsourcelines(obj)
+
+        file_ = f"{obj.__module__.replace('.', '/')}.py"
+
+        # try commit, fallback to branch, fallback to "main" branch
+        branch = os.environ.get("GIT_COMMIT", os.environ.get("GIT_BRANCH", "main"))
+
+        result = f"<https://{REPO}/blob/{branch}/{file_}#L{starting_line}-L{starting_line + len(lines) - 1}>"
+
+        if os.environ.get("GIT_DIRTY", "0") != "0":
+            result += "\n\nNOTE: running in dirty repository, location might be inaccurate"
+
+        await ctx.send(result)
 
     @commands.group(
         invoke_without_command=True,
