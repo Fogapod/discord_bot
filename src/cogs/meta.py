@@ -3,8 +3,8 @@ import os
 import time
 
 from pathlib import Path
-from types import FunctionType, MethodType
-from typing import Any, Iterable, Optional, Type, Union
+from types import FunctionType, MethodDescriptorType, MethodType
+from typing import Any, Callable, Iterable, Optional, Type, Union
 
 from discord.ext import commands  # type: ignore[attr-defined]
 
@@ -101,7 +101,7 @@ class Meta(Cog):
 
     def _get_object_for_source_inspection(
         self, ctx: Context, name: str
-    ) -> Iterable[Union[Type[Any], FunctionType, MethodType]]:
+    ) -> Iterable[Union[Type[Any], FunctionType, MethodType, MethodDescriptorType, Callable[..., Any]]]:
         object_aliases = {
             "Bot": PINK,
             "Context": Context,
@@ -128,6 +128,7 @@ class Meta(Cog):
 
             return ()
 
+        # attribute source
         object_name, _, method = name.partition(".")
         if not method:
             return ()
@@ -136,15 +137,21 @@ class Meta(Cog):
             if (obj := ctx.bot.get_cog(object_name)) is None:
                 return ()
 
+            # get cog type to allow property lookup. otherwise we would get values from getattr
+            obj = type(obj)
+
         if (attr := getattr(obj, method, None)) is not None:
             if isinstance(attr, commands.Command):
                 return [attr.callback]
 
-            if inspect.isroutine(attr):
+            if isinstance(attr, property):
+                return filter(None, [attr.fget, attr.fset, attr.fdel])
+
+            if inspect.isfunction(attr) or inspect.ismethod(attr) or inspect.ismethoddescriptor(attr):
                 # this can theoretically be some sort of callable from other library. we want none of that
                 top_level_module, _ = self.__module__.split(".", 1)
                 if attr.__module__.startswith(f"{top_level_module}."):
-                    return [attr]  # type: ignore
+                    return [attr]
 
         return ()
 
