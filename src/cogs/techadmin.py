@@ -78,6 +78,9 @@ class TechAdmin(Cog):
         # this is not ideal because if TechAdmin itself is reloaded, this value is lost
         self._last_reloaded_extension: Optional[str] = last_reloaded
 
+    async def cog_unload(self) -> None:
+        self.bot.__i_am_sorry_this_is_needed_for_reload_will_delete_later_i_promise = self._last_reloaded_extension
+
     # TODO: a converter
     # TODO: resolve cogs inside groups properly (folders without __ini__.py)
     @staticmethod
@@ -86,6 +89,16 @@ class TechAdmin(Cog):
             extension = command.cog.__module__
         elif (cog := ctx.bot.get_cog(name)) is not None:
             extension = cog.__module__
+        elif name.startswith("on_"):
+            if (events := ctx.bot.extra_events.get(name)) is not None:
+                if len(events) > 1:
+                    raise commands.BadArgument(
+                        f"More than one event matched: {', '.join((e.__module__) for e in events)}"
+                    )
+
+                return events[0].__module__
+
+            raise commands.BadArgument("Event not found")
         else:
             extension = f"{COG_MODULE_PREFIX}{name.lstrip(COG_MODULE_PREFIX)}"
 
@@ -122,10 +135,6 @@ class TechAdmin(Cog):
         else:
             extension = self._resolve_extension(ctx, thing)
             self._last_reloaded_extension = extension
-
-            # keep ourselves as last reloaded cog in bot. set cog attribute as well in case reload fails somehow
-            if extension == self.__module__:
-                ctx.bot.__i_am_sorry_this_is_needed_for_reload_will_delete_later_i_promise = extension
 
         await self.bot.reload_extension(extension)
 

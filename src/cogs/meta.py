@@ -4,7 +4,7 @@ import time
 
 from pathlib import Path
 from types import FunctionType, MethodType
-from typing import Any, Optional, Type, Union
+from typing import Any, Iterable, Optional, Type, Union
 
 from discord.ext import commands  # type: ignore[attr-defined]
 
@@ -101,57 +101,90 @@ class Meta(Cog):
 
     def _get_object_for_source_inspection(
         self, ctx: Context, name: str
-    ) -> Optional[Union[Type[Any], FunctionType, MethodType]]:
+    ) -> Iterable[Union[Type[Any], FunctionType, MethodType]]:
         if name == "help":
-            return type(ctx.bot.help_command)
+            return [type(ctx.bot.help_command)]
 
         if (command := ctx.bot.get_command(name)) is not None:
-            return command.callback
+            return [command.callback]
 
         if (cog := ctx.bot.get_cog(name)) is not None:
-            return type(cog)
+            return [type(cog)]
 
-        maybe_cog_name, _, maybe_method = name.partition(".")
-        if (cog := ctx.bot.get_cog(maybe_cog_name)) is not None:
-            if (attr := getattr(cog, maybe_method, None)) is not None:
-                if isinstance(attr, commands.Command):
-                    return attr.callback
+        if name.startswith("on_"):
+            if (events := ctx.bot.extra_events.get(name)) is not None:
+                return events
 
-                if inspect.isroutine(attr):
-                    # this can theoretically be some sort of callable from other library. we want none of that
-                    top_level_module, _ = self.__module__.split(".", 1)
-                    if attr.__module__.startswith(f"{top_level_module}."):
-                        return attr  # type: ignore
+            if (event := getattr(ctx.bot, name, None)) is not None:
+                return [event]
 
-        return None
+            return ()
+
+        object_aliases = {
+            "Bot": PINK,
+            "Context": Context,
+        }
+
+        object_name, _, method = name.partition(".")
+        if not method:
+            return ()
+
+        if (obj := object_aliases.get(object_name)) is None:
+            if (obj := ctx.bot.get_cog(object_name)) is None:
+                return ()
+
+        if (attr := getattr(obj, method, None)) is not None:
+            if isinstance(attr, commands.Command):
+                return [attr.callback]
+
+            if inspect.isroutine(attr):
+                # this can theoretically be some sort of callable from other library. we want none of that
+                top_level_module, _ = self.__module__.split(".", 1)
+                if attr.__module__.startswith(f"{top_level_module}."):
+                    return [attr]  # type: ignore
+
+        return ()
 
     @commands.command(aliases=["src"])
     async def source(self, ctx: Context, *, thing: Optional[str]) -> None:
-        """Get source code of command, module or entire bot"""
+        """
+        Get source code of command, module, event or bot
+
+        Use on_ prefix for events.
+
+        Some objects allow method lookup using dot (Bot.get_prefix):
+          - Bot
+          - Context
+          - Any valid cog
+        """
 
         if thing is None:
             await ctx.send(f"<https://{REPO}>")
             return
 
-        if (obj := self._get_object_for_source_inspection(ctx, thing)) is None:
-            await ctx.reply("Command or cog not found")
+        if not (objs := self._get_object_for_source_inspection(ctx, thing)):
+            await ctx.reply("Command, cog or event not found")
             return
 
-        lines, starting_line = inspect.getsourcelines(obj)
+        result = ""
 
-        file_path = Path(*obj.__module__.split("."))
-        if file_path.is_dir():
-            file_path = file_path / "__init__.py"
-        else:
-            file_path = file_path.with_suffix(".py")
+        for obj in objs:
+            lines, starting_line = inspect.getsourcelines(obj)
 
-        # try commit, fallback to branch, fallback to "main" branch
-        branch = os.environ.get("GIT_COMMIT", os.environ.get("GIT_BRANCH", "main"))
+            file_path = Path(*obj.__module__.split("."))
+            if file_path.is_dir():
+                file_path = file_path / "__init__.py"
+            else:
+                file_path = file_path.with_suffix(".py")
 
-        result = f"<https://{REPO}/blob/{branch}/{file_path}#L{starting_line}-L{starting_line + len(lines) - 1}>"
+            # try commit, fallback to branch, fallback to "main" branch
+            branch = os.environ.get("GIT_COMMIT", os.environ.get("GIT_BRANCH", "main"))
+
+            # github specific layout
+            result += f"`{obj.__module__}`: <https://{REPO}/blob/{branch}/{file_path}#L{starting_line}-L{starting_line + len(lines) - 1}>\n"
 
         if os.environ.get("GIT_DIRTY", "0") != "0":
-            result += "\n\nNOTE: running in dirty repository, location might be inaccurate"
+            result += "\nNOTE: running in dirty repository, location might be inaccurate"
 
         await ctx.send(result)
 
