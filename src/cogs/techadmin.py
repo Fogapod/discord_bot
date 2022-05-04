@@ -163,7 +163,7 @@ class TechAdmin(Cog):
         await self.bot.invoke(new_ctx)
         await ctx.ok()
 
-    @commands.command()
+    @commands.command(aliases=["eva!", "eval!"])
     async def eval(self, ctx: Context, *, code: Code) -> None:
         """
         Evaluate code inside bot, with async support
@@ -173,7 +173,7 @@ class TechAdmin(Cog):
         """
 
         async with ctx.typing():
-            result = await self._eval(ctx, code)
+            result = await self._eval(ctx, code, insert_return=ctx.invoked_with.endswith("!"))
             result = result.replace(self.bot.http.token, "TOKEN_LEAKED")
 
         await ctx.send(f"```py\n{result}```")
@@ -214,7 +214,7 @@ class TechAdmin(Cog):
         # replacing token because of variable formatting
         await ctx.send(result.replace(self.bot.http.token, "TOKEN_LEAKED"))
 
-    async def _eval(self, ctx: Context, code: Code) -> str:
+    async def _eval(self, ctx: Context, code: Code, *, insert_return: bool = False) -> str:
         # copied from https://github.com/Fogapod/KiwiBot/blob/49743118661abecaab86388cb94ff8a99f9011a8/modules/owner/module_eval.py
         # (originally copied from R. Danny bot)
         glob = {
@@ -229,18 +229,17 @@ class TechAdmin(Cog):
             "random": random,
         }
 
-        # insert return
-        code_no_last_line, maybe_nl, last_line = code.body.rpartition("\n")
+        fn_body = code.body
 
-        last_line_and_indent = re.fullmatch(r"(\s*)(.*)", last_line)
-        assert last_line_and_indent is not None
-        last_line_indent, last_line = last_line_and_indent[1], last_line_and_indent[2]
+        if insert_return:
+            # insert return
+            code_no_last_line, maybe_nl, last_line = fn_body.rpartition("\n")
 
-        if not last_line.startswith(("return ", "raise ", "yield ")):
-            # special syntax for not inserting final return
-            if last_line.startswith("!"):
-                last_line = last_line[1:]
-            else:
+            last_line_and_indent = re.fullmatch(r"(\s*)(.*)", last_line)
+            assert last_line_and_indent is not None
+            last_line_indent, last_line = last_line_and_indent[1], last_line_and_indent[2]
+
+            if not last_line.startswith(("return ", "raise ", "yield ")):
                 # ignore code that is already invalid. this may also fail if there is a multiline expression since we
                 # only take last line, we do not want to put return there either
                 if self._is_valid_syntax(last_line):
@@ -249,10 +248,11 @@ class TechAdmin(Cog):
                     if self._is_valid_syntax(last_line_with_return):
                         last_line = last_line_with_return
 
-        indented_source = textwrap.indent(f"{code_no_last_line}{maybe_nl}{last_line_indent}{last_line}", "    ")
+            fn_body = f"{code_no_last_line}{maybe_nl}{last_line_indent}{last_line}"
+
         wrapped_source = f"""\
 async def __pink_eval__():
-{indented_source}\
+{textwrap.indent(fn_body, "    ")}\
 """
 
         # NOTE: docs exclicitly say exception value can be passed to format_exception_only since 3.10
