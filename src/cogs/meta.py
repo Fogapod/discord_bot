@@ -102,6 +102,11 @@ class Meta(Cog):
     def _get_object_for_source_inspection(
         self, ctx: Context, name: str
     ) -> Iterable[Union[Type[Any], FunctionType, MethodType]]:
+        object_aliases = {
+            "Bot": PINK,
+            "Context": Context,
+        }
+
         if name == "help":
             return [type(ctx.bot.help_command)]
 
@@ -111,6 +116,9 @@ class Meta(Cog):
         if (cog := ctx.bot.get_cog(name)) is not None:
             return [type(cog)]
 
+        if (obj := object_aliases.get(name)) is not None:
+            return [obj]
+
         if name.startswith("on_"):
             if (events := ctx.bot.extra_events.get(name)) is not None:
                 return events
@@ -119,11 +127,6 @@ class Meta(Cog):
                 return [event]
 
             return ()
-
-        object_aliases = {
-            "Bot": PINK,
-            "Context": Context,
-        }
 
         object_name, _, method = name.partition(".")
         if not method:
@@ -172,13 +175,15 @@ class Meta(Cog):
             lines, starting_line = inspect.getsourcelines(obj)
 
             file_path = Path(*obj.__module__.split("."))
+            # folder cog type
             if file_path.is_dir():
                 file_path = file_path / "__init__.py"
             else:
                 file_path = file_path.with_suffix(".py")
 
             # try commit, fallback to branch, fallback to "main" branch
-            branch = os.environ.get("GIT_COMMIT", os.environ.get("GIT_BRANCH", "main"))
+            if (branch := os.environ.get("GIT_COMMIT")) is None:
+                branch = os.environ.get("GIT_BRANCH", "main")
 
             # github specific layout
             result += f"`{obj.__module__}`: <https://{REPO}/blob/{branch}/{file_path}#L{starting_line}-L{starting_line + len(lines) - 1}>\n"
