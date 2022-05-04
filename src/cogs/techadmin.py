@@ -173,7 +173,7 @@ class TechAdmin(Cog):
         """
 
         async with ctx.typing():
-            result = await self._eval(ctx, code, insert_return=ctx.invoked_with.endswith("!"))
+            result = await self._eval(ctx, code, insert_return=not ctx.invoked_with.endswith("!"))
             result = result.replace(self.bot.http.token, "TOKEN_LEAKED")
 
         await ctx.send(f"```py\n{result}```")
