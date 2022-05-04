@@ -144,31 +144,29 @@ class Meta(Cog):
                 return ()
 
         for method in method_chain.split("."):
-            # try getting property from class. if it succeeds, continue. otherwise use instance for variable lookups
-            if not inspect.isclass(obj):
-                obj_class = type(obj)
-            else:
+            if inspect.isclass(obj):
                 obj_class = obj
+            else:
+                obj_class = type(obj)
 
+            # try getting property from class. if it succeeds, continue. otherwise use instance for variable lookups
             maybe_property = getattr(obj_class, method, None)
             if isinstance(maybe_property, property):
                 obj = maybe_property
-                continue
-
-            if (obj := getattr(obj, method, None)) is None:
+            elif (obj := getattr(obj, method, None)) is None:
+                # lookup failed
                 return ()
-
-            if isinstance(obj, commands.Command):
+            elif isinstance(obj, commands.Command):
                 obj = obj.callback
-
-            if not (
+            elif not (
                 inspect.isfunction(obj)
                 or inspect.ismethod(obj)
                 or inspect.ismethoddescriptor(obj)
                 or inspect.ismodule(obj)
                 or inspect.isclass(obj)
             ):
-                obj = type(obj)
+                # we're at some attribute, try getting it's type
+                obj = obj_class
 
         if isinstance(obj, property):
             return filter(None, [obj.fget, obj.fset, obj.fdel])
