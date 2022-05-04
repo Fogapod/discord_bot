@@ -185,7 +185,9 @@ class TechAdmin(Cog):
         async with ctx.typing():
             result = await self._exec(ctx, code.body)
 
-        await ctx.send(result.replace(self.bot.http.token, "TOKEN_LEAKED"))
+        result.replace(self.bot.http.token, "TOKEN_LEAKED")
+
+        await ctx.send(f"```bash\n{result}```")
 
     @commands.command(aliases=["select"])
     async def sql(self, ctx: Context, *, code: Code) -> None:

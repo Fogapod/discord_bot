@@ -1,7 +1,9 @@
 import inspect
 import os
+import re
 import time
 
+from importlib import metadata
 from pathlib import Path
 from types import FunctionType, MethodDescriptorType, MethodType
 from typing import Any, Callable, Iterable, Optional, Type, Union
@@ -10,6 +12,7 @@ from discord.ext import commands  # type: ignore[attr-defined]
 
 from src.bot import PINK, Prefix
 from src.cog import Cog
+from src.cogs.utils.errorhandler import PINKError
 from src.context import Context
 from src.settings import settings
 from src.utils import seconds_to_human_readable
@@ -148,10 +151,7 @@ class Meta(Cog):
                 return filter(None, [attr.fget, attr.fset, attr.fdel])
 
             if inspect.isfunction(attr) or inspect.ismethod(attr) or inspect.ismethoddescriptor(attr):
-                # this can theoretically be some sort of callable from other library. we want none of that
-                top_level_module, _ = self.__module__.split(".", 1)
-                if attr.__module__.startswith(f"{top_level_module}."):
-                    return [attr]
+                return [attr]
 
         return ()
 
@@ -179,21 +179,47 @@ class Meta(Cog):
         result = ""
 
         for obj in objs:
-            lines, starting_line = inspect.getsourcelines(obj)
+            object_module = obj.__module__
+            object_top_level_module, _ = object_module.split(".", 1)
 
-            file_path = Path(*obj.__module__.split("."))
-            # folder cog type
-            if file_path.is_dir():
-                file_path = file_path / "__init__.py"
-            else:
+            file_path = Path(*object_module.split("."))
+
+            # show source for supported modules (only discord.py for now)
+            if object_top_level_module == "discord":
+                repo = "github.com/Rapptz/discord.py"
                 file_path = file_path.with_suffix(".py")
 
-            # try commit, fallback to branch, fallback to "main" branch
-            if (branch := os.environ.get("GIT_COMMIT")) is None:
-                branch = os.environ.get("GIT_BRANCH", "main")
+                dpy_version = metadata.version("discord.py")
+
+                # dev versions have git commit, use it
+                if git_sha_match := re.fullmatch(r".+?\+g(\w+)", dpy_version):
+                    branch = git_sha_match[1]
+                else:
+                    # take only major and minor versions
+                    dpy_semver = re.match(r"\d+\.\d+", dpy_version)[0]  # type: ignore
+                    # dpy branch naming rules: v1.5.x
+                    branch = f"v{dpy_semver}.x"
+            else:
+                top_level_module, _ = self.__module__.split(".", 1)
+                if top_level_module != object_top_level_module:
+                    raise PINKError(f"`{thing}` is defined in external module: `{object_module}`")
+
+                repo = REPO
+
+                # folder cog type
+                if file_path.is_dir():
+                    file_path = file_path / "__init__.py"
+                else:
+                    file_path = file_path.with_suffix(".py")
+
+                # try commit, fallback to branch, fallback to "main" branch
+                if (branch := os.environ.get("GIT_COMMIT")) is None:
+                    branch = os.environ.get("GIT_BRANCH", "main")
+
+            lines, starting_line = inspect.getsourcelines(obj)
 
             # github specific layout
-            result += f"`{obj.__module__}`: <https://{REPO}/blob/{branch}/{file_path}#L{starting_line}-L{starting_line + len(lines) - 1}>\n"
+            result += f"`{object_module}`: <https://{repo}/blob/{branch}/{file_path}#L{starting_line}-L{starting_line + len(lines) - 1}>\n"
 
         if os.environ.get("GIT_DIRTY", "0") != "0":
             result += "\nNOTE: running in dirty repository, location might be inaccurate"
