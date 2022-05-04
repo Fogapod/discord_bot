@@ -5,8 +5,10 @@ import time
 
 from importlib import metadata
 from pathlib import Path
-from types import FunctionType, MethodDescriptorType, MethodType
+from types import FunctionType, MethodDescriptorType, MethodType, ModuleType
 from typing import Any, Callable, Iterable, Optional, Type, Union
+
+import discord
 
 from discord.ext import commands  # type: ignore[attr-defined]
 
@@ -104,10 +106,11 @@ class Meta(Cog):
 
     def _get_object_for_source_inspection(
         self, ctx: Context, name: str
-    ) -> Iterable[Union[Type[Any], FunctionType, MethodType, MethodDescriptorType, Callable[..., Any]]]:
+    ) -> Iterable[Union[Type[Any], FunctionType, MethodType, MethodDescriptorType, Callable[..., Any], ModuleType]]:
         object_aliases = {
             "Bot": ctx.bot,
             "Context": ctx,
+            "discord": discord,
         }
 
         if name == "help":
@@ -153,7 +156,13 @@ class Meta(Cog):
             if isinstance(obj, commands.Command):
                 obj = obj.callback
 
-            if not (inspect.isfunction(obj) or inspect.ismethod(obj) or inspect.ismethoddescriptor(obj)):
+            if not (
+                inspect.isfunction(obj)
+                or inspect.ismethod(obj)
+                or inspect.ismethoddescriptor(obj)
+                or inspect.ismodule(obj)
+                or inspect.isclass(obj)
+            ):
                 obj = type(obj)
 
         if isinstance(obj, property):
@@ -185,7 +194,11 @@ class Meta(Cog):
         result = ""
 
         for obj in objs:
-            object_module = obj.__module__
+            if isinstance(obj, ModuleType):
+                object_module = thing
+            else:
+                object_module = obj.__module__
+
             object_top_level_module, *_ = object_module.partition(".")
 
             file_path = Path(*object_module.split("."))
