@@ -145,7 +145,12 @@ class Meta(Cog):
 
         for method in method_chain.split("."):
             # try getting property from class. if it succeeds, continue. otherwise use instance for variable lookups
-            maybe_property = getattr(type(obj), method, None)
+            if not inspect.isclass(obj):
+                obj_class = type(obj)
+            else:
+                obj_class = obj
+
+            maybe_property = getattr(obj_class, method, None)
             if isinstance(maybe_property, property):
                 obj = maybe_property
                 continue
