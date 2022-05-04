@@ -106,8 +106,8 @@ class Meta(Cog):
         self, ctx: Context, name: str
     ) -> Iterable[Union[Type[Any], FunctionType, MethodType, MethodDescriptorType, Callable[..., Any]]]:
         object_aliases = {
-            "Bot": PINK,
-            "Context": Context,
+            "Bot": ctx.bot,
+            "Context": ctx,
         }
 
         if name == "help":
@@ -120,7 +120,7 @@ class Meta(Cog):
             return [type(cog)]
 
         if (obj := object_aliases.get(name)) is not None:
-            return [obj]
+            return [type(obj)]
 
         if name.startswith("on_"):
             if (events := ctx.bot.extra_events.get(name)) is not None:
@@ -132,28 +132,34 @@ class Meta(Cog):
             return ()
 
         # attribute source
-        object_name, _, method = name.partition(".")
-        if not method:
+        object_name, _, method_chain = name.partition(".")
+        if not method_chain:
             return ()
 
         if (obj := object_aliases.get(object_name)) is None:
             if (obj := ctx.bot.get_cog(object_name)) is None:
                 return ()
 
-            # get cog type to allow property lookup. otherwise we would get values from getattr
-            obj = type(obj)
+        for method in method_chain.split("."):
+            # try getting property from class. if it succeeds, continue. otherwise use instance for variable lookups
+            maybe_property = getattr(type(obj), method, None)
+            if isinstance(maybe_property, property):
+                obj = maybe_property
+                continue
 
-        if (attr := getattr(obj, method, None)) is not None:
-            if isinstance(attr, commands.Command):
-                return [attr.callback]
+            if (obj := getattr(obj, method, None)) is None:
+                return ()
 
-            if isinstance(attr, property):
-                return filter(None, [attr.fget, attr.fset, attr.fdel])
+            if isinstance(obj, commands.Command):
+                obj = obj.callback
 
-            if inspect.isfunction(attr) or inspect.ismethod(attr) or inspect.ismethoddescriptor(attr):
-                return [attr]
+            if not (inspect.isfunction(obj) or inspect.ismethod(obj) or inspect.ismethoddescriptor(obj)):
+                obj = type(obj)
 
-        return ()
+        if isinstance(obj, property):
+            return filter(None, [obj.fget, obj.fset, obj.fdel])
+
+        return [obj]
 
     @commands.command(aliases=["src"])
     async def source(self, ctx: Context, *, thing: Optional[str]) -> None:
@@ -180,7 +186,7 @@ class Meta(Cog):
 
         for obj in objs:
             object_module = obj.__module__
-            object_top_level_module, _ = object_module.split(".", 1)
+            object_top_level_module, *_ = object_module.partition(".")
 
             file_path = Path(*object_module.split("."))
 
@@ -200,7 +206,7 @@ class Meta(Cog):
                     # dpy branch naming rules: v1.5.x
                     branch = f"v{dpy_semver}.x"
             else:
-                top_level_module, _ = self.__module__.split(".", 1)
+                top_level_module, *_ = self.__module__.partition(".")
                 if top_level_module != object_top_level_module:
                     raise PINKError(f"`{thing}` is defined in external module: `{object_module}`")
 
