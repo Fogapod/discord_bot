@@ -446,6 +446,11 @@ class Accents(Cog, HookHost):
         if message.guild is None:
             return
 
+        # we are in edit event
+        if (old_response := self._sent_webhook_messages.pop(message.id, None)) is not None:
+            await self._edit_webhook_message(old_response, message)
+            return
+
         if not message.content:
             return
 
@@ -505,11 +510,7 @@ class Accents(Cog, HookHost):
                 # return
                 raise
 
-        if (old_response := self._sent_webhook_messages.pop(message.id, None)) is not None:
-            with contextlib.suppress(discord.NotFound):
-                await old_response.delete()
-        else:
-            self._sent_webhook_messages[message.id] = new_message
+        self._sent_webhook_messages[message.id] = new_message
 
         with contextlib.suppress(discord.NotFound):
             await message.delete()
@@ -549,7 +550,7 @@ class Accents(Cog, HookHost):
         ctx: Context,
         content: str,
         original: discord.Message,
-    ) -> discord.Message:
+    ) -> discord.WebhookMessage:
         return await ctx.send(
             content,
             allowed_mentions=discord.AllowedMentions(
@@ -566,6 +567,10 @@ class Accents(Cog, HookHost):
             embeds=list(map(self._copy_embed, original.embeds)),
             wait=True,
         )
+
+    async def _edit_webhook_message(self, original: discord.WebhookMessage, new: discord.Message) -> None:
+        # only copy embeds since they arrive late
+        await original.edit(embeds=new.embeds)
 
     @Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
