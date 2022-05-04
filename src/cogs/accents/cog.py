@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import collections
 import contextlib
 import logging
@@ -40,10 +41,16 @@ class Accents(Cog, HookHost):
         super().__init__(bot)
 
         # channel_id -> Webhook
-        self._webhooks = LRU(50)
+        self._webhooks = LRU(64)
 
         # guild_id -> user_id -> [Accent]
         self._accents: Dict[int, Dict[int, List[Accent]]] = {}
+
+        # message_id -> webhook_message
+        # used for fighting back against discord embed message edits:
+        # user sends text message -> discord queues embed creation in background -> edits message on success
+        # this triggers accents twice. cached message ids are used to delete original response
+        self._sent_webhook_messages = LRU(64)
 
     async def cog_load(self) -> None:
         # TODO: perform cleanup in case name format or bot name ever changes?
@@ -478,7 +485,7 @@ class Accents(Cog, HookHost):
             return
 
         try:
-            await self._send_new_message(ctx, content, message)
+            new_message = await self._send_new_message(ctx, content, message)
         except (discord.NotFound, discord.InvalidArgument):
             # InvalidArgument appears in some rare cases when webhooks is deleted or is
             # owned by other bot
@@ -487,7 +494,7 @@ class Accents(Cog, HookHost):
             del self._webhooks[message.channel.id]
 
             try:
-                await self._send_new_message(ctx, content, message)
+                new_message = await self._send_new_message(ctx, content, message)
             except Exception as e:
                 await ctx.reply(
                     f"Accents error: unable to deliver message after invalidating cache: **{e}**.\n"
@@ -497,6 +504,12 @@ class Accents(Cog, HookHost):
                 # NOTE: is it really needed? what else could trigger this?
                 # return
                 raise
+
+        if (old_response := self._sent_webhook_messages.pop(message.id, None)) is not None:
+            with contextlib.suppress(discord.NotFound):
+                await old_response.delete()
+        else:
+            self._sent_webhook_messages[message.id] = new_message
 
         with contextlib.suppress(discord.NotFound):
             await message.delete()
@@ -536,8 +549,8 @@ class Accents(Cog, HookHost):
         ctx: Context,
         content: str,
         original: discord.Message,
-    ) -> None:
-        await ctx.send(
+    ) -> discord.Message:
+        return await ctx.send(
             content,
             allowed_mentions=discord.AllowedMentions(
                 everyone=original.author.guild_permissions.mention_everyone,
@@ -551,6 +564,7 @@ class Accents(Cog, HookHost):
             username=original.author.display_name,
             avatar_url=original.author.display_avatar,
             embeds=list(map(self._copy_embed, original.embeds)),
+            wait=True,
         )
 
     @Cog.listener()
@@ -560,4 +574,12 @@ class Accents(Cog, HookHost):
     # needed in case people use command and edit their message
     @Cog.listener()
     async def on_message_edit(self, _old: discord.Message, new: discord.Message) -> None:
+        # wait for original message to be sent more or less reliably because this edit could be embed edit
+        # for that message that should remove original one
+        #
+        # sleep happens here instead of send for 2 reasons:
+        #   - send must be as fast as possible
+        #   - embed updates can be quite slow, it is not feasible to wait that long (up to a few seconds)
+        await asyncio.sleep(0.5)
+
         await self._replace_message(new)
