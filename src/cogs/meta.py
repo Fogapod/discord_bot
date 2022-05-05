@@ -144,10 +144,15 @@ class Meta(Cog):
         if not attr_chain_str:
             return ()
 
-        if (obj := object_aliases.get(object_name)) is None:
-            if (obj := module_aliases.get(object_name)) is None:
-                if (obj := ctx.bot.get_cog(object_name)) is None:
-                    return ()
+        for getter in (
+            object_aliases.get,
+            module_aliases.get,
+            ctx.bot.get_cog,
+        ):
+            if (obj := getter(object_name)) is not None:
+                break
+        else:
+            return ()
 
         attr_chain = attr_chain_str.split(".")
 
