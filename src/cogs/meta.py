@@ -110,6 +110,8 @@ class Meta(Cog):
         object_aliases = {
             "Bot": ctx.bot,
             "Context": ctx,
+        }
+        module_aliases = {
             "discord": discord,
         }
 
@@ -124,6 +126,9 @@ class Meta(Cog):
 
         if (obj := object_aliases.get(name)) is not None:
             return [type(obj)]
+
+        if (obj := module_aliases.get(name)) is not None:
+            return [obj]
 
         if name.startswith("on_"):
             if (events := ctx.bot.extra_events.get(name)) is not None:
@@ -140,8 +145,9 @@ class Meta(Cog):
             return ()
 
         if (obj := object_aliases.get(object_name)) is None:
-            if (obj := ctx.bot.get_cog(object_name)) is None:
-                return ()
+            if (obj := module_aliases.get(object_name)) is None:
+                if (obj := ctx.bot.get_cog(object_name)) is None:
+                    return ()
 
         attr_chain = attr_chain_str.split(".")
 
@@ -172,6 +178,45 @@ class Meta(Cog):
                 obj = type(obj)
 
         return [obj]
+
+    @staticmethod
+    def _github_object_url(
+        *,
+        repo: str,
+        branch: str,
+        file_path: Optional[str] = None,
+        inspectable_object: Optional[
+            Union[
+                Type[Any],
+                FunctionType,
+                MethodType,
+                MethodDescriptorType,
+                Callable[..., Any],
+                ModuleType,
+            ]
+        ] = None,
+    ) -> str:
+        base = f"https://{repo}"
+
+        if file_path is not None:
+            base += f"/blob/{branch}/{file_path}"
+        else:
+            base += f"/tree/{branch}"
+
+        if inspectable_object is not None:
+            if file_path is None:
+                raise RuntimeError("Object passed without file path")
+
+            lines, starting_line = inspect.getsourcelines(inspectable_object)
+
+            if isinstance(inspectable_object, ModuleType):
+                starting_line += 1
+
+            ending_line = starting_line + len(lines) - 1
+
+            base += f"#L{starting_line}-L{ending_line}"
+
+        return base
 
     @commands.command(aliases=["src"])
     async def source(self, ctx: Context, *, thing: Optional[str]) -> None:
@@ -209,7 +254,6 @@ class Meta(Cog):
             # show source for supported modules (only discord.py for now)
             if object_top_level_module == "discord":
                 repo = "github.com/Rapptz/discord.py"
-                file_path = file_path.with_suffix(".py")
 
                 dpy_version = metadata.version("discord.py")
 
@@ -221,6 +265,21 @@ class Meta(Cog):
                     dpy_semver = re.match(r"\d+\.\d+", dpy_version)[0]  # type: ignore
                     # dpy branch naming rules: v1.5.x
                     branch = f"v{dpy_semver}.x"
+
+                # if module itself is requested, return repo url without any line pointers
+                if str(file_path) == "discord":
+                    maybe_obj = None
+                    maybe_file_path = None
+                else:
+                    maybe_obj = obj
+                    maybe_file_path = str(file_path.with_suffix(".py"))
+
+                url = self._github_object_url(
+                    repo=repo,
+                    branch=branch,
+                    file_path=maybe_file_path,
+                    inspectable_object=maybe_obj,
+                )
             else:
                 top_level_module, *_ = self.__module__.partition(".")
                 if top_level_module != object_top_level_module:
@@ -238,10 +297,14 @@ class Meta(Cog):
                 if (branch := os.environ.get("GIT_COMMIT")) is None:
                     branch = os.environ.get("GIT_BRANCH", "main")
 
-            lines, starting_line = inspect.getsourcelines(obj)
+                url = self._github_object_url(
+                    repo=repo,
+                    branch=branch,
+                    file_path=str(file_path),
+                    inspectable_object=obj,
+                )
 
-            # github specific layout
-            result += f"`{object_module}`: <https://{repo}/blob/{branch}/{file_path}#L{starting_line}-L{starting_line + len(lines) - 1}>\n"
+            result += f"`{object_module}`: <{url}>\n"
 
         if os.environ.get("GIT_DIRTY", "0") != "0":
             result += "\nNOTE: running in dirty repository, location might be inaccurate"
