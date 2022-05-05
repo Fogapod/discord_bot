@@ -184,8 +184,7 @@ class Meta(Cog):
         *,
         repo: str,
         branch: str,
-        file_path: Optional[str] = None,
-        inspectable_object: Optional[
+        obj: Optional[
             Union[
                 Type[Any],
                 FunctionType,
@@ -198,23 +197,25 @@ class Meta(Cog):
     ) -> str:
         base = f"https://{repo}"
 
-        if file_path is not None:
-            base += f"/blob/{branch}/{file_path}"
-        else:
+        if obj is None:
             base += f"/tree/{branch}"
+        else:
+            lines, starting_line = inspect.getsourcelines(obj)
 
-        if inspectable_object is not None:
-            if file_path is None:
-                raise RuntimeError("Object passed without file path")
-
-            lines, starting_line = inspect.getsourcelines(inspectable_object)
-
-            if isinstance(inspectable_object, ModuleType):
+            if isinstance(obj, ModuleType):
+                object_module = obj.__name__
                 starting_line += 1
+            else:
+                object_module = obj.__module__
 
-            ending_line = starting_line + len(lines) - 1
+            file_path = Path(*object_module.split("."))
 
-            base += f"#L{starting_line}-L{ending_line}"
+            if file_path.is_dir():
+                file_path = file_path / "__init__.py"
+            else:
+                file_path = file_path.with_suffix(".py")
+
+            base += f"/blob/{branch}/{'/'.join(file_path.parts)}#L{starting_line}-L{starting_line + len(lines) - 1}"
 
         return base
 
@@ -249,8 +250,6 @@ class Meta(Cog):
 
             object_top_level_module, *_ = object_module.partition(".")
 
-            file_path = Path(*object_module.split("."))
-
             # show source for supported modules (only discord.py for now)
             if object_top_level_module == "discord":
                 repo = "github.com/Rapptz/discord.py"
@@ -266,19 +265,10 @@ class Meta(Cog):
                     # dpy branch naming rules: v1.5.x
                     branch = f"v{dpy_semver}.x"
 
-                # if module itself is requested, return repo url without any line pointers
-                if str(file_path) == "discord":
-                    maybe_obj = None
-                    maybe_file_path = None
-                else:
-                    maybe_obj = obj
-                    maybe_file_path = str(file_path.with_suffix(".py"))
-
                 url = self._github_object_url(
                     repo=repo,
                     branch=branch,
-                    file_path=maybe_file_path,
-                    inspectable_object=maybe_obj,
+                    obj=None if thing == "discord" else obj,
                 )
             else:
                 top_level_module, *_ = self.__module__.partition(".")
@@ -287,12 +277,6 @@ class Meta(Cog):
 
                 repo = REPO
 
-                # folder cog type
-                if file_path.is_dir():
-                    file_path = file_path / "__init__.py"
-                else:
-                    file_path = file_path.with_suffix(".py")
-
                 # try commit, fallback to branch, fallback to "main" branch
                 if (branch := os.environ.get("GIT_COMMIT")) is None:
                     branch = os.environ.get("GIT_BRANCH", "main")
@@ -300,8 +284,7 @@ class Meta(Cog):
                 url = self._github_object_url(
                     repo=repo,
                     branch=branch,
-                    file_path=str(file_path),
-                    inspectable_object=obj,
+                    obj=obj,
                 )
 
             result += f"`{object_module}`: <{url}>\n"
