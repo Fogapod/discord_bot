@@ -135,25 +135,28 @@ class Meta(Cog):
             return ()
 
         # attribute source
-        object_name, _, method_chain = name.partition(".")
-        if not method_chain:
+        object_name, _, attr_chain_str = name.partition(".")
+        if not attr_chain_str:
             return ()
 
         if (obj := object_aliases.get(object_name)) is None:
             if (obj := ctx.bot.get_cog(object_name)) is None:
                 return ()
 
-        for method in method_chain.split("."):
-            if inspect.isclass(obj):
-                obj_class = obj
-            else:
-                obj_class = type(obj)
+        attr_chain = attr_chain_str.split(".")
 
-            # try getting property from class. if it succeeds, continue. otherwise use instance for variable lookups
-            maybe_property = getattr(obj_class, method, None)
-            if isinstance(maybe_property, property):
-                obj = maybe_property
-            elif (obj := getattr(obj, method, None)) is None:
+        for i, attr in enumerate(attr_chain):
+            # only return properties when we are at final attr. otherwise use property value
+            if i + 1 == len(attr_chain):
+                if inspect.isclass(obj):
+                    obj_class = obj
+                else:
+                    obj_class = type(obj)
+
+                if isinstance(prop := getattr(obj_class, attr, None), property):
+                    return filter(None, [prop.fget, prop.fset, prop.fdel])
+
+            if (obj := getattr(obj, attr, None)) is None:
                 # lookup failed
                 return ()
             elif isinstance(obj, commands.Command):
@@ -166,10 +169,7 @@ class Meta(Cog):
                 or inspect.isclass(obj)
             ):
                 # we're at some attribute, try getting it's type
-                obj = obj_class
-
-        if isinstance(obj, property):
-            return filter(None, [obj.fget, obj.fset, obj.fdel])
+                obj = type(obj)
 
         return [obj]
 
