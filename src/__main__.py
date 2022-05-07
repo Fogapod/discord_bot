@@ -30,9 +30,10 @@ async def main() -> None:
     if settings.sentry.dsn is not None:
         import sentry_sdk
 
+        # Cannot instantiate abstract class "init" with abstract attribute "__exit__"
+        # what
         sentry_sdk.init(
             settings.sentry.dsn,
-            traces_sample_rate=1.0,
         )
     else:
         log.warning("skipped sentry initialization")

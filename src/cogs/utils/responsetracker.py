@@ -5,10 +5,10 @@ from typing import Any, Union
 import discord
 
 from src.classes.bot import PINK
+from src.classes.cache import LRU
 from src.classes.cog import Cog
 from src.classes.context import Context
 from src.hooks import HookHost
-from src.utils import LRU
 
 _EmojiType = Union[discord.Reaction, discord.Emoji, discord.PartialEmoji, str]
 

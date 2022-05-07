@@ -32,14 +32,8 @@ disallow_incomplete_defs = true
 no_implicit_optional = true
 no_implicit_reexport = true
 strict_equality = true
-
-# new type: ignore comments in discord.py break mypy, do not typecheck it
-# https://github.com/python/mypy/issues/12299
-[[tool.mypy.overrides]]
-module = [
-    "discord.*",
-]
-follow_imports = "skip"
+# kills mypy, see comment below
+# namespace_packages = true
 
 # discord.ext seem to require `namespace_packages = true`, but it is currently broken in mypy:
 # https://github.com/python/mypy/issues/12257
@@ -52,3 +46,10 @@ module = [
     "aiocache.*",
 ]
 ignore_missing_imports = true
+
+# first tells you to remove type: ignore comments from discord.ext, then tells you they are unused. completely broken
+[[tool.mypy.overrides]]
+module = [
+    "discord.*",
+]
+follow_imports = "skip"

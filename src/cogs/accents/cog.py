@@ -14,11 +14,11 @@ from discord.ext import commands  # type: ignore[attr-defined]
 from pink_accents import Accent
 
 from src.classes.bot import PINK
+from src.classes.cache import LRU
 from src.classes.cog import Cog
 from src.classes.context import Context
 from src.errors import PINKError
 from src.hooks import HookHost
-from src.utils import LRU
 
 from .constants import ALL_ACCENTS
 from .types import PINKAccent
