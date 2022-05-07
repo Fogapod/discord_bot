@@ -30,10 +30,10 @@ class Version:
         return self.git_dirty_files > 0
 
     def short(self) -> str:
-        if self.git_commit is None:
+        if self.git_commit_short is None:
             return "unversioned"
 
-        result: str = self.git_commit_short  # type: ignore[assignment]
+        result = self.git_commit_short
         if self.git_branch is not None:
             result = f"{self.git_branch}/{result}"
 
