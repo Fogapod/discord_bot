@@ -170,17 +170,18 @@ class Meta(Cog):
             if (obj := getattr(obj, attr, None)) is None:
                 # lookup failed
                 return ()
-            elif isinstance(obj, commands.Command):
+
+            if isinstance(obj, commands.Command):
                 obj = obj.callback
-            elif not (
-                inspect.isfunction(obj)
-                or inspect.ismethod(obj)
-                or inspect.ismethoddescriptor(obj)
-                or inspect.ismodule(obj)
-                or inspect.isclass(obj)
-            ):
-                # we're at some attribute, try getting it's type
-                obj = type(obj)
+        if not (
+            inspect.isfunction(obj)
+            or inspect.ismethod(obj)
+            or inspect.ismethoddescriptor(obj)
+            or inspect.ismodule(obj)
+            or inspect.isclass(obj)
+        ):
+            # we're at some attribute, try getting it's type
+            obj = type(obj)
 
         return [obj]
 
