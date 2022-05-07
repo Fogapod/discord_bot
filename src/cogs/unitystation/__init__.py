@@ -1,10 +1,10 @@
-from typing import Dict, List, Optional
+from typing import Optional
 
 from discord.ext import commands  # type: ignore[attr-defined]
 
-from src.bot import PINK
-from src.cog import Cog
-from src.context import Context
+from src.classes.bot import PINK
+from src.classes.cog import Cog
+from src.classes.context import Context
 
 from .servers import CONTABO_RETRIES, ContaboError, ServerList
 
@@ -81,7 +81,7 @@ class UnityStation(Cog):
         if not servers:
             return "No servers online"
 
-        data: Dict[str, List[str]] = {
+        data: dict[str, list[str]] = {
             "name": [],
             "version": [],
             "players": [],

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from io import StringIO
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any, Optional
 
 import aiohttp
 import asyncpg
@@ -9,7 +9,7 @@ import discord
 
 from discord.ext import commands  # type: ignore[attr-defined]
 
-from .hooks import Hookable
+from src.hooks import Hookable
 
 if TYPE_CHECKING:
     from .bot import PINK
@@ -85,7 +85,7 @@ class Context(commands.Context, Hookable):
     @Hookable.hookable()
     async def react(
         self,
-        emoji: Union[discord.Emoji, str],
+        emoji: discord.Emoji | str,
         message: Optional[discord.Message] = None,
     ) -> discord.Message:
         if message is None:

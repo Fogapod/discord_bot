@@ -7,9 +7,9 @@ import discord
 
 from discord.ext import commands  # type: ignore[attr-defined]
 
-from src.bot import PINK
-from src.cog import Cog
-from src.context import Context
+from src.classes.bot import PINK
+from src.classes.cog import Cog
+from src.classes.context import Context
 
 log = logging.getLogger(__name__)
 

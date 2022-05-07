@@ -1,10 +1,22 @@
 import asyncio
+import logging
 
 from collections import OrderedDict
-from typing import Any, Tuple
+from typing import Any
+
+__all__ = (
+    "run_process",
+    "run_process_shell",
+    "seconds_to_human_readable",
+    "LRU",
+)
+
+log = logging.getLogger(__name__)
 
 
-async def run_process(cmd: str, *args: str) -> Tuple[str, str]:
+async def run_process(cmd: str, *args: str) -> tuple[str, str]:
+    log.info("running subprocess with args: %s", args)
+
     process = await asyncio.create_subprocess_exec(
         cmd,
         *args,
@@ -13,10 +25,15 @@ async def run_process(cmd: str, *args: str) -> Tuple[str, str]:
     )
     data = await process.communicate()
 
-    return ["" if stream is None else stream.decode() for stream in data]  # type: ignore
+    return (
+        (data[0] or b"").decode(),
+        (data[1] or b"").decode(),
+    )
 
 
-async def run_process_shell(program: str) -> Tuple[str, str]:
+async def run_process_shell(program: str) -> tuple[str, str]:
+    log.info("running subprocess shell: %s", program)
+
     process = await asyncio.create_subprocess_shell(
         program,
         stdout=asyncio.subprocess.PIPE,
@@ -24,7 +41,10 @@ async def run_process_shell(program: str) -> Tuple[str, str]:
     )
     data = await process.communicate()
 
-    return ["" if stream is None else stream.decode() for stream in data]  # type: ignore
+    return (
+        (data[0] or b"").decode(),
+        (data[1] or b"").decode(),
+    )
 
 
 def seconds_to_human_readable(seconds: int) -> str:

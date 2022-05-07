@@ -6,7 +6,7 @@ import re
 import time
 
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Set, Type, Union
+from typing import Any, Iterator, Optional, Type
 
 import aiohttp
 import asyncpg
@@ -15,8 +15,9 @@ import sentry_sdk
 
 from discord.ext import commands  # type: ignore[attr-defined]
 
-from .context import Context
-from .settings import settings
+from src.classes.context import Context
+from src.classes.version import Version
+from src.settings import settings
 
 log = logging.getLogger(__name__)
 
@@ -63,14 +64,22 @@ class Prefix:
 
 
 class PINK(commands.Bot):
-    def __init__(self, *, session: aiohttp.ClientSession, pg: asyncpg.Pool[asyncpg.Record], **kwargs: Any) -> None:
+    def __init__(
+        self,
+        *,
+        session: aiohttp.ClientSession,
+        pg: asyncpg.Pool[asyncpg.Record],
+        version: Version,
+        **kwargs: Any,
+    ) -> None:
         super().__init__(**kwargs)
 
         self.session = session
         self.pg = pg
+        self.version = version
 
-        self.prefixes: Dict[int, Prefix] = {}
-        self.owner_ids: Set[int] = set()
+        self.prefixes: dict[int, Prefix] = {}
+        self.owner_ids: set[int] = set()
 
     # --- overloads ---
     async def setup_hook(self) -> None:
@@ -108,10 +117,11 @@ class PINK(commands.Bot):
 
     async def _load_cogs(self) -> None:
         for module in self._iterate_cogs():
+            log.debug(f"loading {module}")
             try:
                 await self.load_extension(module)
             except Exception:
-                log.exception(f"loading {module}")
+                log.exception(f"while loading {module}")
             else:
                 log.info(f"loaded {module}")
 
@@ -146,7 +156,7 @@ class PINK(commands.Bot):
             else:
                 yield to_module(entry.parent / entry.stem)
 
-    async def get_prefix(self, message: discord.Message) -> Union[List[str], str]:
+    async def get_prefix(self, message: discord.Message) -> list[str] | str:
         guild_id = getattr(message.guild, "id", -1)
 
         if settings := self.prefixes.get(guild_id):
@@ -178,7 +188,7 @@ class PINK(commands.Bot):
 
     # --- events ---
     async def on_ready(self) -> None:
-        log.info(f"READY as {self.user}[{self.user.id}] with prefix {settings.bot.prefix}")
+        log.info(f"READY as {self.user} ({self.user.id}) with prefix {settings.bot.prefix}")
 
     async def on_message(self, message: discord.Message) -> None:
         # TODO: how to make this optional? sentry must not be a hard dependency

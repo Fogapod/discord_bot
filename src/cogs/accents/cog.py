@@ -13,10 +13,10 @@ import discord
 from discord.ext import commands  # type: ignore[attr-defined]
 from pink_accents import Accent
 
-from src.bot import PINK
-from src.cog import Cog
-from src.cogs.utils.errorhandler import PINKError
-from src.context import Context
+from src.classes.bot import PINK
+from src.classes.cog import Cog
+from src.classes.context import Context
+from src.errors import PINKError
 from src.hooks import HookHost
 from src.utils import LRU
 

@@ -5,7 +5,8 @@ import aiohttp
 import asyncpg
 import discord
 
-from .bot import PINK
+from .classes.bot import PINK
+from .classes.version import Version
 from .logging import setup_logging
 from .settings import settings
 
@@ -21,6 +22,10 @@ else:
 
 async def main() -> None:
     setup_logging()
+
+    version = Version()
+
+    log.info(f"running on version {version.full()}")
 
     if settings.sentry.dsn is not None:
         import sentry_sdk
@@ -41,23 +46,24 @@ async def main() -> None:
         database=settings.database.database,
     )
 
-    async with session, pg:
-        pink = PINK(
-            session=session,
-            pg=pg,
-            command_prefix=settings.bot.prefix,
-            case_insensitive=True,
-            allowed_mentions=discord.AllowedMentions(roles=False, everyone=False, users=True),
-            intents=discord.Intents(
-                guilds=True,
-                members=True,
-                emojis=True,
-                messages=True,
-                message_content=True,
-                reactions=True,
-            ),
-        )
+    pink = PINK(
+        session=session,
+        pg=pg,
+        version=version,
+        command_prefix=settings.bot.prefix,
+        case_insensitive=True,
+        allowed_mentions=discord.AllowedMentions(roles=False, everyone=False, users=True),
+        intents=discord.Intents(
+            guilds=True,
+            members=True,
+            emojis=True,
+            messages=True,
+            message_content=True,
+            reactions=True,
+        ),
+    )
 
+    async with pink, session, pg:
         await pink.start(settings.bot.token)
 
 

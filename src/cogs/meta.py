@@ -1,21 +1,20 @@
 import inspect
-import os
 import re
 import time
 
 from importlib import metadata
 from pathlib import Path
 from types import FunctionType, MethodDescriptorType, MethodType, ModuleType
-from typing import Any, Callable, Iterable, Optional, Type, Union
+from typing import Any, Callable, Iterable, Optional, Type
 
 import discord
 
 from discord.ext import commands  # type: ignore[attr-defined]
 
-from src.bot import PINK, Prefix
-from src.cog import Cog
-from src.cogs.utils.errorhandler import PINKError
-from src.context import Context
+from src.classes.bot import PINK, Prefix
+from src.classes.cog import Cog
+from src.classes.context import Context
+from src.errors import PINKError
 from src.settings import settings
 from src.utils import seconds_to_human_readable
 
@@ -68,18 +67,6 @@ class Meta(Cog):
     async def about(self, ctx: Context) -> None:
         """General information about bot"""
 
-        if git_commit := os.environ.get("GIT_COMMIT"):
-            revision = git_commit[:10]
-            if git_branch := os.environ.get("GIT_BRANCH"):
-                revision = f"{git_branch}/{revision}"
-
-            if (git_dirty_files := os.environ.get("GIT_DIRTY", "0")) != "0":
-                revision = f"{revision} DIRTY[{git_dirty_files}]"
-
-            revision = f"[{revision}]"
-        else:
-            revision = ""
-
         owner_mentions = []
         for owner_id in dict.fromkeys([*AUTHORS, *self.bot.owner_ids]).keys():
             if owner := await self.bot.maybe_get_user(owner_id):
@@ -93,7 +80,7 @@ class Meta(Cog):
 
         fields = {
             "prefix": f"@mention or {settings.bot.prefix}",
-            "source": f"{REPO} {revision}",
+            "source": f"{REPO} - {ctx.bot.version}",
             "support": f"discord.gg / {SUPPORT}",
             "owners": " ".join(owner_mentions),
             "uptime": seconds_to_human_readable(int(time.monotonic() - ctx.bot.launched_at)),
@@ -106,7 +93,7 @@ class Meta(Cog):
 
     def _get_object_for_source_inspection(
         self, ctx: Context, name: str
-    ) -> Iterable[Union[Type[Any], FunctionType, MethodType, MethodDescriptorType, Callable[..., Any], ModuleType]]:
+    ) -> Iterable[Type[Any] | FunctionType | MethodType | MethodDescriptorType | Callable[..., Any] | ModuleType]:
         object_aliases = {
             "Bot": ctx.bot,
             "Context": ctx,
@@ -191,14 +178,7 @@ class Meta(Cog):
         repo: str,
         branch: str,
         obj: Optional[
-            Union[
-                Type[Any],
-                FunctionType,
-                MethodType,
-                MethodDescriptorType,
-                Callable[..., Any],
-                ModuleType,
-            ]
+            Type[Any] | FunctionType | MethodType | MethodDescriptorType | Callable[..., Any] | ModuleType
         ] = None,
     ) -> str:
         base = f"https://{repo}"
@@ -283,9 +263,9 @@ class Meta(Cog):
 
                 repo = REPO
 
-                # try commit, fallback to branch, fallback to "main" branch
-                if (branch := os.environ.get("GIT_COMMIT")) is None:
-                    branch = os.environ.get("GIT_BRANCH", "main")
+                if (branch := ctx.bot.version.git_commit) is None:
+                    if (branch := ctx.bot.version.git_branch) is None:
+                        branch = "main"
 
                 url = self._github_object_url(
                     repo=repo,
@@ -295,7 +275,7 @@ class Meta(Cog):
 
             result += f"`{object_module}`: <{url}>\n"
 
-        if os.environ.get("GIT_DIRTY", "0") != "0":
+        if self.bot.version.is_dirty:
             result += "\nNOTE: running in dirty repository, location might be inaccurate"
 
         await ctx.send(result)

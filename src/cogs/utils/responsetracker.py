@@ -4,9 +4,9 @@ from typing import Any, Union
 
 import discord
 
-from src.bot import PINK
-from src.cog import Cog
-from src.context import Context
+from src.classes.bot import PINK
+from src.classes.cog import Cog
+from src.classes.context import Context
 from src.hooks import HookHost
 from src.utils import LRU
 

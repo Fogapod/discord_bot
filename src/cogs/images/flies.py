@@ -12,8 +12,8 @@ import PIL
 
 from PIL import Image
 
-from src.cogs.utils.errorhandler import PINKError
 from src.decorators import in_executor
+from src.errors import PINKError
 
 DEG_TO_RAD_RATIO = pi / 180
 

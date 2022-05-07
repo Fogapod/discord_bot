@@ -1,6 +1,6 @@
 from discord.ext import commands  # type: ignore[attr-defined]
 
-from src.context import Context
+from src.classes.context import Context
 
 from .constants import LANGCODE_ALIASES, LANGCODES, LANGUAGES
 
