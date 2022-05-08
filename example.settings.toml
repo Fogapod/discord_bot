@@ -23,8 +23,5 @@ server = 391987311468085248
 user_log_channel = 399649344443383810
 all_role = 518862360681906186
 
-[cog.chat]
-travitia_api_token = "?3.?fD?ABC4AB9[,'J[(J"
-
 [cog.images]
 ocr_api_token = "aaa"

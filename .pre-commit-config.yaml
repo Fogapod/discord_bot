@@ -29,7 +29,6 @@ repos:
         additional_dependencies:
           - "uvloop"
           - "python-dotenv"
-          - "travitia_talk"
           - "pink_accents==0.0.4"
           - "discord.py @ git+https://github.com/Rapptz/discord.py@eee65ac39b85edc0353402baa42ca7e72ec286d9"
           - "asyncpg-stubs @ git+https://github.com/bryanforbes/asyncpg-stubs@bb92f810baaa157c3750610a2ac946dfd903a5b8"

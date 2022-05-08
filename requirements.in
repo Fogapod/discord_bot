@@ -10,7 +10,6 @@ asyncpg
 tomli
 
 # api libs for commands
-travitia-talk
 googletrans>=3.1.0a0
 
 # accents

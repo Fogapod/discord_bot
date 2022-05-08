@@ -49,7 +49,7 @@ class Accents(Cog, HookHost):
         # message_id -> webhook_message
         # used for fighting back against discord embed message edits:
         # user sends text message -> discord queues embed creation in background -> edits message on success
-        # this triggers accents twice. cached message ids are used to delete original response
+        # this triggers accents twice. cached message ids are used to edit original response
         self._sent_webhook_messages = LRU(64)
 
     async def cog_load(self) -> None:

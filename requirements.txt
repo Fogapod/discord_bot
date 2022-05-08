@@ -7,9 +7,7 @@
 aiocache @ git+https://github.com/Fogapod/aiocache@d20f4f7b94a8213544dc13dd9b931d9015203c15
     # via -r requirements.in
 aiohttp==3.8.1
-    # via
-    #   discord-py
-    #   travitia-talk
+    # via discord-py
 aiosignal==1.2.0
     # via aiohttp
 async-timeout==4.0.2
@@ -73,8 +71,6 @@ sniffio==1.2.0
     #   httpcore
     #   httpx
 tomli==2.0.1
-    # via -r requirements.in
-travitia-talk==0.0.1
     # via -r requirements.in
 urllib3==1.26.9
     # via sentry-sdk
