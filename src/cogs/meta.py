@@ -102,7 +102,7 @@ class Meta(Cog):
             "discord": discord,
         }
 
-        if name == "help":
+        if name.lower() == "help" or name.lower().startswith("help "):
             return [type(ctx.bot.help_command)]
 
         if (command := ctx.bot.get_command(name)) is not None:

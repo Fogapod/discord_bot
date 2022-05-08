@@ -11,6 +11,7 @@ import textwrap
 import traceback
 
 from contextlib import redirect_stdout
+from pprint import pformat
 from typing import Any, Optional, Union
 
 import asyncpg
@@ -283,7 +284,9 @@ async def __pink_eval__():
 
             return "Evaluated"
 
-        return f"{from_stdout}{returned}"
+        # pprint is ugly but it is better than nothing.
+        # json.dumps(..., indent=2, default=lambda o: str(o)) does the job but it adds quotes around everything
+        return f"{from_stdout}{pformat(returned)}"
 
     @staticmethod
     def _is_valid_syntax(source: str) -> bool:
