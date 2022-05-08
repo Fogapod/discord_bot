@@ -25,6 +25,7 @@ from src.classes.context import Context
 from src.utils import run_process_shell
 
 COG_MODULE_PREFIX = "src.cogs."
+PG_UNNAMED_COLUMN = "?column?"
 
 log = logging.getLogger(__name__)
 
@@ -306,14 +307,21 @@ async def __pink_eval__():
     async def _sql_table(self, result: list[asyncpg.Record]) -> str:
         # convert to list because otherwise iterator is exhausted
         columns = list(result[0].keys())
-        col_widths = [len(c) for c in columns]
+
+        no_named_columns = not list(filter(lambda c: c != PG_UNNAMED_COLUMN, columns))
+        col_widths = [0 if no_named_columns and c == PG_UNNAMED_COLUMN else len(c) for c in columns]
 
         for row in result:
             for i, value in enumerate(row.values()):
                 col_widths[i] = max((col_widths[i], len(str(value))))
 
-        header = " | ".join(f"{column:^{col_widths[i]}}" for i, column in enumerate(columns))
-        separator = "-+-".join("-" * width for width in col_widths)
+        if no_named_columns:
+            header = ""
+        else:
+            header = f"""\
+{" | ".join(f"{column:^{col_widths[i]}}" for i, column in enumerate(columns))}
+{"-+-".join("-" * width for width in col_widths)}
+"""
 
         def sanitize_value(value: Any) -> str:
             return str(value).replace("\n", "\\n")
@@ -323,7 +331,7 @@ async def __pink_eval__():
             for row in result
         )
 
-        return f"```sql\n{header}\n{separator}\n{body}```"
+        return f"```prolog\n{header}{body}```"
 
 
 async def setup(bot: PINK) -> None:
