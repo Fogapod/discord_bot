@@ -4,7 +4,6 @@ import ast
 import asyncio
 import copy
 import io
-import logging
 import random
 import re
 import textwrap
@@ -27,8 +26,6 @@ from src.utils import run_process_shell
 
 COG_MODULE_PREFIX = "src.cogs."
 PG_UNNAMED_COLUMN = "?column?"
-
-log = logging.getLogger(__name__)
 
 
 class Code:
@@ -116,7 +113,6 @@ class TechAdmin(Cog):
         extension = self._resolve_extension(ctx, thing)
         await self.bot.load_extension(extension)
 
-        log.info(f"loaded {extension} by {ctx.author.id}")
         await ctx.send(f"loaded `{extension}`")
 
     @commands.command()
@@ -126,7 +122,6 @@ class TechAdmin(Cog):
         extension = self._resolve_extension(ctx, thing)
         await self.bot.unload_extension(extension)
 
-        log.info(f"unloaded {extension} by {ctx.author.id}")
         await ctx.send(f"unloaded `{extension}`")
 
     @commands.command(aliases=["re"])
@@ -153,7 +148,6 @@ class TechAdmin(Cog):
         else:
             delete_after = 10
 
-        log.info(f"reloaded {extension} by {ctx.author.id}")
         await ctx.send(f"reloaded `{extension}`", delete_after=delete_after)
 
     # https://github.com/Rapptz/RoboDanny/blob/715a5cf8545b94d61823f62db484be4fac1c95b1/cogs/admin.py#L422

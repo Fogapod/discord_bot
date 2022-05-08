@@ -117,13 +117,10 @@ class PINK(commands.Bot):
 
     async def _load_cogs(self) -> None:
         for module in self._iterate_cogs():
-            log.debug(f"loading {module}")
             try:
                 await self.load_extension(module)
             except Exception:
                 log.exception(f"while loading {module}")
-            else:
-                log.info(f"loaded {module}")
 
     def _iterate_cogs(self, path: Optional[Path] = None) -> Iterator[str]:
         """
@@ -185,6 +182,27 @@ class PINK(commands.Bot):
         cls: Optional[Type[commands.Context]] = None,
     ) -> Context:
         return await super().get_context(message, cls=cls or Context)
+
+    async def load_extension(self, name: str, *, package: Optional[str] = None) -> None:
+        log.debug(f"loading {name}")
+
+        await super().load_extension(name, package=package)
+
+        log.info(f"loaded {name}")
+
+    async def unload_extension(self, name: str, *, package: Optional[str] = None) -> None:
+        log.debug(f"unloading {name}")
+
+        await super().unload_extension(name, package=package)
+
+        log.info(f"unloaded {name}")
+
+    async def reload_extension(self, name: str, *, package: Optional[str] = None) -> None:
+        log.debug(f"reloading {name}")
+
+        await super().reload_extension(name, package=package)
+
+        log.info(f"reloaded {name}")
 
     # --- events ---
     async def on_ready(self) -> None:
