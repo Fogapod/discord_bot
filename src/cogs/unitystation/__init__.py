@@ -6,7 +6,7 @@ from src.classes.bot import PINK
 from src.classes.cog import Cog
 from src.classes.context import Context
 
-from .servers import CONTABO_RETRIES, ContaboError, ServerList
+from .servers import ServerList
 
 US_INVITE = "tFcTpBp"
 
@@ -28,13 +28,7 @@ class UnityStation(Cog):
         """List hub servers"""
 
         async with ctx.typing():
-            try:
-                await self.servers.fetch(ctx)
-            except ContaboError:
-                await ctx.reply(
-                    f"Request failed after {CONTABO_RETRIES} retries. Possibly an error with my host ((contabo))"
-                )
-                return
+            await self.servers.fetch(ctx)
 
             if server is None:
                 text = await self._servers()
