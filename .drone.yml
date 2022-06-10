@@ -11,12 +11,7 @@ steps:
   - name: greeting
     commands:
       - echo hello world
-      - ls -la
-      - podman build --help
-      - git rev-parse --abbrev-ref HEAD
-      - git rev-parse HEAD
-      - git status --porcelain=v1 2>/dev/null | wc -l
-      - podman build --pull --cache-from $IMAGE_NAME -t $IMAGE_NAME:latest . \
+      - podman build --pull --cache-from fogapod/pink -t fogapod/pink:latest . \
         --build-arg GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD) \
         --build-arg GIT_COMMIT=$(git rev-parse HEAD) \
         --build-arg GIT_DIRTY=$(git status --porcelain=v1 2>/dev/null | wc -l)
