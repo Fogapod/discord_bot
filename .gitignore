@@ -6,6 +6,9 @@
 *.json
 *.toml
 
+# CI
+!.drone.yml
+
 !example.env
 !example.settings.toml
 

@@ -1,0 +1,17 @@
+---
+kind: pipeline
+type: exec
+name: default
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+  - name: greeting
+    commands:
+      - echo hello world
+      - podman build --pull --cache-from $IMAGE_NAME -t $IMAGE_NAME:latest . \
+        --build-arg GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD) \
+        --build-arg GIT_COMMIT=$(git rev-parse HEAD) \
+        --build-arg GIT_DIRTY=$(git status --porcelain=v1 2>/dev/null | wc -l)
