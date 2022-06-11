@@ -66,7 +66,6 @@ class ModelMeta(abc.ABCMeta):
             config = merge_configs(config, config_override)
 
         fields = []
-        all_fields_optional = True
 
         # an ugly hack. this is only constructed to be passed to typing.get_type_hints
         cls_for_annotation_inspection = super().__new__(mcls, name, (), namespace, **kwargs)
@@ -82,7 +81,6 @@ class ModelMeta(abc.ABCMeta):
             bases,
             {
                 "__config__": config,
-                "__all_fields_optional__": all_fields_optional,
                 "__fields__": fields,
                 **namespace,
             },
@@ -94,8 +92,6 @@ class ModelMeta(abc.ABCMeta):
 
 class BaseModel(metaclass=ModelMeta):
     __config__: ClassVar[Type[BaseConfig]]
-    # TODO
-    __all_fields_optional__: ClassVar[bool]
     __fields__: ClassVar[Iterable[Field]]
 
     @classmethod
