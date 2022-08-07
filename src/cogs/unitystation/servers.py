@@ -81,42 +81,46 @@ class DownloadAddress:
         return f"<{type(self).__name__} url={self.url} response={self.response}>"
 
 
+# note about initvars
+# https://github.com/python/mypy/issues/12877#issuecomment-1141001772
 @dataclass
 class Server:
-    name: InitVar[str]
+    _name: InitVar[str]
+    name: str = field(init=False)
     fork: str
     version: str
     map: str
     gamemode: str
     time: str
-    players: InitVar[int]
+    _players: InitVar[int]
+    players: int = field(init=False)
     fps: int
     ip: str
     port: str
     address: str = field(init=False)
     downloads: List[DownloadAddress]
 
-    def __post_init__(self, name: str, players: str) -> None:
+    def __post_init__(self, _name: str, _players: str) -> None:
         # newlines are allowed in server names
-        self.name = name.replace("\n", " ")
+        self.name = _name.replace("\n", " ")
 
-        if players == "unknown":
+        if _players == "unknown":
             self.players = -1
         else:
-            self.players = int(players)
+            self.players = int(_players)
 
         self.address = f"{self.ip}:{self.port}"
 
     @classmethod
     def from_data(cls, data: Mapping[str, Any]) -> Server:
         aliases = {
-            "ServerName": "name",
+            "ServerName": "_name",
             "ForkName": "fork",
             "BuildVersion": "version",
             "CurrentMap": "map",
             "GameMode": "gamemode",
             "IngameTime": "time",
-            "PlayerCount": "players",
+            "PlayerCount": "_players",
             "fps": "fps",
             "ServerIP": "ip",
             "ServerPort": "port",

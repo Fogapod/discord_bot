@@ -1,4 +1,4 @@
-FROM python:3.10-alpine3.15
+FROM python:3.10-alpine3.16
 
 # enables proper stdout flushing
 ENV PYTHONUNBUFFERED yes
@@ -36,6 +36,9 @@ RUN apk add --no-cache \
     make \
     # Required for almost everything
     gcc \
+    # cchardet:
+    # gcc: fatal error: cannot execute 'cc1plus': execvp: No such file or directory
+    g++ \
     musl-dev \
     && pip install -U pip \
     && pip install -U -r requirements.txt \
