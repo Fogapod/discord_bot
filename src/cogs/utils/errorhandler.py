@@ -37,9 +37,15 @@ class ErrorHandler(Cog):
         if isinstance(e, commands.CommandInvokeError):
             e = e.original
 
-        ignored = (commands.CommandNotFound,)
-        if isinstance(e, ignored):
+        # ignored
+        if isinstance(e, (commands.CommandNotFound,)):
             return
+
+        # owner bypassable
+        if isinstance(e, ((commands.CommandOnCooldown, commands.DisabledCommand),)):
+            if ctx.author.id in ctx.bot.owner_ids:
+                await ctx.reinvoke()
+                return
 
         # TODO: track error frequency and sort this mess or use map
         if isinstance(e, commands.MissingRole):
