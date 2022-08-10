@@ -151,7 +151,10 @@ class Fun(Cog):
 
         await ctx.send(text)
 
-    @commands.command(aliases=["pretend"])
+    # it is not very fun because there is no way to distinguish between people with accents / matrix bridged folks
+    # and impersonated messages
+    # disable for now, might remove later
+    @commands.command(aliases=["pretend"], enabled=False)
     @commands.bot_has_permissions(manage_webhooks=True)
     async def impersonate(self, ctx: Context, user: Union[discord.Member, discord.User], *, text: str) -> None:
         """Send message as someone else"""
