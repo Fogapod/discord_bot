@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import abc
 import contextlib
 import os
 import typing
@@ -54,7 +53,7 @@ def merge_configs(base: Type[BaseConfig], overrides: Optional[Type[BaseConfig]])
     return type("Config", bases, {})
 
 
-class ModelMeta(abc.ABCMeta):
+class ModelMeta(type):
     def __new__(mcls, name: str, bases: tuple[type, ...], namespace: dict[str, Any], **kwargs: Any) -> type:
         config = BaseConfig
 
