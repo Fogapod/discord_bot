@@ -240,7 +240,7 @@ class TechAdmin(Cog):
             assert last_line_and_indent is not None
             last_line_indent, last_line = last_line_and_indent[1], last_line_and_indent[2]
 
-            if not last_line.startswith(("return ", "raise ", "yield ")):
+            if not last_line.startswith(("return ", "raise ", "yield ", " ", "\t")):
                 # ignore code that is already invalid. this may also fail if there is a multiline expression since we
                 # only take last line, we do not want to put return there either
                 if self._is_valid_syntax(last_line):
