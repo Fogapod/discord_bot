@@ -479,9 +479,9 @@ async def ocr_translate(ctx: Context, image: StaticImage, language: Union[str, A
 
     # Google OCR API returns entry for each word separately, but they can be joined
     # by checking full image description. In description words are combined into
-    # lines, lines are separated by newlines, there is a trailing newline.
+    # lines, lines are separated by newlines, there is a trailing newline (usually).
     # Coordinates from words in the same line can be merged
-    lines = annotations["fullTextAnnotation"]["text"][:-1].split("\n")
+    lines = annotations["fullTextAnnotation"]["text"].rstrip("\n").split("\n")
 
     if isinstance(language, Accent):
         new_lines = _apply_accents(ctx, lines, language)
