@@ -30,5 +30,5 @@ repos:
           - "uvloop"
           - "python-dotenv"
           - "pink_accents==0.0.4"
-          - "discord.py==2.0.0"
+          - "discord.py"
           - "asyncpg-stubs @ git+https://github.com/bryanforbes/asyncpg-stubs@bb92f810baaa157c3750610a2ac946dfd903a5b8"

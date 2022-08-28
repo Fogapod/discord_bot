@@ -8,6 +8,7 @@ from src.classes.context import Context
 
 from .servers import ServerList
 
+# avoid invite scraping
 US_INVITE = "tFcTpBp"
 
 
@@ -75,40 +76,40 @@ class UnityStation(Cog):
         if not servers:
             return "No servers online"
 
-        data: dict[str, list[str]] = {
-            "name": [],
-            "version": [],
-            "players": [],
-        }
+        data = [
+            ["name", "version", f"players [{sum(s.players for s in servers)}]"],
+        ]
+        table_attributes = ("name", "version", "players")
         for server in servers:
-            for k, v in data.items():
-                v.append(str(getattr(server, k)))
+            row = []
+            for attribute in table_attributes:
+                value = str(getattr(server, attribute))
 
-        # mark servers with bad downloads
-        for i, server in enumerate(servers):
-            if server.downloads_good:
-                continue
+                if attribute == "version":
+                    # mark servers with bad downloads
+                    if not server.downloads_good:
+                        value = f"{value} !"
 
-            data["version"][i] = f"{server.version} !"
+                row.append(value)
+            data.append(row)
 
-        column_widths = {}
+        column_widths: dict[int, int] = {}
 
-        for col_name, values in data.items():
-            longest_value = max(values, key=len)
+        for row in data:
+            for i, value in enumerate(row):
+                column_widths[i] = max(len(value), column_widths.get(i, 0))
 
-            column_widths[col_name] = max(len(longest_value), len(col_name))
-
-        header = " | ".join(f"{col_name:<{column_widths[col_name]}}" for col_name in data.keys())
+        header = " | ".join(f"{col_name:<{col_width}}" for col_name, col_width in zip(data[0], column_widths.values()))
         separator = " + ".join("-" * i for i in column_widths.values())
 
         body = ""
 
-        for i in range(len(servers)):
-            entries = []
-            for col_name, values in data.items():
-                entries.append(f"{values[i]:<{column_widths[col_name]}}")
+        for row in data[1:]:
+            values = []
+            for i, value in enumerate(row):
+                values.append(f"{value:<{column_widths[i]}}")
 
-            body += f"{' | '.join(entries)}\n"
+            body += f"{' | '.join(values)}\n"
 
         return f"```\n{header}\n{separator}\n{body}```"
 
