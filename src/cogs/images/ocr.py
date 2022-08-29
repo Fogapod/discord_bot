@@ -18,6 +18,12 @@ from src.settings import BaseSettings, settings
 
 from .types import Image, StaticImage
 
+__all__ = (
+    "ocr",
+    "ocr_translate",
+    "textboxes",
+)
+
 
 class CogSettings(BaseSettings):
     ocr_api_token: str
@@ -527,3 +533,75 @@ async def ocr_translate(ctx: Context, image: StaticImage, language: Union[str, A
         stats += f"\nNotes: {notes}"
 
     return result, stats
+
+
+async def textboxes(ctx: Context, image: StaticImage, outline: tuple[int, int, int]) -> Tuple[BytesIO, str]:
+    src = await image.to_pil(ctx)
+
+    annotations = await ocr(ctx, image)
+
+    word_annotations = annotations["textAnnotations"][1:]
+
+    # Google OCR API returns entry for each word separately, but they can be joined
+    # by checking full image description. In description words are combined into
+    # lines, lines are separated by newlines, there is a trailing newline (usually).
+    # Coordinates from words in the same line can be merged
+    lines = annotations["fullTextAnnotation"]["text"].rstrip("\n").split("\n")
+
+    # error reporting
+    notes = ""
+
+    current_word = 0
+    fields = []
+
+    for original_line, line in zip(lines, lines):
+        field = TextField(line, src)
+
+        remaining_line = original_line
+
+        # TODO: sane iterator instead of this
+        for word in word_annotations[current_word:]:
+            text = word["description"]
+            if remaining_line.startswith(text):
+                current_word += 1
+                remaining_line = remaining_line[len(text) :].lstrip()
+                # TODO: merge multiple lines into box
+                try:
+                    field.add_word(word["boundingPoly"]["vertices"], src.size)
+                except AngleUndetectable:
+                    notes += f"angle for `{word}` is undetectable\n"
+            else:
+                break
+
+        if field.initialized:
+            fields.append(field)
+
+    if not fields:
+        raise PINKError("No drawable textboxes", formatted=False)
+
+    result = await _draw_textboxes(src, fields, outline)
+
+    stats = f"Words: {current_word}\nLines: {len(fields)}"
+    if notes:
+        stats += f"\nNotes: {notes}"
+
+    return result, stats
+
+
+@in_executor()
+def _draw_textboxes(src: PIL.Image, fields: Sequence[TextField], outline: tuple[int, int, int]) -> BytesIO:
+    FIELD_CAP = 150
+
+    fields = fields[:FIELD_CAP]
+
+    src = src.convert("RGBA")
+    draw = ImageDraw.Draw(src)
+
+    for field in fields:
+        draw.rectangle(field.coords_padded, outline=outline, width=field.stroke_width)
+
+    result = BytesIO()
+    src.save(result, format="PNG")
+    result.seek(0)
+
+    return result

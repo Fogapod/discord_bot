@@ -27,7 +27,7 @@ except ImportError:
 
 from pink_accents import Accent
 
-from .ocr import ocr, ocr_translate
+from .ocr import ocr, ocr_translate, textboxes
 
 
 class LanguageOrAccent(commands.Converter):
@@ -146,6 +146,27 @@ class Images(Cog):
         await ctx.send(
             stats,
             file=discord.File(result, filename="trocr.png", spoiler=image.is_spoiler),
+        )
+
+    @commands.command(aliases=["textbox", "textboxes"])
+    @commands.cooldown(1, 5, type=commands.BucketType.channel)
+    async def text(
+        self,
+        ctx: Context,
+        image: StaticImage = None,  # type: ignore
+    ) -> None:
+        """Draws boxes around text on image"""
+
+        async with ctx.typing():
+            if image is None:
+                image = await StaticImage.from_history(ctx)
+
+            # hardcoded outline color for now
+            result, stats = await textboxes(ctx, image, (127, 255, 0))
+
+        await ctx.send(
+            stats,
+            file=discord.File(result, filename="textboxes.png", spoiler=image.is_spoiler),
         )
 
     @commands.command(aliases=["flies"])
