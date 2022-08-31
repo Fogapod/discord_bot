@@ -99,8 +99,8 @@ class UnityStation(Cog):
             for i, value in enumerate(row):
                 column_widths[i] = max(len(value), column_widths.get(i, 0))
 
-        header = " ".join(f"{col_name:<{col_width}}" for col_name, col_width in zip(data[0], column_widths.values()))
-        separator = "|".join("-" * i for i in column_widths.values())
+        header = " | ".join(f"{col_name:<{col_width}}" for col_name, col_width in zip(data[0], column_widths.values()))
+        separator = " + ".join("-" * i for i in column_widths.values())
 
         body = ""
 
@@ -109,7 +109,7 @@ class UnityStation(Cog):
             for i, value in enumerate(row):
                 values.append(f"{value:<{column_widths[i]}}")
 
-            body += f"{' '.join(values)}\n"
+            body += f"{' | '.join(values)}\n"
 
         return f"```\n{header}\n{separator}\n{body}```"
 
