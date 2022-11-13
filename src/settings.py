@@ -98,7 +98,7 @@ class BaseModel(metaclass=ModelMeta):
     __fields__: ClassVar[Iterable[Field]]
 
     @classmethod
-    def validate(cls, data: dict[str, Any], env_prefix: str = "") -> None:
+    def validate(cls, data: _MissingClass | dict[str, Any], env_prefix: str = "") -> None:
         """Not an actual validation, just env lookup"""
 
         for field in cls.__fields__:
@@ -113,7 +113,11 @@ class BaseModel(metaclass=ModelMeta):
                 # this is super wrong and broken. proper parsing needed
                 value = annotation(raw_value)
             else:
-                value = data.get(field.name, Missing)
+                if data is Missing:
+                    value = Missing
+                else:
+                    # does not understand Missing check for some reason
+                    value = data.get(field.name, Missing)  # type: ignore
 
                 # not a good indicator but issubclass/inspect.isclass behave weird with type aliases
                 if hasattr(annotation, "__fields__"):

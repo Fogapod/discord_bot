@@ -50,7 +50,7 @@ class Meta(Cog):
         self.bot.help_command = self.old_help_command
 
     @commands.command(aliases=["pink"])
-    async def ping(self, ctx: Context, *_args: str) -> None:
+    async def ping(self, ctx: Context) -> None:
         """Check bot latency"""
 
         g_or_k = "g" if ctx.invoked_with == "ping" else "k"

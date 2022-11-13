@@ -42,7 +42,6 @@ module = [
     "discord.ext.*",
     "googletrans.*",
     "PIL.*",
-    "sentry_sdk.*",
     "aiocache.*",
 ]
 ignore_missing_imports = true

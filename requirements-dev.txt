@@ -14,4 +14,4 @@ pip-tools
 
 # typing
 # https://github.com/MagicStack/asyncpg/issues/569
-asyncpg-stubs @ git+https://github.com/bryanforbes/asyncpg-stubs@bb92f810baaa157c3750610a2ac946dfd903a5b8
+asyncpg-stubs @ git+https://github.com/bryanforbes/asyncpg-stubs@c46b93dca927829eca48b0835018eba9f4046132

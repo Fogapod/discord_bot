@@ -31,4 +31,5 @@ repos:
           - "python-dotenv"
           - "pink_accents==0.0.4"
           - "discord.py"
-          - "asyncpg-stubs @ git+https://github.com/bryanforbes/asyncpg-stubs@bb92f810baaa157c3750610a2ac946dfd903a5b8"
+          - "sentry_sdk"
+          - "asyncpg-stubs @ git+https://github.com/bryanforbes/asyncpg-stubs@c46b93dca927829eca48b0835018eba9f4046132"
