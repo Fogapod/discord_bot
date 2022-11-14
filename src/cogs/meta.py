@@ -9,7 +9,7 @@ from typing import Any, Callable, Iterable, Optional, Type
 
 import discord
 
-from discord.ext import commands  # type: ignore[attr-defined]
+from discord.ext import commands
 
 from src.classes.bot import PINK, Prefix
 from src.classes.cog import Cog
@@ -33,8 +33,8 @@ MAX_PREFIX_LEN = 256
 
 
 class CustomHelp(commands.DefaultHelpCommand):
-    def get_destination(self) -> Context:
-        return self.context
+    def get_destination(self) -> Context:  # type: ignore[override]
+        return self.context  # type: ignore[return-value]
 
 
 class Meta(Cog):
@@ -50,6 +50,7 @@ class Meta(Cog):
         self.bot.help_command = self.old_help_command
 
     @commands.command(aliases=["pink"])
+    @commands.cooldown(1, 60)
     async def ping(self, ctx: Context) -> None:
         """Check bot latency"""
 
@@ -136,7 +137,7 @@ class Meta(Cog):
             module_aliases.get,
             ctx.bot.get_cog,
         ):
-            if (obj := getter(object_name)) is not None:
+            if (obj := getter(object_name)) is not None:  # type: ignore[operator]
                 break
         else:
             return ()
@@ -288,17 +289,21 @@ class Meta(Cog):
     async def prefix(self, ctx: Context) -> None:
         """Get local prefix (if any)."""
 
+        assert ctx.guild is not None
+
         if ctx.guild.id not in ctx.bot.prefixes:
             return await ctx.send(f"Custom prefix not set, default is @mention or {settings.bot.prefix}")
 
         await ctx.send(f"Local prefix: {ctx.bot.prefixes[ctx.guild.id].prefix}")
 
-    @prefix.command()
+    @prefix.command()  # type: ignore
     @commands.has_permissions(manage_guild=True)
     async def set(self, ctx: Context, *, prefix: str) -> None:
         """
         Set custom prefix for server
         """
+
+        assert ctx.guild is not None
 
         if len(prefix) > MAX_PREFIX_LEN:
             await ctx.reply(f"Max prefix len exceeded[{MAX_PREFIX_LEN}]: {prefix[:MAX_PREFIX_LEN]}")
@@ -311,12 +316,14 @@ class Meta(Cog):
 
         await ctx.ok()
 
-    @prefix.command(aliases=["remove", "del"])
+    @prefix.command(aliases=["remove", "del"])  # type: ignore
     @commands.has_permissions(manage_guild=True)
     async def unset(self, ctx: Context) -> None:
         """
         Remove local prefix override
         """
+
+        assert ctx.guild is not None
 
         if ctx.guild.id in ctx.bot.prefixes:
             await Prefix.delete(ctx)

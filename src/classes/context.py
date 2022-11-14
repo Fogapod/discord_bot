@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-from io import StringIO
 from typing import TYPE_CHECKING, Any, Optional
 
 import aiohttp
 import asyncpg
 import discord
 
-from discord.ext import commands  # type: ignore[attr-defined]
+from discord.ext import commands
 
 from src.hooks import Hookable
 
@@ -17,7 +16,7 @@ if TYPE_CHECKING:
 __all__ = ("Context",)
 
 
-class Context(commands.Context, Hookable):
+class Context(commands.Context["PINK"], Hookable):
     bot: PINK
 
     @property
@@ -47,9 +46,9 @@ class Context(commands.Context, Hookable):
     ) -> discord.Message:
 
         if target is None:
-            target = super()
-
             # mypy does not recognize superclass here and just names it "super"
+            target = super()  # type: ignore
+
             if TYPE_CHECKING:
                 assert isinstance(target, discord.abc.Messageable)
 
@@ -62,7 +61,7 @@ class Context(commands.Context, Hookable):
                     # custom error perhaps?
                     return await target.send(str(content)[:2000], **kwargs)
 
-                files.append(discord.File(StringIO(str(content)), filename="message.txt"))
+                files.append(discord.File(str(content), filename="message.txt"))
 
                 return await target.send(files=files, **kwargs)
 

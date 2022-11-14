@@ -146,7 +146,7 @@ class Server:
         return all(d.ok for d in self.downloads)
 
 
-class ServerList:
+class ServerListClient:
     FETCH_INTERVAL = 10
 
     def __init__(self) -> None:

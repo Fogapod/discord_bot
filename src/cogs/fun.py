@@ -5,7 +5,7 @@ from typing import Optional, Union
 
 import discord
 
-from discord.ext import commands  # type: ignore[attr-defined]
+from discord.ext import commands
 
 from src.classes.bot import PINK
 from src.classes.cog import Cog
@@ -78,9 +78,9 @@ class Fun(Cog):
 
         if target is None:
             if isinstance(ctx.channel, discord.DMChannel):
-                target = random.choice((ctx.me, ctx.author))
+                target = random.choice((ctx.me, ctx.author))  # type: ignore
             else:
-                target = random.choice(ctx.channel.members)
+                target = random.choice(ctx.channel.members)  # type: ignore
 
         preposition = "at"
 
@@ -101,7 +101,7 @@ class Fun(Cog):
             mention = target.mention
             preposition = "into"
         else:
-            mention = target
+            mention = target  # type: ignore
 
         if item is None:
             if ctx.message.attachments:
@@ -133,12 +133,12 @@ class Fun(Cog):
 
         if isinstance(target, discord.TextChannel):
             if target.guild == ctx.guild:
-                if target.permissions_for(ctx.author).send_messages and target.permissions_for(ctx.me).send_messages:
-                    if ctx.channel.is_nsfw() and not target.is_nsfw():
+                if target.permissions_for(ctx.author).send_messages and target.permissions_for(ctx.me).send_messages:  # type: ignore
+                    if ctx.channel.is_nsfw() and not target.is_nsfw():  # type: ignore
                         return await ctx.send("Can't throw items from horny channel!")
 
                     return await ctx.send(
-                        f"{item} flies from `{ctx.author}` in {ctx.channel.mention}!",
+                        f"{item} flies from `{ctx.author}` in {ctx.channel.mention}!",  # type: ignore
                         target=target,
                         allowed_mentions=discord.AllowedMentions(users=False),
                     )
@@ -171,11 +171,11 @@ class Fun(Cog):
             if (accent_cog := ctx.bot.get_cog("Accents")) is None:
                 log.warning("accents cog not found, cannot apply accents to impersonation")
             else:
-                if user_accents := accent_cog.get_user_accents(user):
+                if user_accents := accent_cog.get_user_accents(user):  # type: ignore
                     accents = user_accents
 
         try:
-            webhook = await ctx.channel.create_webhook(name="PINK impersonation webhook")
+            webhook = await ctx.channel.create_webhook(name="PINK impersonation webhook")  # type: ignore
         except Exception as e:
             await ctx.reply(f"Unable to create webhook: {e}")
 

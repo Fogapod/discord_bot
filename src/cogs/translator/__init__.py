@@ -2,7 +2,7 @@ from typing import Optional
 
 import googletrans
 
-from discord.ext import commands  # type: ignore[attr-defined]
+from discord.ext import commands
 
 from src.classes.bot import PINK
 from src.classes.cog import Cog
@@ -37,7 +37,7 @@ class Translator(Cog):
                 await ctx.reply("referenced message is unavailable for some weird reason")
                 return
 
-            text = message.content
+            text = message.content  # type: ignore
 
         if text is None:
             await ctx.send_help(ctx.command)
@@ -66,7 +66,7 @@ class Translator(Cog):
 
         return translated.text
 
-    @_translate.command(name="list")
+    @_translate.command(name="list")  # type: ignore
     async def _language_list(self, ctx: Context) -> None:
         """Get a list of supported languages"""
 

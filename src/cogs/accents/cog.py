@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any, DefaultDict, Dict, Iterable, List, Option
 
 import discord
 
-from discord.ext import commands  # type: ignore[attr-defined]
+from discord.ext import commands
 from pink_accents import Accent
 
 from src.classes.bot import PINK
@@ -55,7 +55,7 @@ class Accents(Cog, HookHost):
     async def cog_load(self) -> None:
         # TODO: perform cleanup in case name format or bot name ever changes?
         # current name: PINK
-        self.accent_wh_name = f"{self.bot.user.name} bot accent webhook"
+        self.accent_wh_name = f"{self.bot.user.name} bot accent webhook"  # type: ignore
 
         for settings in await self.bot.pg.fetch("SELECT guild_id, user_id, name, severity FROM accents"):
             if (accent_cls := ALL_ACCENTS.get(settings["name"].lower())) is None:
@@ -102,26 +102,26 @@ class Accents(Cog, HookHost):
     async def accents(self, ctx: Context, user: Optional[discord.Member] = None) -> None:
         """Alias for accent list"""
 
-        await ctx.invoke(self._list, user=user)
+        await ctx.invoke(self._list, user=user)  # type: ignore
 
-    @accent.command(name="list", aliases=["ls"])
+    @accent.command(name="list", aliases=["ls"])  # type: ignore
     async def _list(self, ctx: Context, user: Optional[discord.Member] = None) -> None:
         """List accents for user"""
 
         # we are in DMs
         if ctx.message.guild is None:
             # discord.Member converter looks up global cache in DMs, what a great idea
-            user = ctx.author
+            user = ctx.author  # type: ignore
 
             user_accent_map = {}
         else:
             if user is None:
-                user = ctx.author
+                user = ctx.author  # type: ignore
             else:
                 if user.bot and user.id != ctx.me.id:
                     return await ctx.send("Bots cannot have accents")
 
-            user_accent_map = {a.name: a for a in self.get_user_accents(user)}
+            user_accent_map = {a.name: a for a in self.get_user_accents(user)}  # type: ignore
 
         body = ""
 
@@ -188,7 +188,7 @@ class Accents(Cog, HookHost):
                 "INSERT INTO accents (guild_id, user_id, name, severity) VALUES ($1, $2, $3, $4) "
                 "ON CONFLICT (guild_id, user_id, name) DO UPDATE "
                 "SET name = EXCLUDED.name",
-                ctx.guild.id,
+                ctx.guild.id,  # type: ignore
                 member.id,
                 accent.name,
                 accent.severity,
@@ -198,7 +198,9 @@ class Accents(Cog, HookHost):
         # a special case. empty iterable means remove everything
         if not accents:
             await self.bot.pg.fetchrow(
-                "DELETE FROM accents WHERE guild_id = $1 AND user_id = $2", ctx.guild.id, member.id
+                "DELETE FROM accents WHERE guild_id = $1 AND user_id = $2",
+                ctx.guild.id,  # type: ignore
+                member.id,
             )
 
             self.set_user_accents(member, [])
@@ -223,27 +225,27 @@ class Accents(Cog, HookHost):
         for accent in to_remove:
             await self.bot.pg.fetchrow(
                 "DELETE FROM accents WHERE guild_id = $1 AND user_id = $2 AND name = $3",
-                ctx.guild.id,
+                ctx.guild.id,  # type: ignore
                 member.id,
                 accent.name,
             )
 
     async def _update_nick(self, ctx: Context) -> None:
         new_nick = ctx.me.name
-        for accent in self.get_user_accents(ctx.me):
+        for accent in self.get_user_accents(ctx.me):  # type: ignore
             new_nick = accent.apply(new_nick, limit=32).strip()
 
         with contextlib.suppress(discord.Forbidden):
-            await ctx.me.edit(nick=new_nick)
+            await ctx.me.edit(nick=new_nick)  # type: ignore
 
-    @accent.group(name="bot", invoke_without_command=True, ignore_extra=False)
+    @accent.group(name="bot", invoke_without_command=True, ignore_extra=False)  # type: ignore
     @commands.has_permissions(manage_guild=True)
     async def _bot_accent(self, ctx: Context) -> None:
         """Manage bot accents"""
 
         await ctx.send_help(ctx.command)
 
-    @_bot_accent.command(name="add", aliases=["enable", "on"])
+    @_bot_accent.command(name="add", aliases=["enable", "on"])  # type: ignore
     @commands.has_permissions(manage_guild=True)
     async def add_bot_accent(self, ctx: Context, *accents: PINKAccent) -> None:
         """Add bot accents"""
@@ -251,13 +253,13 @@ class Accents(Cog, HookHost):
         if not accents:
             raise commands.BadArgument("no accents provided")
 
-        await self._add_accents(ctx, ctx.me, accents)
+        await self._add_accents(ctx, ctx.me, accents)  # type: ignore
 
         await self._update_nick(ctx)
 
         await ctx.send("Added bot accents")
 
-    @_bot_accent.command(name="remove", aliases=["disable", "off", "del"])
+    @_bot_accent.command(name="remove", aliases=["disable", "off", "del"])  # type: ignore
     @commands.has_permissions(manage_guild=True)
     async def remove_bot_accent(self, ctx: Context, *accents: PINKAccent) -> None:
         """
@@ -266,13 +268,13 @@ class Accents(Cog, HookHost):
         Removes all if used without arguments
         """
 
-        await self._remove_accents(ctx, ctx.me, accents)
+        await self._remove_accents(ctx, ctx.me, accents)  # type: ignore
 
         await self._update_nick(ctx)
 
         await ctx.send("Removed bot accents")
 
-    @accent.command(name="add", aliases=["enable", "on"])
+    @accent.command(name="add", aliases=["enable", "on"])  # type: ignore
     @commands.bot_has_permissions(manage_messages=True, manage_webhooks=True)
     async def add_accent(self, ctx: Context, *accents: PINKAccent) -> None:
         """Add personal accents"""
@@ -280,11 +282,11 @@ class Accents(Cog, HookHost):
         if not accents:
             raise commands.BadArgument("no accents provided")
 
-        await self._add_accents(ctx, ctx.author, accents)
+        await self._add_accents(ctx, ctx.author, accents)  # type: ignore
 
         await ctx.send("Added personal accents")
 
-    @accent.command(name="remove", aliases=["disable", "off"])
+    @accent.command(name="remove", aliases=["disable", "off"])  # type: ignore
     @commands.guild_only()
     async def remove_accent(self, ctx: Context, *accents: PINKAccent) -> None:
         """
@@ -293,17 +295,17 @@ class Accents(Cog, HookHost):
         Removes all if used without arguments
         """
 
-        await self._remove_accents(ctx, ctx.author, accents)
+        await self._remove_accents(ctx, ctx.author, accents)  # type: ignore
 
         await ctx.send("Removed personal accents")
 
-    @accent.command(name="use")
+    @accent.command(name="use")  # type: ignore
     async def accent_use(self, ctx: Context, accent: PINKAccent, *, text: str) -> None:
         """Apply specified accent to text"""
 
         await ctx.send(text, accents=[accent])
 
-    @accent.command()
+    @accent.command()  # type: ignore
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_messages=True, manage_webhooks=True)
     async def purge(self, ctx: Context, limit: int = 50) -> None:
@@ -315,7 +317,7 @@ class Accents(Cog, HookHost):
         if not lower_limit <= limit <= upper_limit:
             raise PINKError(f"Limit should be between **{lower_limit}** and **{upper_limit}**")
 
-        if (accent_webhook := await self._get_cached_webhook(ctx.channel, create=False)) is None:
+        if (accent_webhook := await self._get_cached_webhook(ctx.channel, create=False)) is None:  # type: ignore
             raise PINKError("There is no accent webhook in this channel. Nothing to delete")
 
         message_counts: DefaultDict[str, int] = collections.defaultdict(int)
@@ -330,7 +332,7 @@ class Accents(Cog, HookHost):
             return True
 
         async with ctx.typing():
-            deleted = await ctx.channel.purge(limit=limit, check=is_accent_webhook, before=ctx.message.created_at)
+            deleted = await ctx.channel.purge(limit=limit, check=is_accent_webhook, before=ctx.message.created_at)  # type: ignore
 
             if not deleted:
                 return await ctx.send("No accent messages found")
@@ -349,17 +351,17 @@ class Accents(Cog, HookHost):
         min_severity: int = 1,
         max_severity: int = 1,
     ) -> None:
-        my_accents = [a.name for a in self.get_user_accents(ctx.me)]
+        my_accents = [a.name for a in self.get_user_accents(ctx.me)]  # type: ignore
 
         if accent.name in my_accents:  # type: ignore
-            await self._remove_accents(ctx, ctx.me, [accent(1)])
+            await self._remove_accents(ctx, ctx.me, [accent(1)])  # type: ignore
         else:
             if min_severity == max_severity:
                 severity = min_severity
             else:
                 severity = random.randint(min_severity, max_severity)
 
-            await self._add_accents(ctx, ctx.me, [accent(severity)])
+            await self._add_accents(ctx, ctx.me, [accent(severity)])  # type: ignore
 
         await self._update_nick(ctx)
 
@@ -409,7 +411,7 @@ class Accents(Cog, HookHost):
         if content is not None:
             if accents is None:
                 if ctx.guild is not None:
-                    accents = self.get_user_accents(ctx.me)
+                    accents = self.get_user_accents(ctx.me)  # type: ignore
                 else:
                     accents = []
 
@@ -431,7 +433,7 @@ class Accents(Cog, HookHost):
         if content is not None:
             if accents is None:
                 if ctx.guild is not None:
-                    accents = self.get_user_accents(ctx.me)
+                    accents = self.get_user_accents(ctx.me)  # type: ignore
                 else:
                     accents = []
 
@@ -491,10 +493,7 @@ class Accents(Cog, HookHost):
 
         try:
             new_message = await self._send_new_message(ctx, content, message)
-        except (discord.NotFound, discord.InvalidArgument):
-            # InvalidArgument appears in some rare cases when webhooks is deleted or is
-            # owned by other bot
-            #
+        except discord.NotFound:
             # cached webhook is missing, should invalidate cache
             del self._webhooks[message.channel.id]
 
@@ -554,11 +553,11 @@ class Accents(Cog, HookHost):
         return await ctx.send(
             content,
             allowed_mentions=discord.AllowedMentions(
-                everyone=original.author.guild_permissions.mention_everyone,
+                everyone=original.author.guild_permissions.mention_everyone,  # type: ignore
                 users=True,
                 roles=True,
             ),
-            target=await self._get_cached_webhook(original.channel),
+            target=await self._get_cached_webhook(original.channel),  # type: ignore
             register=False,
             accents=[],
             # webhook data

@@ -431,7 +431,7 @@ def _apply_accents(ctx: Context, lines: List[str], accent: Accent) -> List[str]:
     return [
         # trocr fully depends on newlines, apply accents to each line separately and
         # replace any newlines with spaces to make sure text order is preserved
-        accent_cog.apply_accents_to_text(line, [accent]).replace("\n", " ")
+        accent_cog.apply_accents_to_text(line, [accent]).replace("\n", " ")  # type: ignore[attr-defined]
         for line in lines
     ]
 
@@ -462,7 +462,7 @@ async def _apply_translation(
     # until language iterator is fixed we translate everything
     need_trasnslation = {i: line for i, line in enumerate(lines)}
 
-    translated = await translator_cog.translate("\n".join(need_trasnslation.values()), language)
+    translated = await translator_cog.translate("\n".join(need_trasnslation.values()), language)  # type: ignore[attr-defined]
 
     translated_lines = translated.split("\n")
     if len(translated_lines) != len(need_trasnslation):

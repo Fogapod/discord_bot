@@ -13,7 +13,7 @@ import asyncpg
 import discord
 import sentry_sdk
 
-from discord.ext import commands  # type: ignore[attr-defined]
+from discord.ext import commands
 
 from src.classes.context import Context
 from src.classes.version import Version
@@ -40,7 +40,7 @@ class Prefix:
         # custom prefix or mention
         # this way prefix logic is simplified and it hopefully runs faster at a cost of
         # storing duplicate mention regexes
-        self.prefix_re = mention_or_prefix_regex(bot.user.id, self.prefix)
+        self.prefix_re = mention_or_prefix_regex(bot.user.id, self.prefix)  # type: ignore
 
     @classmethod
     def from_pg(cls, bot: PINK, data: asyncpg.Record) -> Prefix:
@@ -51,13 +51,13 @@ class Prefix:
             "INSERT INTO prefixes (guild_id, prefix) VALUES ($1, $2) "
             "ON CONFLICT (guild_id) DO UPDATE "
             "SET prefix = EXCLUDED.prefix",
-            ctx.guild.id,
+            ctx.guild.id,  # type: ignore
             self.prefix,
         )
 
     @staticmethod
     async def delete(ctx: Context) -> None:
-        await ctx.pg.fetchrow("DELETE FROM prefixes WHERE guild_id = $1", ctx.guild.id)
+        await ctx.pg.fetchrow("DELETE FROM prefixes WHERE guild_id = $1", ctx.guild.id)  # type: ignore
 
     def __repr__(self) -> str:
         return f"<{type(self).__name__} prefix={self.prefix}>"
@@ -94,7 +94,7 @@ class PINK(commands.Bot):
         )
 
     async def _load_prefixes(self) -> None:
-        self._default_prefix_re = mention_or_prefix_regex(self.user.id, settings.bot.prefix)
+        self._default_prefix_re = mention_or_prefix_regex(self.user.id, settings.bot.prefix)  # type: ignore
 
         for guild in await self.pg.fetch("SELECT guild_id, prefix FROM prefixes"):
             self.prefixes[guild["guild_id"]] = Prefix.from_pg(self, guild)
@@ -170,18 +170,19 @@ class PINK(commands.Bot):
         # allow empty match in DMs
         return ""
 
-    async def is_owner(self, user: discord.User) -> bool:
+    async def is_owner(self, user: discord.abc.User, /) -> bool:
         """Just self.owner_ids. No fancy tricks with app info fetching"""
 
         return user.id in self.owner_ids
 
     async def get_context(
         self,
-        message: discord.Message,
+        origin: discord.Message | discord.Interaction,
+        /,
         *,
-        cls: Optional[Type[commands.Context]] = None,
-    ) -> Context:
-        return await super().get_context(message, cls=cls or Context)
+        cls: Type[commands.Context[PINK]] = discord.utils.MISSING,
+    ) -> Any:
+        return await super().get_context(origin, cls=cls or Context)
 
     async def load_extension(self, name: str, *, package: Optional[str] = None) -> None:
         log.debug(f"loading {name}")
@@ -206,7 +207,7 @@ class PINK(commands.Bot):
 
     # --- events ---
     async def on_ready(self) -> None:
-        log.info(f"READY as {self.user} ({self.user.id}) with prefix {settings.bot.prefix}")
+        log.info(f"READY as {self.user} ({self.user.id}) with prefix {settings.bot.prefix}")  # type: ignore
 
     async def on_message(self, message: discord.Message) -> None:
         # TODO: how to make this optional? sentry must not be a hard dependency

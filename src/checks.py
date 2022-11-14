@@ -1,6 +1,6 @@
 from typing import Callable, TypeVar
 
-from discord.ext import commands  # type: ignore[attr-defined]
+from discord.ext import commands
 
 from src.classes.context import Context
 

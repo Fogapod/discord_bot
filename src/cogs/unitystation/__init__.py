@@ -1,12 +1,12 @@
 from typing import Optional
 
-from discord.ext import commands  # type: ignore[attr-defined]
+from discord.ext import commands
 
 from src.classes.bot import PINK
 from src.classes.cog import Cog
 from src.classes.context import Context
 
-from .servers import ServerList
+from .servers import ServerListClient
 
 # avoid invite scraping
 US_INVITE = "tFcTpBp"
@@ -22,14 +22,14 @@ class UnityStation(Cog):
     """
 
     async def cog_load(self) -> None:
-        self.servers = ServerList()
+        self._server_list = ServerListClient()
 
     @commands.command(aliases=["list", "sv", "ls"])
     async def servers(self, ctx: Context, *, server: Optional[str] = None) -> None:
         """List hub servers"""
 
         async with ctx.typing():
-            await self.servers.fetch(ctx)
+            await self._server_list.fetch(ctx)
 
             if server is None:
                 text = await self._servers()
@@ -41,7 +41,7 @@ class UnityStation(Cog):
     async def _server(self, server_name: str) -> str:
         server_name = server_name.lower()
 
-        servers = self.servers.servers
+        servers = self._server_list.servers
 
         for server in servers:
             if server.name.lower().startswith(server_name):
@@ -71,7 +71,7 @@ class UnityStation(Cog):
         return f"```\n{main_info}\n\nDownloads\n{downloads}```"
 
     async def _servers(self) -> str:
-        servers = self.servers.servers
+        servers = self._server_list.servers
 
         if not servers:
             return "No servers online"

@@ -3,7 +3,7 @@ import logging
 import discord
 import sentry_sdk
 
-from discord.ext import commands  # type: ignore[attr-defined]
+from discord.ext import commands
 
 from src.classes.cog import Cog
 from src.classes.context import Context
@@ -20,7 +20,7 @@ class PINKError(Exception):
         self.cancel_cooldown = cancel_cooldown
 
     async def handle(self, ctx: Context) -> None:
-        if self.cancel_cooldown:
+        if self.cancel_cooldown and ctx.command is not None:
             ctx.command.reset_cooldown(ctx)
 
         if self.formatted:
@@ -70,7 +70,7 @@ class ErrorHandler(Cog):
                 commands.NoPrivateMessage,
             ),
         ):
-            ctx.command.reset_cooldown(ctx)
+            ctx.command.reset_cooldown(ctx)  # type: ignore
 
             await ctx.reply(f"Error: **{e}**")
         elif isinstance(e, commands.TooManyArguments):

@@ -121,7 +121,9 @@ class Hookable:
 
             cls.__hooks__[name].append(fn)
 
-            return fn
+            # using inspect on top changes type of fn..
+            # insanity
+            return fn  # type: ignore
 
         return decorator
 

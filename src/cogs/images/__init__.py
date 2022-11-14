@@ -1,10 +1,10 @@
 import os
 
-from typing import Union
+from typing import Optional
 
 import discord
 
-from discord.ext import commands  # type: ignore[attr-defined]
+from discord.ext import commands
 
 from src.classes.bot import PINK
 from src.classes.cog import Cog
@@ -29,9 +29,11 @@ from pink_accents import Accent
 
 from .ocr import ocr, ocr_translate, textboxes
 
+_StrOrAccent = str | Accent
 
-class LanguageOrAccent(commands.Converter):
-    async def convert(self, ctx: Context, argument: str) -> Union[str, Accent]:
+
+class LanguageOrAccent(commands.Converter[_StrOrAccent]):
+    async def convert(self, ctx: Context, argument: str) -> _StrOrAccent:  # type: ignore[override]
         try:
             language = await Language.convert(ctx, argument)
         except commands.BadArgument as e:
@@ -104,6 +106,7 @@ class Images(Cog):
         await ctx.send(i, accents=[])
 
     @commands.command()
+    @commands.cooldown(1, 60)
     async def ocr(
         self,
         ctx: Context,
@@ -121,11 +124,12 @@ class Images(Cog):
 
     @commands.command()
     @commands.cooldown(1, 5, type=commands.BucketType.channel)
+    @commands.cooldown(1, 60)
     async def trocr(
         self,
         ctx: Context,
-        language: LanguageOrAccent,
-        image: StaticImage = None,  # type: ignore
+        language: _StrOrAccent = commands.parameter(converter=LanguageOrAccent()),
+        image: Optional[StaticImage] = commands.parameter(converter=StaticImage, default=None),
     ) -> None:
         """
         Translate text on image
@@ -149,7 +153,7 @@ class Images(Cog):
         )
 
     @commands.command(aliases=["textbox", "textboxes"])
-    @commands.cooldown(1, 5, type=commands.BucketType.channel)
+    @commands.cooldown(1, 60)
     async def text(
         self,
         ctx: Context,

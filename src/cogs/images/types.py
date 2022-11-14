@@ -8,13 +8,13 @@ import warnings
 from asyncio import TimeoutError
 from enum import Enum, auto
 from io import BytesIO
-from typing import Any, List, Optional
+from typing import Any, List, Literal, Optional
 
 import aiohttp
 import discord
 import PIL
 
-from discord.ext import commands  # type: ignore[attr-defined]
+from discord.ext import commands
 from PIL.Image import DecompressionBombWarning
 
 from src.classes.context import Context
@@ -124,8 +124,8 @@ class Image:
         allow_static: bool = True,
         allow_animated: bool = False,
     ) -> Image:
-        if (resolved := reference.resolved) is None:
-            resolved = await ctx.channel.fetch_message(reference.message_id)
+        if (resolved := reference.resolved) is not None and isinstance(resolved, discord.Message):
+            resolved = await ctx.channel.fetch_message(resolved.id)
 
         if isinstance(resolved, discord.Message):  # and not discord.DeletedMessage
             if (
@@ -193,15 +193,15 @@ class Image:
 
             return image
 
-        def pick_format(target_animated: bool) -> Optional[str]:
+        def pick_format(target_animated: bool) -> Optional[Literal["webp", "jpeg", "jpg", "png", "gif"]]:
             if allow_static and allow_animated:
-                return cls.DEFAULT_ANIMATED_FORMAT if target_animated else cls.DEFAULT_STATIC_FORMAT
+                return cls.DEFAULT_ANIMATED_FORMAT if target_animated else cls.DEFAULT_STATIC_FORMAT  # type: ignore[return-value]
 
             if allow_animated and target_animated:
-                return cls.DEFAULT_ANIMATED_FORMAT
+                return cls.DEFAULT_ANIMATED_FORMAT  # type: ignore[return-value]
 
             if allow_static:
-                return cls.DEFAULT_STATIC_FORMAT
+                return cls.DEFAULT_STATIC_FORMAT  # type: ignore[return-value]
 
             # only static allowed, target is animated
             return None
@@ -260,7 +260,7 @@ class Image:
         except commands.UserNotFound:
             pass
         else:
-            if (avatar_format := pick_format(user.avatar.is_animated())) is None:
+            if (avatar_format := pick_format(user.display_avatar.is_animated())) is None:
                 raise commands.BadArgument(
                     f"Static images are not allowed, {user} has static avatar",
                 )
@@ -336,7 +336,9 @@ class Image:
 
         # check embeds (user posted url / bot posted rich embed)
         for embed in msg.embeds:
-            if embed.image:
+            if embed.image is not None:
+                assert embed.image.url is not None
+
                 if (
                     cls._check_extension(
                         embed.image.url,
@@ -352,8 +354,10 @@ class Image:
 
             # bot condition because we do not want image from
             # rich embed thumbnail
-            if not embed.thumbnail or (msg.author.bot and embed.type == "rich"):
+            if embed.thumbnail is None or (msg.author.bot and embed.type == "rich"):
                 continue
+
+            assert embed.thumbnail.url is not None
 
             # avoid case when image embed was created from url that is
             # used as argument or flag
@@ -491,25 +495,25 @@ class Image:
 
 class StaticImage(Image):
     @classmethod
-    async def from_text(cls, ctx: Context, argument: str) -> Image:
-        return await cls._from_text(ctx, argument)
+    async def from_text(cls, ctx: Context, argument: str) -> StaticImage:
+        return await cls._from_text(ctx, argument)  # type: ignore[return-value]
 
     @classmethod
     async def from_history(
         cls,
         ctx: Context,
-    ) -> Image:
-        return await cls._from_history(ctx)
+    ) -> StaticImage:
+        return await cls._from_history(ctx)  # type: ignore[return-value]
 
 
 class AnimatedImage(Image):
     @classmethod
-    async def from_text(cls, ctx: Context, argument: str) -> Image:
-        return await cls._from_text(ctx, argument, allow_static=False, allow_animated=True)
+    async def from_text(cls, ctx: Context, argument: str) -> AnimatedImage:
+        return await cls._from_text(ctx, argument, allow_static=False, allow_animated=True)  # type: ignore[return-value]
 
     @classmethod
     async def from_history(
         cls,
         ctx: Context,
-    ) -> Image:
-        return await cls._from_history(ctx, allow_static=False, allow_animated=True)
+    ) -> AnimatedImage:
+        return await cls._from_history(ctx, allow_static=False, allow_animated=True)  # type: ignore[return-value]

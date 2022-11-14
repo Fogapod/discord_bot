@@ -16,7 +16,7 @@ from typing import Any, Optional, Union
 import asyncpg
 import discord
 
-from discord.ext import commands  # type: ignore[attr-defined]
+from discord.ext import commands
 
 from src.checks import is_owner
 from src.classes.bot import PINK
@@ -67,7 +67,7 @@ class Code:
 class TechAdmin(Cog):
     """Commands for bot administrators"""
 
-    async def cog_check(self, ctx: Context) -> None:
+    async def cog_check(self, ctx: Context) -> None:  # type: ignore
         return await is_owner().predicate(ctx)  # type: ignore[attr-defined]
 
     async def cog_load(self) -> None:
@@ -80,7 +80,7 @@ class TechAdmin(Cog):
         self._last_reloaded_extension: Optional[str] = last_reloaded
 
     async def cog_unload(self) -> None:
-        self.bot.__i_am_sorry_this_is_needed_for_reload_will_delete_later_i_promise = self._last_reloaded_extension
+        self.bot.__i_am_sorry_this_is_needed_for_reload_will_delete_later_i_promise = self._last_reloaded_extension  # type: ignore
 
     # TODO: a converter
     # TODO: resolve cogs inside groups properly (folders without __ini__.py)
@@ -174,8 +174,8 @@ class TechAdmin(Cog):
         """
 
         async with ctx.typing():
-            result = await self._eval(ctx, code, insert_return=not ctx.invoked_with.endswith("!"))
-            result = result.replace(self.bot.http.token, "TOKEN_LEAKED")
+            result = await self._eval(ctx, code, insert_return=not ctx.invoked_with.endswith("!"))  # type: ignore
+            result = result.replace(self.bot.http.token, "TOKEN_LEAKED")  # type: ignore
 
         await ctx.send(f"```py\n{result}```")
 
@@ -186,7 +186,7 @@ class TechAdmin(Cog):
         async with ctx.typing():
             result = await self._exec(ctx, code.body)
 
-        result.replace(self.bot.http.token, "TOKEN_LEAKED")
+        result.replace(self.bot.http.token, "TOKEN_LEAKED")  # type: ignore
 
         await ctx.send(f"```bash\n{result}```")
 
@@ -213,7 +213,7 @@ class TechAdmin(Cog):
             result = await self._sql_table(data)
 
         # replacing token because of variable formatting
-        await ctx.send(result.replace(self.bot.http.token, "TOKEN_LEAKED"))
+        await ctx.send(result.replace(self.bot.http.token, "TOKEN_LEAKED"))  # type: ignore
 
     async def _eval(self, ctx: Context, code: Code, *, insert_return: bool = False) -> str:
         # copied from https://github.com/Fogapod/KiwiBot/blob/49743118661abecaab86388cb94ff8a99f9011a8/modules/owner/module_eval.py
@@ -266,7 +266,7 @@ async def __pink_eval__():
 
         try:
             with redirect_stdout(fake_stdout):
-                returned = await glob["__pink_eval__"]()
+                returned = await glob["__pink_eval__"]()  # type: ignore
         except Exception as e:
             return f"{fake_stdout.getvalue()}{''.join(traceback.format_exception_only(e))}"  # type: ignore[arg-type]
 
