@@ -336,7 +336,7 @@ class Image:
 
         # check embeds (user posted url / bot posted rich embed)
         for embed in msg.embeds:
-            if embed.image is not None:
+            if embed.image:
                 assert embed.image.url is not None
 
                 if (
@@ -354,7 +354,7 @@ class Image:
 
             # bot condition because we do not want image from
             # rich embed thumbnail
-            if embed.thumbnail is None or (msg.author.bot and embed.type == "rich"):
+            if not embed.thumbnail or (msg.author.bot and embed.type == "rich"):
                 continue
 
             assert embed.thumbnail.url is not None
