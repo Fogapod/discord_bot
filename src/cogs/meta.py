@@ -50,7 +50,6 @@ class Meta(Cog):
         self.bot.help_command = self.old_help_command
 
     @commands.command(aliases=["pink"])
-    @commands.cooldown(1, 60)
     async def ping(self, ctx: Context) -> None:
         """Check bot latency"""
 

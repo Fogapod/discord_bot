@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import asyncio
 import itertools
 import math
 
 from io import BytesIO
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Optional, Sequence
 
 import PIL
 
@@ -34,12 +35,16 @@ class CogSettings(BaseSettings):
 
 cog_settings = settings.subsettings(CogSettings)
 
-_VertexType = Dict[str, int]
-_VerticesType = Tuple[_VertexType, _VertexType, _VertexType, _VertexType]
+_VertexType = dict[str, int]
+_VerticesType = tuple[_VertexType, _VertexType, _VertexType, _VertexType]
 
 OCR_API_URL = "https://content-vision.googleapis.com/v1/images:annotate"
+OCR_RATELIMIT = 30
 
 FONT = ImageFont.truetype("DejaVuSans.ttf")
+
+_ocr_queue: asyncio.Queue[tuple[asyncio.Queue[dict[str, Any]], bytes, Context]] = asyncio.Queue(5)
+_task: Optional[asyncio.Task[Any]] = None
 
 
 class GoogleOCRError(PINKError):
@@ -55,7 +60,7 @@ class GoogleOCRError(PINKError):
         super().__init__(str(self))
 
     @classmethod
-    def from_response(cls, response: Dict[str, Any]) -> GoogleOCRError:
+    def from_response(cls, response: dict[str, Any]) -> GoogleOCRError:
         error = response.get("error", {})
 
         code = error.get("code")
@@ -95,7 +100,7 @@ class TextField:
 
         self._padding = padding
 
-    def add_word(self, vertices: _VerticesType, src_size: Tuple[int, int]) -> None:
+    def add_word(self, vertices: _VerticesType, src_size: tuple[int, int]) -> None:
         if not self.initialized:
             # Get angle from first word
             self.angle = self._get_angle(vertices)
@@ -108,7 +113,7 @@ class TextField:
         self.lower = lower if self.lower is None else max((self.lower, lower))
 
     @staticmethod
-    def _vertices_to_coords(vertices: _VerticesType, src_size: Tuple[int, int], angle: int) -> Tuple[int, int, int, int]:
+    def _vertices_to_coords(vertices: _VerticesType, src_size: tuple[int, int], angle: int) -> tuple[int, int, int, int]:
         """Returns Pillow style coordinates (left, upper, right, lower)."""
 
         # A - 0
@@ -189,7 +194,7 @@ class TextField:
 
     @staticmethod
     def _get_angle(vertices: _VerticesType) -> int:
-        def get_coords(vertex: _VertexType) -> Tuple[Optional[int], Optional[int]]:
+        def get_coords(vertex: _VertexType) -> tuple[Optional[int], Optional[int]]:
             return vertex.get("x"), vertex.get("y")
 
         cycle = itertools.cycle(vertices)
@@ -225,11 +230,11 @@ class TextField:
         return 90 * round(degrees / 90)
 
     @property
-    def coords(self) -> Tuple[int, int, int, int]:
+    def coords(self) -> tuple[int, int, int, int]:
         return (self.left, self.upper, self.right, self.lower)  # type: ignore
 
     @property
-    def coords_padded(self) -> Tuple[int, int, int, int]:
+    def coords_padded(self) -> tuple[int, int, int, int]:
         return (
             max((0, self.left - self._padding)),  # type: ignore
             max((0, self.upper - self._padding)),  # type: ignore
@@ -318,9 +323,7 @@ class TextField:
 #                 yield paragraph_language or block_language or extract_language(word)
 
 
-async def ocr(ctx: Context, image: Image) -> Dict[str, Any]:
-    b64 = await image.to_base64(ctx)
-
+async def _fetch_ocr(ctx: Context, image_b64: bytes) -> dict[str, Any]:
     async with ctx.session.post(
         OCR_API_URL,
         params={
@@ -330,7 +333,7 @@ async def ocr(ctx: Context, image: Image) -> Dict[str, Any]:
             "requests": [
                 {
                     "features": [{"type": "TEXT_DETECTION"}],
-                    "image": {"content": b64.decode()},
+                    "image": {"content": image_b64.decode()},
                 }
             ]
         },
@@ -365,6 +368,41 @@ async def ocr(ctx: Context, image: Image) -> Dict[str, Any]:
             raise PINKError("no text detected", formatted=False)
 
     return maybe_annotations
+
+
+async def _ocr_fetch_task() -> None:
+    while True:
+        return_q, image_b64, ctx = await _ocr_queue.get()
+
+        ocr_result = await _fetch_ocr(ctx, image_b64)
+        return_q.put_nowait(ocr_result)
+
+        await asyncio.sleep(OCR_RATELIMIT)
+
+
+async def ocr(ctx: Context, image: Image) -> dict[str, Any]:
+    global _task
+
+    if _task is None:
+        _task = asyncio.create_task(_ocr_fetch_task())
+
+    image_b64 = await image.to_base64(ctx)
+    result_q: asyncio.Queue[dict[str, Any]] = asyncio.Queue(1)
+
+    try:
+        _ocr_queue.put_nowait((result_q, image_b64, ctx))
+    except asyncio.QueueFull:
+        raise PINKError(f"OCR queue full ({_ocr_queue.maxsize}), try again later")
+
+    if (qsize := _ocr_queue.qsize()) > 1:
+        qsize -= 1
+
+        await ctx.reply(
+            f"please wait **~ {round((qsize - 1) * OCR_RATELIMIT + OCR_RATELIMIT / 2)}s**",
+            delete_after=5,
+        )
+
+    return await result_q.get()
 
 
 @in_executor()
@@ -424,7 +462,7 @@ def _draw_trocr(src: PIL.Image, fields: Sequence[TextField]) -> BytesIO:
     return result
 
 
-def _apply_accents(ctx: Context, lines: List[str], accent: Accent) -> List[str]:
+def _apply_accents(ctx: Context, lines: list[str], accent: Accent) -> list[str]:
     if (accent_cog := ctx.bot.get_cog("Accents")) is None:
         raise RuntimeError("No accents cog loaded")
 
@@ -438,10 +476,10 @@ def _apply_accents(ctx: Context, lines: List[str], accent: Accent) -> List[str]:
 
 async def _apply_translation(
     ctx: Context,
-    lines: List[str],
+    lines: list[str],
     language: str,
     _block_annotations: Any,
-) -> List[str]:
+) -> list[str]:
     if (translator_cog := ctx.bot.get_cog("Translator")) is None:
         raise RuntimeError("No translator cog loaded")
 
@@ -475,7 +513,7 @@ async def _apply_translation(
     return new_lines
 
 
-async def ocr_translate(ctx: Context, image: StaticImage, language: Union[str, Accent]) -> Tuple[BytesIO, str]:
+async def ocr_translate(ctx: Context, image: StaticImage, language: str | Accent) -> tuple[BytesIO, str]:
     src = await image.to_pil(ctx)
 
     annotations = await ocr(ctx, image)
@@ -535,7 +573,7 @@ async def ocr_translate(ctx: Context, image: StaticImage, language: Union[str, A
     return result, stats
 
 
-async def textboxes(ctx: Context, image: StaticImage, outline: tuple[int, int, int]) -> Tuple[BytesIO, str]:
+async def textboxes(ctx: Context, image: StaticImage, outline: tuple[int, int, int]) -> tuple[BytesIO, str]:
     src = await image.to_pil(ctx)
 
     annotations = await ocr(ctx, image)

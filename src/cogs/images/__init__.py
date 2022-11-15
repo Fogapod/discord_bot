@@ -106,7 +106,7 @@ class Images(Cog):
         await ctx.send(i, accents=[])
 
     @commands.command()
-    @commands.cooldown(1, 60)
+    @commands.cooldown(1, 5, type=commands.BucketType.channel)
     async def ocr(
         self,
         ctx: Context,
@@ -124,7 +124,6 @@ class Images(Cog):
 
     @commands.command()
     @commands.cooldown(1, 5, type=commands.BucketType.channel)
-    @commands.cooldown(1, 60)
     async def trocr(
         self,
         ctx: Context,
@@ -153,7 +152,7 @@ class Images(Cog):
         )
 
     @commands.command(aliases=["textbox", "textboxes"])
-    @commands.cooldown(1, 60)
+    @commands.cooldown(1, 5, type=commands.BucketType.channel)
     async def text(
         self,
         ctx: Context,
