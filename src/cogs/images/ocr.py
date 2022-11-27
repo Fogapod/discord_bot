@@ -43,7 +43,7 @@ OCR_RATELIMIT = 30
 
 FONT = ImageFont.truetype("DejaVuSans.ttf")
 
-_ocr_queue: asyncio.Queue[tuple[asyncio.Queue[dict[str, Any]], bytes, Context]] = asyncio.Queue(5)
+_ocr_queue: asyncio.Queue[tuple[asyncio.Future[dict[str, Any]], bytes, Context]] = asyncio.Queue(5)
 _task: Optional[asyncio.Task[Any]] = None
 
 
@@ -372,10 +372,14 @@ async def _fetch_ocr(ctx: Context, image_b64: bytes) -> dict[str, Any]:
 
 async def _ocr_fetch_task() -> None:
     while True:
-        return_q, image_b64, ctx = await _ocr_queue.get()
+        fut, image_b64, ctx = await _ocr_queue.get()
 
-        ocr_result = await _fetch_ocr(ctx, image_b64)
-        return_q.put_nowait(ocr_result)
+        try:
+            ocr_result = await _fetch_ocr(ctx, image_b64)
+        except Exception as e:
+            fut.set_exception(e)
+        else:
+            fut.set_result(ocr_result)
 
         await asyncio.sleep(OCR_RATELIMIT)
 
@@ -387,10 +391,10 @@ async def ocr(ctx: Context, image: Image) -> dict[str, Any]:
         _task = asyncio.create_task(_ocr_fetch_task())
 
     image_b64 = await image.to_base64(ctx)
-    result_q: asyncio.Queue[dict[str, Any]] = asyncio.Queue(1)
+    fut: asyncio.Future[dict[str, Any]] = asyncio.Future()
 
     try:
-        _ocr_queue.put_nowait((result_q, image_b64, ctx))
+        _ocr_queue.put_nowait((fut, image_b64, ctx))
     except asyncio.QueueFull:
         raise PINKError(f"OCR queue full ({_ocr_queue.maxsize}), try again later")
 
@@ -402,7 +406,7 @@ async def ocr(ctx: Context, image: Image) -> dict[str, Any]:
             delete_after=5,
         )
 
-    return await result_q.get()
+    return await fut
 
 
 @in_executor()
