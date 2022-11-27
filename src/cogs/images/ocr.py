@@ -390,8 +390,8 @@ async def ocr(ctx: Context, image: Image) -> dict[str, Any]:
     if _task is None:
         _task = asyncio.create_task(_ocr_fetch_task())
 
+    fut = asyncio.get_running_loop().create_future()
     image_b64 = await image.to_base64(ctx)
-    fut: asyncio.Future[dict[str, Any]] = asyncio.Future()
 
     try:
         _ocr_queue.put_nowait((fut, image_b64, ctx))

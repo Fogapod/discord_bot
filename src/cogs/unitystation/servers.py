@@ -47,7 +47,8 @@ class DownloadAddress:
                 return
             else:
                 # we are first, lock url
-                fut = asyncio.Future()
+                fut = asyncio.get_running_loop().create_future()
+
                 await self._locks.add(self.url, fut)
 
         try:
