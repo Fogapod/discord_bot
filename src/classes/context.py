@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import io
+
 from typing import TYPE_CHECKING, Any, Optional
 
 import aiohttp
@@ -61,7 +63,7 @@ class Context(commands.Context["PINK"], Hookable):
                     # custom error perhaps?
                     return await target.send(str(content)[:2000], **kwargs)
 
-                files.append(discord.File(str(content), filename="message.txt"))
+                files.append(discord.File(io.StringIO(str(content)), filename="message.txt"))  # type: ignore[arg-type]
 
                 return await target.send(files=files, **kwargs)
 

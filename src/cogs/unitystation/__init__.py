@@ -1,4 +1,5 @@
-from typing import Optional
+from datetime import date
+from typing import Any, Optional
 
 from discord.ext import commands
 
@@ -112,6 +113,52 @@ class UnityStation(Cog):
             body += f"{' | '.join(values)}\n"
 
         return f"```\n{header}\n{separator}\n{body}```"
+
+    @commands.command(aliases=["cl"])
+    async def changelog(self, ctx: Context, *, build: Optional[str] = None) -> None:
+        """Unitystation changelog"""
+
+        if build is not None:
+            async with ctx.session.get(f"https://changelog.unitystation.org/changes/{build}") as r:
+                changes: list[dict[str, Any]] = await r.json()
+
+        else:
+            async with ctx.session.get("https://changelog.unitystation.org/whats-new") as r:
+                data = await r.json()
+                build = data["build"]
+                changes = data["changes"]
+
+        if not changes:
+            await ctx.reply(f"No changes in build **{build}** or it does not exist at all idk")
+
+            return
+
+        longest_category = len(max(changes, key=lambda x: len(x["category"]))["category"])
+
+        changes_joined = "\n".join(
+            f"`[{c['category']:>{longest_category}}-{c['pr_number']}]` "
+            f"{c['description'].rstrip('.')} -- **{c['author_username']}**"
+            for c in sorted(
+                changes,
+                # priorities: is new, is fix, every other tag else alphabetically, date from new to old, author name
+                key=lambda x: (
+                    x["category"].lower() != "new",
+                    x["category"].lower() != "fix",
+                    x["category"],
+                    date.fromisoformat(x["date_added"]),
+                    x["author_username"],
+                ),
+            )
+        )
+
+        await ctx.send(
+            f"""\
+build: **{build}**
+PR base url: <{changes[0]["pr_url"].rsplit("/", 1)[0]}/>
+
+{changes_joined}
+"""
+        )
 
 
 async def setup(bot: PINK) -> None:
