@@ -166,9 +166,10 @@ class UnityStation(Cog):
         await ctx.send(
             f"""\
 build: **{build}**
-PR base url: <{changes[0]["pr_url"].rsplit("/", 1)[0]}/>
+PR base url: {changes[0]["pr_url"].rsplit("/", 1)[0]}/
 {changes_joined}\
-"""
+""",
+            suppress_embeds=True,
         )
 
 
