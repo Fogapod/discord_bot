@@ -135,28 +135,39 @@ class UnityStation(Cog):
 
         longest_category = len(max(changes, key=lambda x: len(x["category"]))["category"])
 
-        changes_joined = "\n".join(
-            f"`[{c['category']:>{longest_category}}-{c['pr_number']}]` "
-            f"{c['description'].rstrip('.')} -- **{c['author_username']}**"
-            for c in sorted(
-                changes,
-                # priorities: is new, is fix, every other tag else alphabetically, date from new to old, author name
-                key=lambda x: (
-                    x["category"].lower() != "new",
-                    x["category"].lower() != "fix",
-                    x["category"],
-                    date.fromisoformat(x["date_added"]),
-                    x["author_username"],
-                ),
-            )
+        sorted_changes = sorted(
+            changes,
+            # priorities: is new, is fix, every other tag else alphabetically, date, pr number from new to old, author name
+            # NOTE: this is a mess and is probably borken
+            key=lambda c: (
+                c["category"].lower() != "new",
+                c["category"].lower() != "fix",
+                c["category"],
+                date.fromisoformat(c["date_added"]),
+                c["pr_number"],
+                c["author_username"],
+            ),
         )
+
+        changes_joined = ""
+
+        current_pr = -1
+        for change in sorted_changes:
+            if (pr := change["pr_number"]) != current_pr:
+                current_pr = pr
+                changes_joined += f"\n**{pr}** by **{change['author_username']}**"
+
+            if (description := change["description"]).endswith("."):
+                # usage of dot is annoyingly inconsistent
+                description = description[:-1]
+
+            changes_joined += f"\n`{change['category']:>{longest_category}}` {description}"
 
         await ctx.send(
             f"""\
 build: **{build}**
 PR base url: <{changes[0]["pr_url"].rsplit("/", 1)[0]}/>
-
-{changes_joined}
+{changes_joined}\
 """
         )
 
