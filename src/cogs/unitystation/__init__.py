@@ -161,7 +161,7 @@ class UnityStation(Cog):
                 # usage of dot is annoyingly inconsistent
                 description = description[:-1]
 
-            changes_joined += f"\n`{change['category']:>{longest_category}}` {description}"
+            changes_joined += f"\n`{change['category']:<{longest_category}}` {description}"
 
         await ctx.send(
             f"""\
