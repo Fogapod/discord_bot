@@ -22,6 +22,9 @@ class UnityStation(Cog):
     You can learn more about this game by joining their official server: discord.gg/{US_INVITE}
     """
 
+    def cog_check(self, ctx: Context) -> bool:  # type: ignore
+        return ctx.guild and ctx.guild.id == 273774715741667329  # type: ignore
+
     async def cog_load(self) -> None:
         self._server_list = ServerListClient()
 
