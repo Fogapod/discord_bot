@@ -18,6 +18,9 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.11'
+      # because pre-commit uses external mypy
+      - name: install mypy
+        run: pip install mypy
       - uses: pre-commit/action@v3.0.0
 
   deploy:
