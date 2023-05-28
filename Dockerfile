@@ -23,6 +23,9 @@ RUN apk add --no-cache \
     libwebp-dev \
     # Font for trocr
     ttf-dejavu \
+	# orjson:
+	# Error loading shared library libgcc_s.so.1: No such file or directory
+	libgcc \
     && apk add --no-cache --virtual .build-deps \
     # git pip packages
     git \
