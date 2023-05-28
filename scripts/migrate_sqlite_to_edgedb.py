@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Tuple
 
 import edgedb  # type: ignore
 
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # type: ignore
 
 load_dotenv()
 

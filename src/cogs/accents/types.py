@@ -22,7 +22,7 @@ class PINKAccent(Accent, register=False):
         try:
             severity = 1 if match[3] is None else int(match[3])
         except ValueError:
-            raise commands.BadArgument(f"{name}: severity must be integer")
+            raise commands.BadArgument(f"{name}: severity must be integer") from None
 
         if severity > cls.MAX_SEVERITY:
             raise commands.BadArgument(f"{name}: severity must be lower or equal to {cls.MAX_SEVERITY}")
@@ -30,9 +30,9 @@ class PINKAccent(Accent, register=False):
         try:
             accent = ALL_ACCENTS[name.lower()]
         except KeyError:
-            raise commands.BadArgument(f"not a valid accent: {name}")
+            raise commands.BadArgument(f"not a valid accent: {name}") from None
 
         try:
             return accent(severity)
         except BadSeverity as e:
-            raise commands.BadArgument(f"{name}: bad severity: {e}")
+            raise commands.BadArgument(f"{name}: bad severity: {e}") from None

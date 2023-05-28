@@ -396,7 +396,7 @@ async def ocr(ctx: Context, image: Image) -> dict[str, Any]:
     try:
         _ocr_queue.put_nowait((fut, image_b64, ctx))
     except asyncio.QueueFull:
-        raise PINKError(f"OCR queue full ({_ocr_queue.maxsize}), try again later")
+        raise PINKError(f"OCR queue full ({_ocr_queue.maxsize}), try again later") from None
 
     if (qsize := _ocr_queue.qsize()) > 1:
         qsize -= 1
@@ -511,7 +511,7 @@ async def _apply_translation(
         raise RuntimeError(f"expected {len(need_trasnslation)} translated lines, got {len(translated_lines)}")
 
     new_lines = lines.copy()
-    for idx, translated_line in zip(need_trasnslation.keys(), translated_lines):
+    for idx, translated_line in zip(need_trasnslation.keys(), translated_lines, strict=True):
         new_lines[idx] = translated_line
 
     return new_lines
@@ -542,7 +542,7 @@ async def ocr_translate(ctx: Context, image: StaticImage, language: str | Accent
     current_word = 0
     fields = []
 
-    for original_line, line in zip(lines, new_lines):
+    for original_line, line in zip(lines, new_lines, strict=True):
         field = TextField(line, src)
 
         remaining_line = original_line
@@ -596,7 +596,7 @@ async def textboxes(ctx: Context, image: StaticImage, outline: tuple[int, int, i
     current_word = 0
     fields = []
 
-    for original_line, line in zip(lines, lines):
+    for original_line, line in zip(lines, lines, strict=True):
         field = TextField(line, src)
 
         remaining_line = original_line

@@ -18,12 +18,12 @@ from .types import AnimatedImage, Image, StaticImage
 try:
     from src.cogs.translator.types import Language
 except ImportError:
-    raise Exception("This cog relies on the existance of translator cog")
+    raise Exception("This cog relies on the existance of translator cog") from None
 
 try:
     from src.cogs.accents.types import PINKAccent
 except ImportError:
-    raise Exception("This cog relies on the existance of accents cog")
+    raise Exception("This cog relies on the existance of accents cog") from None
 
 from pink_accents import Accent
 

@@ -433,7 +433,7 @@ if __name__ == "__main__":
         }
 
         for k, v in word_keys.items():
-            for word, replacement in zip(inp[k], inp[v]):
+            for word, replacement in zip(inp[k], inp[v], strict=True):
                 push(word, replacement, words)
 
         prefix_keys = {
@@ -441,7 +441,7 @@ if __name__ == "__main__":
         }
 
         for k, v in prefix_keys.items():
-            for prefix, replacement in zip(inp[k], inp[v]):
+            for prefix, replacement in zip(inp[k], inp[v], strict=True):
                 push(rf"\b{prefix}", replacement, patterns)
 
         suffix_keys = {
@@ -449,7 +449,7 @@ if __name__ == "__main__":
         }
 
         for k, v in prefix_keys.items():
-            for suffix, replacement in zip(inp[k], inp[v]):
+            for suffix, replacement in zip(inp[k], inp[v], strict=True):
                 push(rf"{suffix}\b", replacement, patterns)
 
     generate_pink_accent(words, patterns)

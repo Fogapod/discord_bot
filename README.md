@@ -17,3 +17,8 @@ Running on production:
 - apply schema.sql
 - fill in settings.toml file
 - start service from units/
+
+## Development
+
+### Running local database
+`podman run --rm -p 5432:5432 -e POSTGRES_HOST_AUTH_METHOD=trust -e POSTGRES_USER=pink -e POSTGRES_DATABASE=pink -v $(pwd)/schema.sql:/docker-entrypoint-initdb.d/schema.sql postgres:15-alpine`

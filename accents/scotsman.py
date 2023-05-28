@@ -520,8 +520,6 @@ class Scotsman(Accent):
         r"those": "they",
         r"through": "thro`",
         r"throughout": "throo`oot",
-        r"throw": "chuck",
-        r"threw": "chucked",
         r"to": "tae",
         r"today": "th`day",
         r"together": "th`gither",

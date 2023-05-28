@@ -54,9 +54,9 @@ class FetchedImage:
         try:
             img = PIL.Image.open(BytesIO(self.bytes))
         except PIL.Image.DecompressionBombError:
-            raise PINKError(f"failed to open image, exceeds **{PIL.Image.MAX_IMAGE_PIXELS}** pixel limit")
+            raise PINKError(f"failed to open image, exceeds **{PIL.Image.MAX_IMAGE_PIXELS}** pixel limit") from None
         except OSError as e:
-            raise PINKError(f"failed to open image: {e}", formatted=False)
+            raise PINKError(f"failed to open image: {e}", formatted=False) from None
 
         else:
             if sum(img.size) > max_dimensions:
@@ -477,7 +477,7 @@ class Image:
             else:
                 error += str(e)
 
-            raise commands.BadArgument(error)
+            raise commands.BadArgument(error) from e
 
     async def to_pil(self, ctx: Context) -> PIL.Image:
         fetched = await self.fetch(ctx)

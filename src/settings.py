@@ -4,8 +4,9 @@ import contextlib
 import os
 import typing
 
+from collections.abc import Iterable
 from enum import Enum, auto
-from typing import Any, ClassVar, Iterable, Literal, Optional, Type, TypeVar
+from typing import Any, ClassVar, Literal, Optional, Type, TypeVar
 
 __all__ = ("settings",)
 
@@ -155,10 +156,10 @@ class BaseSettings(BaseModel):
 
     def __loader_impl__(self) -> dict[str, Any]:
         if self.__config__.loader == Loader.TOML:
-            import tomli
+            import tomllib
 
             with open(self.__config__.settings_file, "rb") as f:
-                return tomli.load(f)
+                return tomllib.load(f)
         elif self.__config__.loader == Loader.JSON:
             import json
 

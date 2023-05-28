@@ -1,17 +1,14 @@
 # formatting
-isort
 black
 
 # linting
 pre-commit
 mypy
-flake8
-flake8-bugbear
-flake8-unused-arguments
+ruff
 
 # dependency management
 pip-tools
 
 # typing
 # https://github.com/MagicStack/asyncpg/issues/569
-asyncpg-stubs @ git+https://github.com/bryanforbes/asyncpg-stubs@c46b93dca927829eca48b0835018eba9f4046132
+asyncpg-stubs

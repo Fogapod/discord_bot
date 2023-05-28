@@ -46,7 +46,6 @@ class Context(commands.Context["PINK"], Hookable):
         target: Optional[discord.abc.Messageable] = None,
         **kwargs: Any,
     ) -> discord.Message:
-
         if target is None:
             # mypy does not recognize superclass here and just names it "super"
             target = super()  # type: ignore
@@ -80,7 +79,6 @@ class Context(commands.Context["PINK"], Hookable):
         content: Any = None,
         **kwargs: Any,
     ) -> None:
-
         await message.edit(content=content, **kwargs)
 
     @Hookable.hookable()

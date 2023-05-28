@@ -1,13 +1,9 @@
-FROM python:3.10-alpine3.16
+FROM python:3.11-alpine3.16
 
-# enables proper stdout flushing
-ENV PYTHONUNBUFFERED yes
-# no .pyc files
-ENV PYTHONDONTWRITEBYTECODE yes
-
-# pip optimizations
-ENV PIP_NO_CACHE_DIR yes
-ENV PIP_DISABLE_PIP_VERSION_CHECK yes
+ENV PYTHONUNBUFFERED=yes \
+	PYTHONDONTWRITEBYTECODE=yes \
+	PIP_NO_CACHE_DIR=yes \
+	PIP_DISABLE_PIP_VERSION_CHECK=yes
 
 WORKDIR /code
 
@@ -44,8 +40,15 @@ RUN apk add --no-cache \
     && pip install -U -r requirements.txt \
     && apk del --purge .build-deps
 
-ARG UID=1188
-ARG GID=1188
+ARG UID=1188 \
+	GID=1188 \
+	GIT_BRANCH="master" \
+	GIT_COMMIT="" \
+	GIT_DIRTY="0"
+
+ENV GIT_BRANCH=${GIT_BRANCH} \
+	GIT_COMMIT=${GIT_COMMIT} \
+	GIT_DIRTY=${GIT_DIRTY}
 
 RUN addgroup -g $GID -S pink \
     && adduser -u $UID -S pink -G pink \
@@ -54,13 +57,5 @@ RUN addgroup -g $GID -S pink \
 USER pink
 
 COPY --chown=pink:pink . .
-
-ARG GIT_BRANCH="master"
-ARG GIT_COMMIT=""
-ARG GIT_DIRTY="0"
-
-ENV GIT_BRANCH=${GIT_BRANCH}
-ENV GIT_COMMIT=${GIT_COMMIT}
-ENV GIT_DIRTY=${GIT_DIRTY}
 
 ENTRYPOINT ["python", "-m", "src"]
