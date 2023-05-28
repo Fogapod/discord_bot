@@ -36,6 +36,8 @@ RUN apk add --no-cache \
     # gcc: fatal error: cannot execute 'cc1plus': execvp: No such file or directory
     g++ \
     musl-dev \
+	# orjson
+	cargo \
     && pip install -U pip \
     && pip install -U -r requirements.txt \
     && apk del --purge .build-deps
