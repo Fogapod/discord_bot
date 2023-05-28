@@ -20,7 +20,9 @@ jobs:
           python-version: '3.11'
       # because pre-commit uses external mypy
       - name: install mypy
-        run: pip install mypy
+        run: |
+          pip install -U pip
+          pip install mypy -r requirements.txt
       - uses: pre-commit/action@v3.0.0
 
   deploy:
