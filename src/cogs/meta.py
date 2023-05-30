@@ -25,7 +25,7 @@ PINK_ART = r"""   ___ _____    __
 / ___/\/ /_/ /\  / __ \
 \/   \____/\_\ \/\/  \/"""
 
-REPO = "github.com/Fogapod/pink"
+REPO = "git.based.computer/fogapod/pink"
 SUPPORT = "TNXn8R7"
 AUTHORS = (386551253532147712, 253384991940149249)
 
