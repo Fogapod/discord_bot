@@ -2,10 +2,11 @@ import inspect
 import re
 import time
 
+from collections.abc import Callable, Iterable
 from importlib import metadata
 from pathlib import Path
 from types import FunctionType, MethodDescriptorType, MethodType, ModuleType
-from typing import Any, Callable, Iterable, Optional, Type
+from typing import Any, Optional, Type
 
 import discord
 
@@ -205,6 +206,45 @@ class Meta(Cog):
 
         return base
 
+    @staticmethod
+    def _gitea_object_url(
+        *,
+        repo: str,
+        branch: Optional[str],
+        commit: Optional[str],
+        obj: Optional[
+            Type[Any] | FunctionType | MethodType | MethodDescriptorType | Callable[..., Any] | ModuleType
+        ] = None,
+    ) -> str:
+        base = f"https://{repo}"
+
+        if commit is not None:
+            base += f"/src/commit/{commit}"
+        elif branch is not None:
+            base += f"/src/branch/{branch}"
+        else:
+            raise ValueError("Expected commit or branch")
+
+        if obj is not None:
+            lines, starting_line = inspect.getsourcelines(obj)
+
+            if isinstance(obj, ModuleType):
+                object_module = obj.__name__
+                starting_line += 1
+            else:
+                object_module = obj.__module__
+
+            file_path = Path(*object_module.split("."))
+
+            if file_path.is_dir():
+                file_path = file_path / "__init__.py"
+            else:
+                file_path = file_path.with_suffix(".py")
+
+            base += f"/{'/'.join(file_path.parts)}#L{starting_line}-L{starting_line + len(lines) - 1}"
+
+        return base
+
     @commands.command(aliases=["src"])
     async def source(self, ctx: Context, *, thing: Optional[str]) -> None:
         """
@@ -262,13 +302,16 @@ class Meta(Cog):
                     raise PINKError(f"`{thing}` is defined in external module: `{object_module}`")
 
                 repo = REPO
+                commit = None
+                branch = None
 
-                if (branch := ctx.bot.version.git_commit) is None:
+                if (commit := ctx.bot.version.git_commit) is None:
                     if (branch := ctx.bot.version.git_branch) is None:
                         branch = "main"
 
-                url = self._github_object_url(
+                url = self._gitea_object_url(
                     repo=repo,
+                    commit=commit,
                     branch=branch,
                     obj=obj,
                 )
