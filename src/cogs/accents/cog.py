@@ -13,10 +13,10 @@ import discord
 from discord.ext import commands
 from pink_accents import Accent
 
-from src.classes.bot import PINK
-from src.classes.cache import LRU
-from src.classes.cog import Cog
-from src.classes.context import Context
+from src.bot import PINK
+from src.cache import LRU
+from src.cog import Cog
+from src.context import Context
 from src.errors import PINKError
 from src.hooks import HookHost
 

@@ -4,7 +4,7 @@ from discord.ext import commands
 from pink_accents import Accent
 from pink_accents.errors import BadSeverity
 
-from src.classes.context import Context
+from src.context import Context
 
 from .constants import ALL_ACCENTS
 

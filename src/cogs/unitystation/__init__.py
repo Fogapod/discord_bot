@@ -3,9 +3,9 @@ from typing import Any, Optional
 
 from discord.ext import commands
 
-from src.classes.bot import PINK
-from src.classes.cog import Cog
-from src.classes.context import Context
+from src.bot import PINK
+from src.cog import Cog
+from src.context import Context
 
 from .servers import ServerListClient
 

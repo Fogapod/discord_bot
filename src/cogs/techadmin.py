@@ -18,10 +18,10 @@ import discord
 
 from discord.ext import commands
 
+from src.bot import PINK
 from src.checks import is_owner
-from src.classes.bot import PINK
-from src.classes.cog import Cog
-from src.classes.context import Context
+from src.cog import Cog
+from src.context import Context
 from src.utils import run_process_shell
 
 COG_MODULE_PREFIX = "src.cogs."

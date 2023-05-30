@@ -15,9 +15,9 @@ import sentry_sdk
 
 from discord.ext import commands
 
-from src.classes.context import Context
-from src.classes.version import Version
+from src.context import Context
 from src.settings import settings
+from src.version import Version
 
 log = logging.getLogger(__name__)
 

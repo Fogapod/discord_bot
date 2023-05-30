@@ -12,7 +12,7 @@ import aiohttp
 
 from aiocache import SimpleMemoryCache
 
-from src.classes.context import Context
+from src.context import Context
 from src.errors import PINKError
 
 log = logging.getLogger(__name__)

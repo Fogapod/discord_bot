@@ -17,7 +17,7 @@ import PIL
 from discord.ext import commands
 from PIL.Image import DecompressionBombWarning
 
-from src.classes.context import Context
+from src.context import Context
 from src.decorators import in_executor
 from src.errors import PINKError
 from src.regexes import EMOTE_REGEX, ID_REGEX

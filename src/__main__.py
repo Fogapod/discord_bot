@@ -6,10 +6,10 @@ import aiohttp
 import asyncpg
 import discord
 
-from .classes.bot import PINK
-from .classes.version import Version
+from .bot import PINK
 from .logging import setup_logging
 from .settings import settings
+from .version import Version
 
 log = logging.getLogger(__name__)
 

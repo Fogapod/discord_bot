@@ -2,7 +2,7 @@ from typing import Callable, TypeVar
 
 from discord.ext import commands
 
-from src.classes.context import Context
+from src.context import Context
 
 __all__ = ("is_owner",)
 

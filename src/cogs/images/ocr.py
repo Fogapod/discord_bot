@@ -12,7 +12,7 @@ import PIL
 from PIL import ImageDraw, ImageFilter, ImageFont
 from pink_accents import Accent
 
-from src.classes.context import Context
+from src.context import Context
 from src.decorators import in_executor
 from src.errors import PINKError
 from src.settings import BaseSettings, settings
