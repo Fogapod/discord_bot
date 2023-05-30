@@ -98,6 +98,7 @@ class Server:
     fps: int
     ip: str
     port: str
+    password: bool
     address: str = field(init=False)
     downloads: List[DownloadAddress]
 
@@ -125,6 +126,7 @@ class Server:
             "fps": "fps",
             "ServerIP": "ip",
             "ServerPort": "port",
+            "Passworded": "password",
         }
 
         download_aliases = {
@@ -135,8 +137,8 @@ class Server:
 
         return cls(
             downloads=[DownloadAddress(v, data[k]) for k, v in download_aliases.items()],
-            # how is this an incompatibe type, mypy???
-            **{v: str(data.get(k, "unknown")) for k, v in aliases.items()},  # type: ignore
+            # i am sorry for ever doubting you, mypy
+            **{v: data.get(k, "unknown") for k, v in aliases.items()},
         )
 
     async def check_downloads(self, ctx: Context) -> None:

@@ -23,7 +23,11 @@ class UnityStation(Cog):
     """
 
     def cog_check(self, ctx: Context) -> bool:  # type: ignore
-        return ctx.guild and ctx.guild.id == 273774715741667329  # type: ignore
+        # hide from help but otherwise let users call it. direct help still works because it has extra argument
+        if ctx.invoked_with == "help":
+            return ctx.guild and ctx.guild.id == 273774715741667329  # type: ignore
+
+        return True
 
     async def cog_load(self) -> None:
         self._server_list = ServerListClient()
@@ -65,6 +69,7 @@ class UnityStation(Cog):
             "gamemode",
             "time",
             "players",
+            "password",
             "fps",
             "address",
         )
@@ -93,6 +98,9 @@ class UnityStation(Cog):
                     # mark servers with bad downloads
                     if not server.downloads_good:
                         value = f"{value} !"
+                elif attribute == "players":
+                    if server.password:
+                        value = f"{value} [#]"
 
                 row.append(value)
             data.append(row)
