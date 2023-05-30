@@ -4,7 +4,7 @@
 #
 #    pip-compile requirements.in
 #
-aiocache @ git+https://github.com/Fogapod/aiocache@d20f4f7b94a8213544dc13dd9b931d9015203c15
+aiocache==0.12.1
     # via -r requirements.in
 aiodns==3.0.0
     # via discord-py
