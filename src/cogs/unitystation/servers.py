@@ -167,8 +167,7 @@ class ServerListClient:
             if r.status != 200:
                 raise PINKError(f"Bad API response status code: **{r.status}**")
 
-            # they send json with html mime type
-            data = await r.json(content_type=None)
+            data = await r.json()
 
         self._fetch_time = time.monotonic()
 
