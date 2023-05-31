@@ -1,10 +1,10 @@
 **/__pycache__
 
 # repo metadata
-.github
-LICENSE
-README.md
-scripts
+/.github
+/LICENSE
+/README.md
+/scripts
 
 # configs
 *.env
@@ -14,20 +14,20 @@ scripts
 **/*.json
 
 # deployment configs
-units
+/units
 
 # tool configs
-Dockerfile
-.dockerignore
-.flake8
+/Dockerfile
+/.dockerignore
 **/.gitignore
 
 # tool cache/data
-.venv
-.git
-.mypy_cache
-.pytest_cache
-target
+/.venv
+/.git
+/.mypy_cache
+/.pytest_cache
+/.ruff_cache
+/target
 
 # dependency configs (except requirements.txt)
 **/*.txt
@@ -35,4 +35,4 @@ target
 !requirements.txt
 
 # IDEs
-.vscode
+/.vscode
