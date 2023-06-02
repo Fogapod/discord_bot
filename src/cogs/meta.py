@@ -321,7 +321,7 @@ class Meta(Cog):
         if self.bot.version.is_dirty:
             result += "\nNOTE: running in dirty repository, location might be inaccurate"
 
-        await ctx.send(result)
+        await ctx.send(result, accents=[])
 
     @commands.group(
         invoke_without_command=True,
