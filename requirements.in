@@ -7,7 +7,7 @@ discord.py[speed]>=2.0
 asyncpg
 
 # api libs for commands
-googletrans>=3.1.0a0
+googletrans-py==4.0.0
 
 # accents
 pink-accents==0.0.4
