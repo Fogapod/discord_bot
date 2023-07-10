@@ -208,7 +208,7 @@ class PINK(commands.Bot):
 
     # --- events ---
     async def on_ready(self) -> None:
-        log.info("READY as %s (%s) with prefix %s", self.user, self.user.id, self.bot.prefix)  # type: ignore
+        log.info("READY as %s (%s) with prefix %s", self.user, self.user.id, settings.bot.prefix)  # type: ignore
 
     async def on_message(self, message: discord.Message) -> None:
         # TODO: how to make this optional? sentry must not be a hard dependency
