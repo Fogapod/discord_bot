@@ -2,7 +2,7 @@ from pink_accents import Accent
 
 
 class Mime(Accent):
-    PATTERNS = {
+    PATTERNS = {  # noqa: RUF012
         # https://stackoverflow.com/a/11324894
         #
         # this regex is not perfect, ("*abc", "abc*", "ab*c") do not match

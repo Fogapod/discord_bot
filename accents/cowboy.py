@@ -19,7 +19,7 @@ def yeehaw_end(m: Match) -> Optional[str]:
 class Cowboy(Accent):
     """Doin' rancho relaxo all day every day"""
 
-    PATTERNS = {
+    PATTERNS = {  # noqa: RUF012
         r"\bo\B": "aw",
         # "the" excluded
         r"\b(th|t)(?!h?e\b)\B": "'",
@@ -32,7 +32,7 @@ class Cowboy(Accent):
         r"(?<!h-)re": "hr",
         DISCORD_MESSAGE_END: yeehaw_end,
     }
-    WORDS = {
+    WORDS = {  # noqa: RUF012
         r"the": "thuh",
         r"hey": ("heya", "ee", "hay"),
         r"you": ("cha", "chu", "ya"),

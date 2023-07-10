@@ -1,12 +1,12 @@
-# most of this is blatantly copied from:
+# original code from KiwiBot:
 # https://github.com/Fogapod/KiwiBot/blob/master/modules/images/module_fly.py
 
 import random
 import time
 
+from collections.abc import Sequence
 from math import cos, pi, sin
 from pathlib import Path
-from typing import Dict, List, Sequence, Tuple
 
 import PIL
 
@@ -55,7 +55,7 @@ class Fly:
 
         self._modified = True
 
-    def _rand_pos(self) -> Tuple[int, int]:
+    def _rand_pos(self) -> tuple[int, int]:
         return (random.randint(*self.bounds_x), random.randint(*self.bounds_y))
 
     def _move_forward(self) -> None:
@@ -77,7 +77,7 @@ class Fly:
         self.pos_x, self.pos_y = new_x, new_y
 
     def _rand_angle(self) -> int:
-        return random.choice(list(DIRECTIONS.keys()) + [self.angle])
+        return random.choice([self.angle, *list(DIRECTIONS.keys())])
 
     def _increment_state(self) -> None:
         if self.state >= FINAL_STATE:
@@ -87,7 +87,7 @@ class Fly:
 
         self._modified = True
 
-    def spawn(self, bounds_x: Tuple[int, int], bounds_y: Tuple[int, int]) -> None:
+    def spawn(self, bounds_x: tuple[int, int], bounds_y: tuple[int, int]) -> None:
         self.bounds_x, self.bounds_y = bounds_x, bounds_y
 
         self.pos_x, self.pos_y = self._rand_pos()
@@ -105,7 +105,7 @@ class Fly:
         actions = (0, 1, 2)
         weights = (0.15, 0.15, 0.7)
 
-        action = random.choices(actions, weights)[0]
+        action = random.choices(actions, weights, k=1)[0]
         if action == 0:
             return
         elif action == 1:
@@ -136,7 +136,7 @@ class FlyDrawer:
             self.fly_src = None
 
         for coordinate in self.src.size:
-            if FLY_SIDE > coordinate:
+            if coordinate < FLY_SIDE:
                 raise PINKError("image is too small", formatted=False)
 
         self.flies = flies
@@ -147,8 +147,8 @@ class FlyDrawer:
         for fly in self.flies:
             fly.spawn(bounds_x, bounds_y)
 
-        self._cached_flies: Dict[str, Image] = {}
-        self._frames: List[Image] = []
+        self._cached_flies: dict[str, Image] = {}
+        self._frames: list[Image] = []
 
     def _get_fly_image(self, angle: int, state: int) -> Image:
         name = f"{DIRECTIONS[angle]}_{state if not self.fly_src else 0}"
@@ -195,14 +195,14 @@ class FlyDrawer:
         if self.fly_src:
             self.fly_src.close()
 
-    def run(self) -> str:
+    def run(self) -> Path:
         for _ in range(self.steps):
             for fly in self.flies:
                 fly.do_step()
 
             self.make_frame()
 
-        filename = f"/tmp/fly_{time.time()}.gif"
+        filename = Path(f"/tmp/fly_{time.time()}.gif")
         self._frames[0].save(
             filename,
             format="GIF",
@@ -227,7 +227,7 @@ def draw_flies(
     steps: int,
     speed: int,
     amount: int,
-) -> str:
+) -> Path:
     flies = []
     for _ in range(amount):
         flies.append(Fly(speed=speed))

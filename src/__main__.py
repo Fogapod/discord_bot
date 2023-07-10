@@ -26,7 +26,7 @@ async def main() -> None:
 
     version = Version()
 
-    log.info(f"running on version {version.full()} python {platform.python_version()}")
+    log.info("running on version %s python %s", version.full(), platform.python_version())
 
     if settings.sentry.dsn is not None:
         import sentry_sdk

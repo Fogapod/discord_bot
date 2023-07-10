@@ -7,7 +7,7 @@ class Leet(Accent):
     # note:
     # \ should be avoided because it renders differently in discord codeblocks and
     # normal text
-    PATTERNS = {
+    PATTERNS = {  # noqa: RUF012
         r"a": "4",
         r"b": "6",
         # r"c": "(",

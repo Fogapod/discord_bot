@@ -107,7 +107,7 @@ def generate_neologism(_: Match) -> str:
 class Schizophrenia(Accent):
     """Weather is great today, isnt it?"""
 
-    WORDS = {
+    WORDS = {  # noqa: RUF012
         r"\w+": {
             switch_topic: 0.13,
             repeat_word: 0.2,

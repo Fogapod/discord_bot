@@ -5,8 +5,9 @@ import collections
 import logging
 import time
 
+from collections.abc import Mapping
 from dataclasses import InitVar, dataclass, field
-from typing import Any, ClassVar, List, Mapping
+from typing import Any, ClassVar
 
 import aiohttp
 
@@ -100,7 +101,7 @@ class Server:
     port: str
     password: bool
     address: str = field(init=False)
-    downloads: List[DownloadAddress]
+    downloads: list[DownloadAddress]
 
     def __post_init__(self, _name: str, _players: str) -> None:
         # newlines are allowed in server names
@@ -153,7 +154,7 @@ class ServerListClient:
     FETCH_INTERVAL = 10
 
     def __init__(self) -> None:
-        self.servers: List[Server] = []
+        self.servers: list[Server] = []
         self._fetch_time = time.monotonic() - self.FETCH_INTERVAL
 
     async def fetch(self, ctx: Context) -> None:

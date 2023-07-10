@@ -7,6 +7,6 @@ from pink_accents import Accent
 class Dashes(Accent):
     """Who-even-talks-like-this?"""
 
-    PATTERNS = {
+    PATTERNS = {  # noqa: RUF012
         r" +": "-",
     }

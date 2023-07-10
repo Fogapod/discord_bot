@@ -1,8 +1,9 @@
 import asyncio
 
+from collections.abc import Awaitable, Callable
 from concurrent.futures import Executor
 from functools import partial, wraps
-from typing import Awaitable, Callable, Optional, ParamSpec, TypeVar
+from typing import Optional, ParamSpec, TypeVar
 
 T = TypeVar("T")
 P = ParamSpec("P")

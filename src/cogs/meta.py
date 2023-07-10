@@ -7,7 +7,7 @@ from collections.abc import Callable, Iterable
 from importlib import metadata
 from pathlib import Path
 from types import FunctionType, MethodDescriptorType, MethodType, ModuleType
-from typing import Any, Optional, Type
+from typing import Any, Optional
 
 import discord
 
@@ -70,7 +70,7 @@ class Meta(Cog):
         """General information about bot"""
 
         owner_mentions = []
-        for owner_id in dict.fromkeys([*AUTHORS, *self.bot.owner_ids]).keys():
+        for owner_id in dict.fromkeys([*AUTHORS, *self.bot.owner_ids]):
             if owner := await self.bot.maybe_get_user(owner_id):
                 if owner.id in AUTHORS and owner.id not in self.bot.owner_ids:
                     owner_mentions.append(f"{owner}[inactive]")
@@ -95,7 +95,7 @@ class Meta(Cog):
 
     def _get_object_for_source_inspection(
         self, ctx: Context, name: str
-    ) -> Iterable[Type[Any] | FunctionType | MethodType | MethodDescriptorType | Callable[..., Any] | ModuleType]:
+    ) -> Iterable[type[Any] | FunctionType | MethodType | MethodDescriptorType | Callable[..., Any] | ModuleType]:
         object_aliases = {
             "Bot": ctx.bot,
             "Context": ctx,
@@ -180,7 +180,7 @@ class Meta(Cog):
         repo: str,
         branch: str,
         obj: Optional[
-            Type[Any] | FunctionType | MethodType | MethodDescriptorType | Callable[..., Any] | ModuleType
+            type[Any] | FunctionType | MethodType | MethodDescriptorType | Callable[..., Any] | ModuleType
         ] = None,
     ) -> str:
         base = f"https://{repo}"
@@ -214,7 +214,7 @@ class Meta(Cog):
         branch: Optional[str],
         commit: Optional[str],
         obj: Optional[
-            Type[Any] | FunctionType | MethodType | MethodDescriptorType | Callable[..., Any] | ModuleType
+            type[Any] | FunctionType | MethodType | MethodDescriptorType | Callable[..., Any] | ModuleType
         ] = None,
     ) -> str:
         base = f"https://{repo}"
@@ -306,9 +306,8 @@ class Meta(Cog):
                 commit = None
                 branch = None
 
-                if (commit := ctx.bot.version.git_commit) is None:
-                    if (branch := ctx.bot.version.git_branch) is None:
-                        branch = "main"
+                if (commit := ctx.bot.version.git_commit) is None and (branch := ctx.bot.version.git_branch) is None:
+                    branch = "main"
 
                 url = self._gitea_object_url(
                     repo=repo,

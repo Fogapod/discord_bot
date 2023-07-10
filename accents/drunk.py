@@ -30,7 +30,7 @@ def hiccburp(m: Match) -> Optional[str]:
 class Drunk(Accent):
     """You feel horrible"""
 
-    PATTERNS = {
+    PATTERNS = {  # noqa: RUF012
         r"\B[aeiouslnmr]\B": duplicate_char,
         r"\b +\b": hiccburp,
     }

@@ -92,11 +92,7 @@ class Fun(Cog):
 
         elif isinstance(
             target,
-            (
-                discord.TextChannel,
-                discord.CategoryChannel,
-                discord.VoiceChannel,
-            ),
+            discord.TextChannel | discord.CategoryChannel | discord.VoiceChannel,
         ):
             mention = target.mention
             preposition = "into"
@@ -132,16 +128,19 @@ class Fun(Cog):
         await ctx.send(f"**{ctx.author}** {verb} {item} {preposition} **{mention}**{modifier}!")
 
         if isinstance(target, discord.TextChannel):
-            if target.guild == ctx.guild:
-                if target.permissions_for(ctx.author).send_messages and target.permissions_for(ctx.me).send_messages:  # type: ignore
-                    if ctx.channel.is_nsfw() and not target.is_nsfw():  # type: ignore
-                        return await ctx.send("Can't throw items from horny channel!")
+            if (
+                target.guild == ctx.guild
+                and target.permissions_for(ctx.author).send_messages  # type: ignore
+                and target.permissions_for(ctx.me).send_messages  # type: ignore
+            ):
+                if ctx.channel.is_nsfw() and not target.is_nsfw():  # type: ignore
+                    return await ctx.send("Can't throw items from horny channel!")
 
-                    return await ctx.send(
-                        f"{item} flies from `{ctx.author}` in {ctx.channel.mention}!",  # type: ignore
-                        target=target,
-                        allowed_mentions=discord.AllowedMentions(users=False),
-                    )
+                return await ctx.send(
+                    f"{item} flies from `{ctx.author}` in {ctx.channel.mention}!",  # type: ignore
+                    target=target,
+                    allowed_mentions=discord.AllowedMentions(users=False),
+                )
 
             await ctx.send(f"{item} bounces back from {mention} and hits `{ctx.author}`!")
 

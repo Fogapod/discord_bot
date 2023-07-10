@@ -8,7 +8,7 @@ import warnings
 from asyncio import TimeoutError
 from enum import Enum, auto
 from io import BytesIO
-from typing import Any, List, Literal, Optional
+from typing import Any, Literal, Optional
 
 import aiohttp
 import discord
@@ -195,7 +195,11 @@ class Image:
 
         def pick_format(target_animated: bool) -> Optional[Literal["webp", "jpeg", "jpg", "png", "gif"]]:
             if allow_static and allow_animated:
-                return cls.DEFAULT_ANIMATED_FORMAT if target_animated else cls.DEFAULT_STATIC_FORMAT  # type: ignore[return-value]
+                return (
+                    cls.DEFAULT_ANIMATED_FORMAT
+                    if target_animated
+                    else cls.DEFAULT_STATIC_FORMAT  # type: ignore[return-value]
+                )
 
             if allow_animated and target_animated:
                 return cls.DEFAULT_ANIMATED_FORMAT  # type: ignore[return-value]
@@ -226,7 +230,7 @@ class Image:
             )
 
         # check if pattern is id that points to emote
-        if id_match := ID_REGEX.fullmatch(argument):
+        if id_match := ID_REGEX.fullmatch(argument):  # noqa: SIM102
             if emote := ctx.bot.get_emoji(int(id_match.string)):
                 if (emote_format := pick_format(emote.animated)) is None:
                     raise commands.BadArgument("Static images are not allowed, static emote provided")
@@ -242,7 +246,7 @@ class Image:
         # thanks discord for this nonsense
         pattern_no_selector_16 = argument.rstrip("\N{VARIATION SELECTOR-16}")
 
-        code = "-".join(map(lambda c: f"{ord(c):x}", pattern_no_selector_16))
+        code = "-".join(f"{ord(c):x}" for c in pattern_no_selector_16)
         emote_url = f"https://cdn.notsobot.com/twemoji/512x512/{code}.png"
 
         async with ctx.session.get(emote_url, timeout=aiohttp.ClientTimeout(total=5)) as r:
@@ -297,10 +301,7 @@ class Image:
         allow_animated: bool = False,
     ) -> Optional[str]:
         extension = url.rpartition(".")[-1].lower()
-        if extension in cls.STATIC_FORMATS and allow_static:
-            return extension
-
-        elif extension in cls.ANIMATED_FORMATS and allow_animated:
+        if (extension in cls.STATIC_FORMATS and allow_static) or (extension in cls.ANIMATED_FORMATS and allow_animated):
             return extension
 
         return None
@@ -361,9 +362,8 @@ class Image:
 
             # avoid case when image embed was created from url that is
             # used as argument or flag
-            if msg.id == ctx.message.id:
-                if embed.thumbnail.url in msg.content:
-                    continue
+            if msg.id == ctx.message.id and embed.thumbnail.url in msg.content:
+                continue
 
             if (
                 cls._check_extension(
@@ -410,7 +410,7 @@ class Image:
         # to check messages before created_at
         history = [m async for m in ctx.channel.history(limit=200, before=ctx.message.created_at)]
 
-        for msg in [ctx.message] + history:
+        for msg in [ctx.message, *history]:
             if (img := cls.from_message(ctx, msg, allow_static=allow_static, allow_animated=allow_animated)) is not None:
                 return img
 
@@ -456,7 +456,7 @@ class Image:
                 if (r.content_length or 0) > max_content_length:
                     raise PINKError("content is too big", formatted=False)
 
-                allowed_extensions: List[str] = []
+                allowed_extensions: list[str] = []
                 if allow_static:
                     allowed_extensions.extend(cls.STATIC_FORMATS)
                 if allow_animated:
@@ -464,7 +464,8 @@ class Image:
 
                 if r.content_type.rpartition("/")[-1].lower() not in allowed_extensions:
                     raise PINKError(
-                        f'unknown content type: **{r.content_type}**, expected one of **{", ".join(allowed_extensions)}**'
+                        f"unknown content type: **{r.content_type}**, expected one of "
+                        f'**{", ".join(allowed_extensions)}**'
                     )
 
                 return await r.read()

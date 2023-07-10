@@ -6,7 +6,8 @@ import typing
 
 from collections.abc import Iterable
 from enum import Enum, auto
-from typing import Any, ClassVar, Literal, Optional, Type, TypeVar
+from pathlib import Path
+from typing import Any, ClassVar, Literal, Optional, TypeVar
 
 __all__ = ("settings",)
 
@@ -41,8 +42,8 @@ class BaseConfig:
     ...
 
 
-def merge_configs(base: Type[BaseConfig], overrides: Optional[Type[BaseConfig]]) -> Type[BaseConfig]:
-    bases: tuple[Type[BaseConfig], ...]
+def merge_configs(base: type[BaseConfig], overrides: Optional[type[BaseConfig]]) -> type[BaseConfig]:
+    bases: tuple[type[BaseConfig], ...]
 
     if overrides is None:
         bases = (base,)
@@ -55,7 +56,13 @@ def merge_configs(base: Type[BaseConfig], overrides: Optional[Type[BaseConfig]])
 
 
 class ModelMeta(type):
-    def __new__(mcls, name: str, bases: tuple[type, ...], namespace: dict[str, Any], **kwargs: Any) -> type:
+    def __new__(
+        mcls,  # noqa: N804
+        name: str,
+        bases: tuple[type, ...],
+        namespace: dict[str, Any],
+        **kwargs: Any,
+    ) -> type:
         config = BaseConfig
 
         for base in reversed(bases):
@@ -93,7 +100,7 @@ class ModelMeta(type):
 
 
 class BaseModel(metaclass=ModelMeta):
-    __config__: ClassVar[Type[BaseConfig]]
+    __config__: ClassVar[type[BaseConfig]]
     # TODO
     __all_fields_optional__: ClassVar[bool]
     __fields__: ClassVar[Iterable[Field]]
@@ -143,8 +150,8 @@ SettingsT = TypeVar("SettingsT", bound="BaseSettings")
 class BaseSettings(BaseModel):
     """TOML settings"""
 
-    __config__: ClassVar[Type[Config]]
-    __data__: dict[str, Any] = {}
+    __config__: ClassVar[type[Config]]
+    __data__: dict[str, Any]
 
     def __init__(self, *, data: Optional[dict[str, Any]] = None) -> None:
         if data is None:
@@ -155,20 +162,22 @@ class BaseSettings(BaseModel):
         self.validate(data, self.__config__.env_prefix)
 
     def __loader_impl__(self) -> dict[str, Any]:
+        settings_file = Path(self.__config__.settings_file)
+
         if self.__config__.loader == Loader.TOML:
             import tomllib
 
-            with open(self.__config__.settings_file, "rb") as f:
+            with settings_file.open("rb") as f:
                 return tomllib.load(f)
         elif self.__config__.loader == Loader.JSON:
             import json
 
-            with open(self.__config__.settings_file, "r") as f:
+            with settings_file.open() as f:
                 return json.load(f)
         else:
             raise NotImplementedError(f"Unknown loader {self.__config__.loader}")
 
-    def subsettings(self, settings: Type[SettingsT]) -> SettingsT:
+    def subsettings(self, settings: type[SettingsT]) -> SettingsT:
         data = self.__data__
 
         subsections = settings.__config__.section.split(".")
@@ -210,7 +219,7 @@ class SentrySettings(BaseSettings):
 
 
 class OwnersSettings(BaseModel):
-    ids: set[int] = set()
+    ids: set[int] = set()  # noqa: RUF012
     mode: Literal["combine", "overwrite"] = "combine"
 
 

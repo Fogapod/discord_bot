@@ -23,7 +23,7 @@ def go_brrrr(m: Match) -> str:
 class Autumn(Accent):
     """Texan + Australian - letters = Autumn"""
 
-    WORDS = {
+    WORDS = {  # noqa: RUF012
         r"increas[a-z]+": {
             lambda m: go_brrrr(m): 0.5,
         },
@@ -40,7 +40,7 @@ class Autumn(Accent):
             "tis": 0.3,
         },
     }
-    PATTERNS = {
+    PATTERNS = {  # noqa: RUF012
         # "who" does not work well with this
         r"\bwh(?!o)": "w",
         r"oo": "u",

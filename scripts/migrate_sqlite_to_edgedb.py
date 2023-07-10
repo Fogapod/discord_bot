@@ -4,7 +4,7 @@ import json
 import os
 import sqlite3
 
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 import edgedb  # type: ignore
 
@@ -19,7 +19,7 @@ def main() -> None:
 
     edgedb_conn = edgedb.connect(os.environ["EDGEDB_DSN"])
 
-    accents: Dict[Tuple[int, int], List[Any]] = {}
+    accents: dict[tuple[int, int], list[Any]] = {}
     for accent in sqlite_conn.execute("SELECT guild_id, user_id, accent, severity FROM user_accent"):
         pk = (accent["guild_id"], accent["user_id"])
         data = (accent["accent"], accent["severity"])

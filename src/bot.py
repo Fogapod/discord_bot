@@ -5,8 +5,9 @@ import logging
 import re
 import time
 
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Any, Iterator, Optional, Type
+from typing import Any, Optional
 
 import aiohttp
 import asyncpg
@@ -107,20 +108,20 @@ class PINK(commands.Bot):
 
             app_info = await self.application_info()
             if team := app_info.team:
-                owners |= set(m.id for m in team.members)
+                owners |= {m.id for m in team.members}
             else:
                 owners.add(app_info.owner.id)
 
         self.owner_ids = owners
 
-        log.info(f"bot owners: {' | '.join(map(str, self.owner_ids))}")
+        log.info("bot owners: %s", " | ".join(map(str, self.owner_ids)))
 
     async def _load_cogs(self) -> None:
         for module in self._iterate_cogs():
             try:
                 await self.load_extension(module)
             except Exception:
-                log.exception(f"while loading {module}")
+                log.exception("while loading %s", module)
 
     def _iterate_cogs(self, path: Optional[Path] = None) -> Iterator[str]:
         """
@@ -177,37 +178,37 @@ class PINK(commands.Bot):
 
     async def get_context(
         self,
-        origin: discord.Message | discord.Interaction,
+        origin: discord.Message | discord.Interaction[Any],
         /,
         *,
-        cls: Type[commands.Context[PINK]] = discord.utils.MISSING,
+        cls: type[commands.Context[PINK]] = discord.utils.MISSING,
     ) -> Any:
         return await super().get_context(origin, cls=cls or Context)
 
     async def load_extension(self, name: str, *, package: Optional[str] = None) -> None:
-        log.debug(f"loading {name}")
+        log.debug("loading %s", name)
 
         await super().load_extension(name, package=package)
 
-        log.info(f"loaded {name}")
+        log.info("loaded %s", name)
 
     async def unload_extension(self, name: str, *, package: Optional[str] = None) -> None:
-        log.debug(f"unloading {name}")
+        log.debug("unloading %s", name)
 
         await super().unload_extension(name, package=package)
 
-        log.info(f"unloaded {name}")
+        log.info("unloaded %s", name)
 
     async def reload_extension(self, name: str, *, package: Optional[str] = None) -> None:
-        log.debug(f"reloading {name}")
+        log.debug("reloading %s", name)
 
         await super().reload_extension(name, package=package)
 
-        log.info(f"reloaded {name}")
+        log.info("reloaded %s")
 
     # --- events ---
     async def on_ready(self) -> None:
-        log.info(f"READY as {self.user} ({self.user.id}) with prefix {settings.bot.prefix}")  # type: ignore
+        log.info("READY as %s (%s) with prefix %s", self.user, self.user.id, self.bot.prefix)  # type: ignore
 
     async def on_message(self, message: discord.Message) -> None:
         # TODO: how to make this optional? sentry must not be a hard dependency

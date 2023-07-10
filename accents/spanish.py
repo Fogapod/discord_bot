@@ -14,7 +14,7 @@ class Spanish(Accent):
     _sentence_end = re.compile(r"(?<=[\.!\?])")
     _first_non_space = re.compile(r"(?=\S)")
 
-    PATTERNS = {
+    PATTERNS = {  # noqa: RUF012
         r"((?<=\s)|\A)s": "es",
     }
 

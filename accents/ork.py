@@ -1,6 +1,5 @@
+# ruff: noqa: RUF001, E501
 import textwrap
-
-from typing import Dict, List
 
 from pink_accents import Accent
 
@@ -8,7 +7,7 @@ from pink_accents import Accent
 class Ork(Accent):
     """You feel the urge to crush ummiez"""
 
-    WORDS = {
+    WORDS = {  # noqa: RUF012
         r"would have": "woulda",
         r"let me": "lemme",
         r"give me": "gimme",
@@ -257,7 +256,7 @@ class Ork(Accent):
         r"(what'sit|whatsit)": "wotsit",
     }
 
-    PATTERNS = {
+    PATTERNS = {  # noqa: RUF012
         r"(\bth|th\b)": "d",
         r"(\bca|ca\b)": "ka",
         r"(\bcu|cu\b)": "ku",
@@ -267,7 +266,7 @@ class Ork(Accent):
     }
 
 
-def push(key: str, value: str, collection: Dict[str, List[str]]) -> None:
+def push(key: str, value: str, collection: dict[str, list[str]]) -> None:
     """Push key to collection. I forgot what it does"""
 
     # lower keys are fine, lower values are not
@@ -286,10 +285,10 @@ def push(key: str, value: str, collection: Dict[str, List[str]]) -> None:
             collection[key].append(value)
 
 
-def merge_duplicate_regexes(collection: Dict[str, List[str]]) -> Dict[str, List[str]]:
+def merge_duplicate_regexes(collection: dict[str, list[str]]) -> dict[str, list[str]]:
     """Create regex groups `(a|b)` for all duplicated keys, leave others untouched"""
 
-    inverted_map: Dict[str, List[str]] = {}
+    inverted_map: dict[str, list[str]] = {}
 
     for k, val in collection.items():
         for v in val:
@@ -298,7 +297,7 @@ def merge_duplicate_regexes(collection: Dict[str, List[str]]) -> Dict[str, List[
             else:
                 inverted_map[v] = [k]
 
-    merged: Dict[str, List[str]] = {}
+    merged: dict[str, list[str]] = {}
     for replacement, w in inverted_map.items():
         key = f'({"|".join(w)})' if len(w) > 1 else w[0]
 
@@ -307,7 +306,7 @@ def merge_duplicate_regexes(collection: Dict[str, List[str]]) -> Dict[str, List[
     return merged
 
 
-def generate_pink_accent(words: Dict[str, List[str]], patterns: Dict[str, List[str]]) -> None:
+def generate_pink_accent(words: dict[str, list[str]], patterns: dict[str, list[str]]) -> None:
     words_lines = []
     patterns_lines = []
 
@@ -342,7 +341,7 @@ PATTERNS = {{
     )
 
 
-def generate_unitystation_accent(words: Dict[str, List[str]], patterns: Dict[str, List[str]]) -> None:
+def generate_unitystation_accent(words: dict[str, list[str]], patterns: dict[str, list[str]]) -> None:
     blocks = []
 
     for k, v in {**words, **patterns}.items():
@@ -416,8 +415,8 @@ if __name__ == "__main__":
         },
     )
 
-    words: Dict[str, List[str]] = {}
-    patterns: Dict[str, List[str]] = {}
+    words: dict[str, list[str]] = {}
+    patterns: dict[str, list[str]] = {}
 
     for inp in inputs:
         # split in advance

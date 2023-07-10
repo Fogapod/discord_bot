@@ -3,7 +3,7 @@
 
 import random
 
-from typing import Generator
+from collections.abc import Generator
 
 from pink_accents import Accent, Match, ReplacementContext
 
@@ -38,6 +38,6 @@ def e(m: Match) -> str:
 class E(Accent):
     """Eeeeee eeeeeeeeeee eee eeee"""
 
-    PATTERNS = {
+    PATTERNS = {  # noqa: RUF012
         r"[a-z]": e,
     }

@@ -17,7 +17,7 @@ def honk(m: Match) -> Optional[str]:
 class Clown(Accent):
     """LOUD == FUNNY HONK!"""
 
-    PATTERNS = {
+    PATTERNS = {  # noqa: RUF012
         r"[a-z]+": lambda m: m.original.upper() if m.severity > 1 else m.original,
         DISCORD_MESSAGE_END: honk,
     }

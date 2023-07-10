@@ -60,7 +60,8 @@ class Code:
         if not self.has_codeblock:
             return self.body
 
-        # this is not completely accurate because it always inserts \n between language and body. also newlines around body are stripped
+        # this is not completely accurate because it always inserts \n between language and body. also newlines around
+        # body are stripped
         return f"```{'' if self.language is None else self.language}\n{self.body}```"
 
 
@@ -80,7 +81,7 @@ class TechAdmin(Cog):
         self._last_reloaded_extension: Optional[str] = last_reloaded
 
     async def cog_unload(self) -> None:
-        self.bot.__i_am_sorry_this_is_needed_for_reload_will_delete_later_i_promise = self._last_reloaded_extension  # type: ignore
+        self.bot.__i_am_sorry_this_is_needed_for_reload_will_delete_later_i_promise = self._last_reloaded_extension  # type: ignore  # noqa: E501
 
     # TODO: a converter
     # TODO: resolve cogs inside groups properly (folders without __ini__.py)
@@ -240,14 +241,13 @@ class TechAdmin(Cog):
             assert last_line_and_indent is not None
             last_line_indent, last_line = last_line_and_indent[1], last_line_and_indent[2]
 
-            if not last_line.startswith(("return ", "raise ", "yield ", " ", "\t")):
-                # ignore code that is already invalid. this may also fail if there is a multiline expression since we
-                # only take last line, we do not want to put return there either
-                if self._is_valid_syntax(last_line):
-                    last_line_with_return = f"return {last_line}"
-                    # may fail if this is assignment and probably some other cases
-                    if self._is_valid_syntax(last_line_with_return):
-                        last_line = last_line_with_return
+            # ignore code that is already invalid. this may also fail if there is a multiline expression since we
+            # only take last line, we do not want to put return there either
+            if not last_line.startswith(("return ", "raise ", "yield ", " ", "\t")) and self._is_valid_syntax(last_line):
+                last_line_with_return = f"return {last_line}"
+                # may fail if this is assignment and probably some other cases
+                if self._is_valid_syntax(last_line_with_return):
+                    last_line = last_line_with_return
 
             fn_body = f"{code_no_last_line}{maybe_nl}{last_line_indent}{last_line}"
 
@@ -258,6 +258,7 @@ async def __pink_eval__():
 
         # NOTE: docs exclicitly say exception value can be passed to format_exception_only since 3.10
         try:
+            # SAFETY: owner only command
             exec(wrapped_source, glob)
         except Exception as e:
             return "".join(traceback.format_exception_only(e))  # type: ignore[arg-type]

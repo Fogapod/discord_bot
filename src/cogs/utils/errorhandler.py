@@ -38,14 +38,13 @@ class ErrorHandler(Cog):
             e = e.original
 
         # ignored
-        if isinstance(e, (commands.CommandNotFound,)):
+        if isinstance(e, commands.CommandNotFound):
             return
 
         # owner bypassable
-        if isinstance(e, ((commands.CommandOnCooldown, commands.DisabledCommand),)):
-            if ctx.author.id in ctx.bot.owner_ids:
-                await ctx.reinvoke()
-                return
+        if isinstance(e, commands.CommandOnCooldown | commands.DisabledCommand) and ctx.author.id in ctx.bot.owner_ids:
+            await ctx.reinvoke()
+            return
 
         # TODO: track error frequency and sort this mess or use map
         if isinstance(e, commands.MissingRole):
@@ -64,24 +63,20 @@ class ErrorHandler(Cog):
             await ctx.reply(f"Check failed: {error}")
         elif isinstance(
             e,
-            (
-                commands.MissingRequiredArgument,
-                commands.BadArgument,
-                commands.NoPrivateMessage,
-            ),
+            commands.MissingRequiredArgument | commands.BadArgument | commands.NoPrivateMessage,
         ):
             ctx.command.reset_cooldown(ctx)  # type: ignore
 
             await ctx.reply(f"Error: **{e}**")
         elif isinstance(e, commands.TooManyArguments):
             await ctx.send_help(ctx.command)
-        elif isinstance(e, (commands.ArgumentParsingError, commands.BadUnionArgument)):
+        elif isinstance(e, commands.ArgumentParsingError | commands.BadUnionArgument):
             await ctx.reply(f"Unable to process command arguments: {e}")
         elif isinstance(e, commands.CommandOnCooldown):
             await ctx.reply(e)
         elif isinstance(e, PINKError):
             await e.handle(ctx)
-        elif isinstance(e, commands.MaxConcurrencyReached):
+        elif isinstance(e, commands.MaxConcurrencyReached):  # noqa: SIM114
             await ctx.reply(e)
         elif isinstance(e, commands.CommandError):
             await ctx.reply(e)

@@ -18,6 +18,6 @@ def repeat_char(m: Match) -> Optional[str]:
 class Stutter(Accent):
     """You st-t-tart repeating some ch-h-hars"""
 
-    PATTERNS = {
+    PATTERNS = {  # noqa: RUF012
         r"\b[a-z](?=[a-z]|\s)": repeat_char,
     }

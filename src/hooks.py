@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import contextlib
 import inspect
 
+from collections.abc import Callable, Iterable
 from functools import partial, update_wrapper, wraps
-from typing import Any, Callable, Iterable, Optional, ParamSpec, TypeVar
+from typing import Any, Optional, ParamSpec, TypeVar
 
 __all__ = (
     "HookHost",
@@ -32,10 +34,9 @@ class HookHost:
 
         for base in cls.__mro__:
             for value in base.__dict__.values():
-                if inspect.isfunction(value):
-                    if hasattr(value, "__hook_target__"):
-                        value.__hook_self_instance__ = self  # type: ignore[attr-defined]
-                        self.__active_hooks__.append(value)
+                if inspect.isfunction(value) and hasattr(value, "__hook_target__"):
+                    value.__hook_self_instance__ = self  # type: ignore[attr-defined]
+                    self.__active_hooks__.append(value)
 
         return self
 
@@ -58,9 +59,8 @@ class Hookable:
         cls.__hooks__ = {}
 
         for value in cls.__dict__.values():
-            if inspect.isfunction(value):
-                if hasattr(value, "__original__"):
-                    cls.__hooks__[value.__name__] = []
+            if inspect.isfunction(value) and hasattr(value, "__original__"):
+                cls.__hooks__[value.__name__] = []
 
     def _hooks_for(self, name: str) -> Iterable[_HookType]:
         return self.__hooks__.get(name, ())
@@ -105,7 +105,7 @@ class Hookable:
 
             nonlocal name
 
-            if name is None:
+            if name is None:  # noqa: SIM102
                 if (name := fn.__name__).startswith("on_"):
                     name = name[3:]
 
@@ -131,7 +131,5 @@ class Hookable:
     def remove_hook(cls, hook: _HookType) -> None:
         name = hook.__hook_name__  # type: ignore[attr-defined]
         if name in cls.__hooks__:
-            try:
+            with contextlib.suppress(ValueError):
                 cls.__hooks__[name].remove(hook)
-            except ValueError:
-                pass

@@ -4,7 +4,7 @@ from pink_accents import Accent
 class French(Accent):
     """You are at your limit"""
 
-    WORDS = {
+    WORDS = {  # noqa: RUF012
         r"a": (
             "un",
             "une",

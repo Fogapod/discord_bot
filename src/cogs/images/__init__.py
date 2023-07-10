@@ -1,5 +1,3 @@
-import os
-
 from typing import Optional
 
 import discord
@@ -127,7 +125,7 @@ class Images(Cog):
     async def trocr(
         self,
         ctx: Context,
-        language: _StrOrAccent = commands.parameter(converter=LanguageOrAccent()),
+        language: _StrOrAccent = commands.parameter(converter=LanguageOrAccent()),  # noqa: B008
         image: Optional[StaticImage] = commands.parameter(converter=StaticImage, default=None),
     ) -> None:
         """
@@ -207,11 +205,11 @@ class Images(Cog):
             filename = await draw_flies(src, fly_src, steps, velocity, amount)
 
             # optimize gif using gifsicle
-            await run_process("gifsicle", *GIFSICLE_ARGUMENTS + [filename])
+            await run_process("gifsicle", *GIFSICLE_ARGUMENTS, str(filename))
 
         await ctx.send(file=discord.File(filename, filename="fly.gif", spoiler=image.is_spoiler))
 
-        os.remove(filename)
+        filename.unlink()
 
 
 async def setup(bot: PINK) -> None:

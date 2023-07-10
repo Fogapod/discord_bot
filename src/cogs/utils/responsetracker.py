@@ -19,7 +19,7 @@ def convert_emoji_reaction(emoji: _EmojiType) -> str:
         emoji = emoji.emoji
 
     if isinstance(emoji, discord.Emoji):
-        return "%s:%s" % (emoji.name, emoji.id)
+        return "%s:%s" % (emoji.name, emoji.id)  # noqa: UP031
     if isinstance(emoji, discord.PartialEmoji):
         return emoji._as_reaction()
     if isinstance(emoji, str):
@@ -28,7 +28,7 @@ def convert_emoji_reaction(emoji: _EmojiType) -> str:
         return emoji.strip("<>")
 
     raise discord.errors.InvalidArgument(
-        "emoji argument must be str, Emoji, or Reaction not {.__class__.__name__}.".format(emoji)
+        "emoji argument must be str, Emoji, or Reaction not {.__class__.__name__}.".format(emoji)  # noqa: UP032
     )
 
 

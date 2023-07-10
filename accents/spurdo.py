@@ -7,7 +7,7 @@ from pink_accents import Accent
 class Spurdo(Accent):
     """You want to run away into forest"""
 
-    PATTERNS = {
+    PATTERNS = {  # noqa: RUF012
         r"xc": "gg",
         r"c": "g",
         r"k": "g",
@@ -21,6 +21,6 @@ class Spurdo(Accent):
         },
     }
 
-    WORDS = {
+    WORDS = {  # noqa: RUF012
         r"epic": "ebin",
     }

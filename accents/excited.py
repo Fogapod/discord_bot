@@ -4,8 +4,9 @@ This is heavily based on E accent.
 
 import random
 
+from collections.abc import Generator
 from math import log10
-from typing import Any, Generator, Type
+from typing import Any
 
 from pink_accents import Accent, Match, Replacement, ReplacementContext
 from pink_accents.errors import BadSeverity
@@ -55,7 +56,7 @@ class State:
 class Excited(Accent):
     """You feel excited"""
 
-    REPLACEMENTS = [Replacement(r"[a-z]", excited, adjust_case=False)]
+    REPLACEMENTS = [Replacement(r"[a-z]", excited, adjust_case=False)]  # noqa: RUF012
 
     # mypy does not understand properties at all
     @Accent.severity.setter  # type: ignore
@@ -74,7 +75,7 @@ class Excited(Accent):
         context_id: Any,
         # renaming to _cls or _ breaks mypy for some reason:
         # Signature of "get_context" incompatible with supertype "Accent"
-        cls: Type[ReplacementContext] = ReplacementContext,  # noqa: U100
+        cls: type[ReplacementContext] = ReplacementContext,
     ) -> ReplacementContext:
         ctx = ReplacementContext(
             source=text,

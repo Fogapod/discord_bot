@@ -4,8 +4,9 @@ import asyncio
 import itertools
 import math
 
+from collections.abc import Sequence
 from io import BytesIO
-from typing import Any, Optional, Sequence
+from typing import Any, ClassVar, Optional
 
 import PIL
 
@@ -48,7 +49,7 @@ _task: Optional[asyncio.Task[Any]] = None
 
 
 class GoogleOCRError(PINKError):
-    KNOWN_HINTS = {
+    KNOWN_HINTS: ClassVar[dict[int | None, str]] = {
         None: "The world is on fire, something really bad happened. I have no idea.",
         14: "This means Google cannot access image URL. Try using a different one.",
     }
@@ -77,11 +78,11 @@ class GoogleOCRError(PINKError):
         return base
 
 
-class TROCRException(Exception):
+class TROCRError(Exception):
     pass
 
 
-class AngleUndetectable(TROCRException):
+class AngleUndetectableError(TROCRError):
     pass
 
 
@@ -223,7 +224,7 @@ class TextField:
 
             break
         else:
-            raise AngleUndetectable
+            raise AngleUndetectableError
 
         # # truncate last digit, OCR often returns 1-2 degree tilted text, ignore this
         # TEMPORARY: truncate angle to 90 degrees
@@ -411,9 +412,9 @@ async def ocr(ctx: Context, image: Image) -> dict[str, Any]:
 
 @in_executor()
 def _draw_trocr(src: PIL.Image, fields: Sequence[TextField]) -> BytesIO:
-    FIELD_CAP = 150
+    field_cap = 150
 
-    fields = fields[:FIELD_CAP]
+    fields = fields[:field_cap]
 
     src = src.convert("RGBA")
 
@@ -502,9 +503,11 @@ async def _apply_translation(
     #     )
 
     # until language iterator is fixed we translate everything
-    need_trasnslation = {i: line for i, line in enumerate(lines)}
+    need_trasnslation = dict(enumerate(lines))
 
-    translated = await translator_cog.translate("\n".join(need_trasnslation.values()), language)  # type: ignore[attr-defined]
+    translated = await translator_cog.translate(  # type: ignore[attr-defined]
+        "\n".join(need_trasnslation.values()), language
+    )
 
     translated_lines = translated.split("\n")
     if len(translated_lines) != len(need_trasnslation):
@@ -556,14 +559,13 @@ async def ocr_translate(ctx: Context, image: StaticImage, language: str | Accent
                 # TODO: merge multiple lines into box
                 try:
                     field.add_word(word["boundingPoly"]["vertices"], src.size)
-                except AngleUndetectable:
+                except AngleUndetectableError:
                     notes += f"angle for `{word}` is undetectable\n"
             else:
                 break
 
-        if field.initialized:
-            if line.casefold() != original_line.casefold():
-                fields.append(field)
+        if field.initialized and line.casefold() != original_line.casefold():
+            fields.append(field)
 
     if not fields:
         raise PINKError("could not translate anything on image", formatted=False)
@@ -610,7 +612,7 @@ async def textboxes(ctx: Context, image: StaticImage, outline: tuple[int, int, i
                 # TODO: merge multiple lines into box
                 try:
                     field.add_word(word["boundingPoly"]["vertices"], src.size)
-                except AngleUndetectable:
+                except AngleUndetectableError:
                     notes += f"angle for `{word}` is undetectable\n"
             else:
                 break
@@ -632,9 +634,9 @@ async def textboxes(ctx: Context, image: StaticImage, outline: tuple[int, int, i
 
 @in_executor()
 def _draw_textboxes(src: PIL.Image, fields: Sequence[TextField], outline: tuple[int, int, int]) -> BytesIO:
-    FIELD_CAP = 150
+    field_cap = 150
 
-    fields = fields[:FIELD_CAP]
+    fields = fields[:field_cap]
 
     src = src.convert("RGBA")
     draw = ImageDraw.Draw(src)

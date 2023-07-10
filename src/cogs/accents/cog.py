@@ -6,7 +6,8 @@ import contextlib
 import logging
 import random
 
-from typing import TYPE_CHECKING, Any, DefaultDict, Dict, Iterable, List, Optional, Type
+from collections.abc import Iterable
+from typing import TYPE_CHECKING, Any, Optional
 
 import discord
 
@@ -44,7 +45,7 @@ class Accents(Cog, HookHost):
         self._webhooks = LRU(64)
 
         # guild_id -> user_id -> [Accent]
-        self._accents: Dict[int, Dict[int, List[Accent]]] = {}
+        self._accents: dict[int, dict[int, list[Accent]]] = {}
 
         # message_id -> webhook_message
         # used for fighting back against discord embed message edits:
@@ -60,7 +61,7 @@ class Accents(Cog, HookHost):
         for settings in await self.bot.pg.fetch("SELECT guild_id, user_id, name, severity FROM accents"):
             if (accent_cls := ALL_ACCENTS.get(settings["name"].lower())) is None:
                 log.error(
-                    f"unknown accent: " f"guild={settings['guild_id']} user={settings['user_id']} {settings['name']}"
+                    "unknown accent: guild=%s user=%s %s", settings["guild_id"], settings["user_id"], settings["name"]
                 )
 
                 continue
@@ -133,7 +134,7 @@ class Accents(Cog, HookHost):
 
             return default
 
-        longest_name = max(len(k) for k in ALL_ACCENTS.keys())
+        longest_name = max(len(k) for k in ALL_ACCENTS)
 
         for accent in sorted(
             ALL_ACCENTS.values(),
@@ -320,11 +321,10 @@ class Accents(Cog, HookHost):
         if (accent_webhook := await self._get_cached_webhook(ctx.channel, create=False)) is None:  # type: ignore
             raise PINKError("There is no accent webhook in this channel. Nothing to delete")
 
-        message_counts: DefaultDict[str, int] = collections.defaultdict(int)
+        message_counts: collections.defaultdict[str, int] = collections.defaultdict(int)
 
         def is_accent_webhook(m: discord.Message) -> bool:
-            # mypy does not understand that None was just checked above
-            if m.webhook_id != accent_webhook.id:  # type: ignore
+            if m.webhook_id != accent_webhook.id:
                 return False
 
             message_counts[m.author.name] += 1
@@ -332,7 +332,11 @@ class Accents(Cog, HookHost):
             return True
 
         async with ctx.typing():
-            deleted = await ctx.channel.purge(limit=limit, check=is_accent_webhook, before=ctx.message.created_at)  # type: ignore
+            deleted = await ctx.channel.purge(  # type: ignore
+                limit=limit,
+                check=is_accent_webhook,
+                before=ctx.message.created_at,
+            )
 
             if not deleted:
                 return await ctx.send("No accent messages found")
@@ -346,7 +350,7 @@ class Accents(Cog, HookHost):
     async def _toggle_bot_accent(
         self,
         ctx: Context,
-        accent: Type[Accent],
+        accent: type[Accent],
         *,
         min_severity: int = 1,
         max_severity: int = 1,
@@ -471,7 +475,7 @@ class Accents(Cog, HookHost):
             # PartialMessageable is weird, it must be excluded by doing this
             assert isinstance(
                 message.channel,
-                (discord.TextChannel, discord.DMChannel, discord.Thread),
+                discord.TextChannel | discord.DMChannel | discord.Thread,
             )
 
         if not (accents := self.get_user_accents(message.author)):

@@ -4,7 +4,7 @@ from pink_accents import Accent
 class Dyslexic(Accent):
     """Waht does tihs do even?"""
 
-    PATTERNS = {
+    PATTERNS = {  # noqa: RUF012
         # swap words with 5% * severity chance
         r"\b(\w+?)(\s+)(\w+?)\b": {
             lambda m: f"{m.match[3]}{m.match[2]}{m.match[1]}": lambda s: s * 0.05,

@@ -1,28 +1,55 @@
 [tool.ruff]
 line-length = 121
 ignore = [
-    "B008",
-    "E501",
+    # doesn't like Optional
+    # https://github.com/charliermarsh/ruff/issues/4858
+    "UP007",
+    # explicit raise from might be a bit too verbose, disable for now
+    "B904",
+    # suggest inlining complex if statements
+    "SIM108",
 ]
 select = [
-    # Pyflakes
+    # pyflakes
     "F",
-    # Pycodestyle
+    # pycodestyle
     "E",
     "W",
     # isort
-    "I001",
+    "I",
+    # flake8-bugbear
+    "B",
+    # flake8-naming
+    "N",
+    # pyupgrade
+    "UP",
+    # flake8-bandit
+    # most rules are stupid
+    # "S",
+    # flake8-comprehensions
+    "C4",
+    # flake8-logging-format
+    "G",
+    # flake8-simplify
+    "SIM",
+    # flake8-use-pathlib
+    "PTH",
+    # ruff
+    "RUF",
 ]
 fixable = [
-	"I001"
+    "I"
 ]
+
+[tool.ruff.flake8-bugbear]
+extend-immutable-calls = ["discord.ext.commands.parameter"]
 
 [tool.ruff.isort]
 combine-as-imports = true
 lines-between-types = 1
 
 [tool.black]
-target-version = ['py310']
+target-version = ['py311']
 line-length = 121
 
 [tool.mypy]

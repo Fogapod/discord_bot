@@ -32,7 +32,7 @@ SEVERE_PATTERNS = {
 class Swedish(Accent):
     """You feel the urge to build a meatball monument"""
 
-    PATTERNS = {
+    PATTERNS = {  # noqa: RUF012
         r"w": "v",
         r"j": "y",
         r"bo": "bjo",

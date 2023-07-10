@@ -7,7 +7,7 @@ class Scotsman(Accent):
     """Makes you less polite"""
 
     # this is insanity. maybe use prefix tree?
-    WORDS = {
+    WORDS = {  # noqa: RUF012
         r"about": "aboot",
         r"above": "`boon",
         r"accounts": "accoonts",
@@ -640,7 +640,7 @@ class Scotsman(Accent):
         r"girls": ("lasses", "lassies", "burds"),
     }
 
-    PATTERNS = {
+    PATTERNS = {  # noqa: RUF012
         DISCORD_MESSAGE_END: {
             " ye daft cunt": lambda s: 0.4 + (0.6 * s / 9),
         }

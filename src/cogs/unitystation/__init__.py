@@ -98,7 +98,7 @@ class UnityStation(Cog):
                     # mark servers with bad downloads
                     if not server.downloads_good:
                         value = f"{value} !"
-                elif attribute == "players":
+                elif attribute == "players":  # noqa: SIM102
                     if server.password:
                         value = f"{value} [#]"
 
@@ -150,7 +150,8 @@ class UnityStation(Cog):
 
         sorted_changes = sorted(
             changes,
-            # priorities: is new, is fix, every other tag else alphabetically, date, pr number from new to old, author name
+            # priorities: is new, is fix, every other tag else alphabetically, date, pr number from new to old, author
+            # name
             # NOTE: this is a mess and is probably borken
             key=lambda c: (
                 c["category"].lower() != "new",

@@ -5,7 +5,7 @@ from pink_accents import Accent
 class Slav(Accent):
     """You feel drunk"""
 
-    WORDS = {
+    WORDS = {  # noqa: RUF012
         r"my": "our",
         r"friend": "comrade",
         r"(enemy|foe)": "american pig",
@@ -17,7 +17,7 @@ class Slav(Accent):
         r"we are being attacked": "нас атакуют",
     }
 
-    PATTERNS = {
+    PATTERNS = {  # noqa: RUF012
         r"\b(a|the) +": {
             "": 0.5,
         },
