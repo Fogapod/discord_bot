@@ -438,7 +438,7 @@ def _draw_trocr(src: PIL.Image, fields: Sequence[TextField]) -> BytesIO:
 
         text_im = PIL.Image.new(
             "RGBA",
-            size=font.getsize(field.text, stroke_width=field.stroke_width),
+            size=font.getbox(field.text, stroke_width=field.stroke_width),
         )
 
         ImageDraw.Draw(text_im).text(
