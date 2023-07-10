@@ -376,14 +376,29 @@ class Meta(Cog):
 
     @commands.command()
     @commands.cooldown(1, 2, type=commands.BucketType.channel)
-    async def randmsg(self, ctx: Context) -> None:
+    async def randmsg(self, ctx: Context, channel: Optional[discord.TextChannel] = None) -> None:
         """
         Returns random message in channel
         """
 
+        if channel is None:
+            channel = ctx.channel  # type: ignore
+            # i hate d.py typing. this is for history calls later
+            assert channel is not None
+
+        user_perms = channel.permissions_for(ctx.author)  # type: ignore
+        if not (user_perms.read_messages and user_perms.read_message_history):
+            await ctx.reply("You do not have access to this channel")
+            return
+
+        my_perms = channel.permissions_for(ctx.author)  # type: ignore
+        if not (my_perms.read_messages and my_perms.read_message_history):
+            await ctx.reply("I do not have access to this channel")
+            return
+
         # this should never index error because we at least should have initial message in channel
         # might be worth caching this
-        oldest = [m async for m in ctx.channel.history(limit=1, oldest_first=True)][0]
+        oldest = [m async for m in channel.history(limit=1, oldest_first=True)][0]
 
         if ctx.message == oldest:
             offset = 0
@@ -392,14 +407,21 @@ class Meta(Cog):
             offset = random.randrange(diff + 1)
 
         # not sure if around always work. if this ever errors, use before/after
-        random_message = [m async for m in ctx.channel.history(limit=1, around=discord.Object(id=oldest.id + offset))][0]
+        random_message = [m async for m in channel.history(limit=1, around=discord.Object(id=oldest.id + offset))][0]
 
-        await ctx.send(
-            f"by **{random_message.author}** in {random_message.created_at.year}",
-            mention_author=False,
-            reference=random_message,
-            accents=[],
-        )
+        if channel == ctx.channel:
+            await ctx.send(
+                f"by **{random_message.author}** in {random_message.created_at.year}",
+                mention_author=False,
+                reference=random_message,
+            )
+        else:
+            await ctx.reply(
+                f"by **{random_message.author}** in {random_message.created_at.year}: {random_message.jump_url}",
+                mention_author=False,
+                # we can not afford to fuck up jump url with owo or something
+                accents=[],
+            )
 
 
 async def setup(bot: PINK) -> None:
