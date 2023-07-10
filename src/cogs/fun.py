@@ -200,15 +200,13 @@ class Fun(Cog):
 
     @commands.command()
     @commands.cooldown(1, 2, type=commands.BucketType.user)
-    async def randmsg(self, ctx: Context, channel: Optional[discord.TextChannel]) -> None:
+    async def randmsg(self, ctx: Context, channel: discord.TextChannel = commands.parameter(default=None)) -> None:
         """
         Returns random message from channel
         """
 
         if channel is None:
-            channel = ctx.channel  # type: ignore
-            # i hate d.py typing. this is for history calls later
-            assert channel is not None
+            channel = ctx.channel
 
         self._ensure_fetch_perms(ctx.author, channel)
         past_point = await self._random_history_point(ctx.message, channel)
@@ -259,15 +257,13 @@ class Fun(Cog):
 
     @commands.command()
     @commands.cooldown(1, 4, type=commands.BucketType.user)
-    async def randimg(self, ctx: Context, channel: Optional[discord.TextChannel]) -> None:
+    async def randimg(self, ctx: Context, channel: discord.TextChannel = commands.parameter(default=None)) -> None:
         """
         Returns random image from channel
         """
 
         if channel is None:
-            channel = ctx.channel  # type: ignore
-            # i hate d.py typing. this is for history calls later
-            assert channel is not None
+            channel = ctx.channel
 
         if isinstance(channel, discord.TextChannel) and channel.is_nsfw() and not ctx.channel.nsfw:  # type: ignore
             raise PINKError("Tried getting image from NSFW channel into SFW")
