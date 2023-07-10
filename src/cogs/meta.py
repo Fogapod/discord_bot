@@ -1,4 +1,5 @@
 import inspect
+import random
 import re
 import time
 
@@ -373,6 +374,30 @@ class Meta(Cog):
             del ctx.bot.prefixes[ctx.guild.id]
 
         await ctx.ok()
+
+    @commands.command()
+    @commands.cooldown(1, 2, type=commands.BucketType.channel)
+    async def randmsg(self, ctx: Context) -> None:
+        """
+        Returns random message in channel
+        """
+
+        # this should never index error because we at least should have initial message in channel
+        # might be worth caching this
+        oldest = [m async for m in ctx.channel.history(limit=1, oldest_first=True)][0]
+
+        diff = ctx.message.id - oldest.id
+        offset = random.randrange(diff)
+
+        # not sure if around always work. if this ever errors, use before/after
+        random_message = [m async for m in ctx.channel.history(limit=1, around=discord.Object(id=oldest.id + offset))][0]
+
+        await ctx.send(
+            f"by **{random_message.author}** in {random_message.created_at.year}",
+            mention_author=False,
+            reference=random_message,
+            accents=[],
+        )
 
 
 async def setup(bot: PINK) -> None:
