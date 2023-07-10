@@ -1,7 +1,8 @@
 import logging
 import random
 
-from typing import Optional, Union
+from collections.abc import Iterable, Iterator, Sequence
+from typing import Optional, TypeVar, Union
 
 import discord
 
@@ -10,8 +11,11 @@ from discord.ext import commands
 from src.bot import PINK
 from src.cog import Cog
 from src.context import Context
+from src.errors import PINKError
 
 log = logging.getLogger(__name__)
+
+T = TypeVar("T")
 
 
 class Fun(Cog):
@@ -193,6 +197,130 @@ class Fun(Cog):
             await ctx.reply(f"Unable to send message: {e}")
         finally:
             await webhook.delete()
+
+    @commands.command()
+    @commands.cooldown(1, 2, type=commands.BucketType.user)
+    async def randmsg(self, ctx: Context, channel: Optional[discord.TextChannel]) -> None:
+        """
+        Returns random message from channel
+        """
+
+        if channel is None:
+            channel = ctx.channel  # type: ignore
+            # i hate d.py typing. this is for history calls later
+            assert channel is not None
+
+        self._ensure_fetch_perms(ctx.author, channel)
+        past_point = await self._random_history_point(ctx.message, channel)
+
+        # not sure if around always work. if this ever errors, use before/after
+        random_message = [m async for m in channel.history(limit=1, around=past_point)][0]
+
+        if channel == ctx.channel:
+            await ctx.send(
+                f"by **{random_message.author}** in {random_message.created_at.year}",
+                mention_author=False,
+                reference=random_message,
+            )
+        else:
+            await ctx.reply(
+                f"by **{random_message.author}** in {random_message.created_at.year}: {random_message.jump_url}",
+                mention_author=False,
+                # we can not afford to fuck up jump url with owo or something
+                accents=[],
+            )
+
+    @staticmethod
+    def _ensure_fetch_perms(user: discord.User | discord.Member, channel: discord.TextChannel) -> None:
+        user_perms = channel.permissions_for(user)  # type: ignore
+        if not (user_perms.read_messages and user_perms.read_message_history):
+            raise PINKError(f"You do not have access to {channel.mention}")
+
+        my_perms = channel.permissions_for(user)  # type: ignore
+        if not (my_perms.read_messages and my_perms.read_message_history):
+            raise PINKError(f"I do not have access to {channel.mention}")
+
+    @staticmethod
+    async def _random_history_point(
+        present: discord.Message,
+        channel: discord.TextChannel | discord.DMChannel,
+    ) -> discord.Object:
+        # this should never index error because we at least should have initial message in channel
+        # might be worth caching this
+        oldest = [m async for m in channel.history(limit=1, oldest_first=True)][0]
+
+        if present == oldest:
+            offset = 0
+        else:
+            diff = present.id - oldest.id
+            offset = random.randrange(diff)
+
+        return discord.Object(id=oldest.id + offset)
+
+    @commands.command()
+    @commands.cooldown(1, 4, type=commands.BucketType.user)
+    async def randimg(self, ctx: Context, channel: Optional[discord.TextChannel]) -> None:
+        """
+        Returns random image from channel
+        """
+
+        if channel is None:
+            channel = ctx.channel  # type: ignore
+            # i hate d.py typing. this is for history calls later
+            assert channel is not None
+
+        if isinstance(channel, discord.TextChannel) and channel.is_nsfw() and not ctx.channel.nsfw:  # type: ignore
+            raise PINKError("Tried getting image from NSFW channel into SFW")
+
+        self._ensure_fetch_perms(ctx.author, channel)
+        past_point = await self._random_history_point(ctx.message, channel)
+
+        middle = [m async for m in channel.history(limit=101, around=past_point)]
+
+        if (maybe_image := self._find_image(self.spiral_out(middle))) is None:
+            # TODO: expand to left and right from here bt fetching 200 messages at a time and doing spiral
+            raise PINKError("Could not find any images")
+
+        url, spoiler = maybe_image
+        if spoiler:
+            url = f"|| {url} ||"
+
+        await ctx.reply(url)
+
+    @staticmethod
+    def _find_image(messages: Iterable[discord.Message]) -> Optional[tuple[str, bool]]:
+        """Returns as soon as it hits image"""
+
+        for message in messages:
+            candidates = []
+
+            for attachment in message.attachments:
+                extension = attachment.filename.rpartition(".")[-1].lower()
+                if extension in ("png", "jpg", "jpeg", "webp"):
+                    candidates.append((attachment.url, attachment.is_spoiler()))
+
+            for embed in message.embeds:
+                if embed.image and embed.image.url:
+                    candidates.append((embed.image.url, False))
+
+                if embed.thumbnail and embed.thumbnail.url:
+                    candidates.append((embed.thumbnail.url, False))
+
+            if candidates:
+                return random.choice(candidates)
+
+        return None
+
+    @staticmethod
+    def spiral_out(arr: Sequence[T]) -> Iterator[T]:
+        middle = len(arr) // 2
+
+        sign = -1
+
+        for i in range(1, len(arr) + 1):
+            sign *= -1
+
+            yield arr[middle + i // 2 * sign]
 
 
 async def setup(bot: PINK) -> None:
