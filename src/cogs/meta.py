@@ -404,7 +404,7 @@ class Meta(Cog):
             offset = 0
         else:
             diff = ctx.message.id - oldest.id
-            offset = random.randrange(diff + 1)
+            offset = random.randrange(diff)
 
         # not sure if around always work. if this ever errors, use before/after
         random_message = [m async for m in channel.history(limit=1, around=discord.Object(id=oldest.id + offset))][0]
