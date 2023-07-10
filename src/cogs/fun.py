@@ -285,7 +285,7 @@ class Fun(Cog):
         if spoiler:
             url = f"|| {url} ||"
 
-        await ctx.reply(url)
+        await ctx.reply(url, mention_author=False, accents=[])
 
     @staticmethod
     def _find_image(messages: Iterable[discord.Message]) -> Optional[tuple[str, bool]]:
