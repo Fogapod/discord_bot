@@ -385,8 +385,11 @@ class Meta(Cog):
         # might be worth caching this
         oldest = [m async for m in ctx.channel.history(limit=1, oldest_first=True)][0]
 
-        diff = ctx.message.id - oldest.id
-        offset = random.randrange(diff)
+        if ctx.message == oldest:
+            offset = 0
+        else:
+            diff = ctx.message.id - oldest.id
+            offset = random.randrange(diff + 1)
 
         # not sure if around always work. if this ever errors, use before/after
         random_message = [m async for m in ctx.channel.history(limit=1, around=discord.Object(id=oldest.id + offset))][0]
