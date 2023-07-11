@@ -1,3 +1,4 @@
+import itertools
 import logging
 import random
 
@@ -316,7 +317,7 @@ class Fun(Cog):
 
             for attachment in message.attachments:
                 extension = attachment.filename.rpartition(".")[-1].lower()
-                if extension in ("png", "jpg", "jpeg", "webp"):
+                if extension in ("png", "jpg", "jpeg", "webp", "gif"):
                     candidates.append((attachment.url, attachment.is_spoiler()))
 
             for embed in message.embeds:
@@ -328,6 +329,86 @@ class Fun(Cog):
 
             if candidates:
                 return random.choice(candidates)
+
+        return None
+
+    @commands.command(aliases=["randa"])
+    @commands.cooldown(1, 5, type=commands.BucketType.user)
+    async def randatt(
+        self,
+        ctx: Context,
+        channel: discord.TextChannel = commands.parameter(
+            default=None,
+            description="channel to use",
+            displayed_default="current channel",
+        ),
+    ) -> None:
+        """
+        Returns random non-image attachment from channel
+        """
+
+        if channel is None:
+            channel = ctx.channel
+
+        if isinstance(channel, discord.TextChannel) and channel.nsfw and not ctx.channel.nsfw:  # type: ignore
+            raise PINKError("Tried getting image from NSFW channel into SFW")
+
+        self._ensure_fetch_perms(ctx.me, ctx.author, channel)
+        past_point = await self._random_history_point(ctx.message, channel)
+
+        # checks up to 701 messages with up to 7 history calls
+        middle = [m async for m in channel.history(limit=101, around=past_point)]
+
+        if (file_ := await self._find_attachment(self.spiral_out(middle))) is not None:
+            await ctx.reply(file=file_, mention_author=False, accents=[])
+            return
+
+        # middle failed, spiral out by fetching left and right sides of history
+        for _ in range(3):
+            left = [m async for m in channel.history(limit=100, before=middle[0])]
+            right = [m async for m in channel.history(limit=100, after=middle[-1])]
+
+            left_len, right_len = len(left), len(right)
+            if left_len != right_len:
+                # one of the sides hit channel end. spiral out inside common length, then sequentially go through
+                # remaining longer side
+                common = min(left_len, right_len)
+                left_common, left_rest = left[left_len - common :], left[: left_len - common]
+                right_common, right_rest = right[:common], right[common:]
+                middle = [*left_common, *right_common]
+                rest = [*left_rest, *right_rest]
+            else:
+                middle = [*left, *right]
+                rest = []
+
+            if (file_ := await self._find_attachment(itertools.chain(self.spiral_out(middle), rest))) is not None:
+                await ctx.reply(file=file_, mention_author=False, accents=[])
+                return
+
+            # one or both sides hit channel end
+            if len(middle) < 200:
+                break
+
+        raise PINKError("Could not find any attachemnts")
+
+    @staticmethod
+    async def _find_attachment(messages: Iterable[discord.Message]) -> Optional[discord.File]:
+        """Returns as soon as it hits non-image attachment"""
+
+        for message in messages:
+            candidates = []
+
+            for attachment in message.attachments:
+                extension = attachment.filename.rpartition(".")[-1].lower()
+                if extension in ("png", "jpg", "jpeg", "webp", "gif"):
+                    continue
+
+                candidates.append(attachment)
+
+            if candidates:
+                chosen = random.choice(candidates)
+
+                return await chosen.to_file(spoiler=chosen.is_spoiler())
 
         return None
 
