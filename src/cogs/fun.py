@@ -198,7 +198,7 @@ class Fun(Cog):
         finally:
             await webhook.delete()
 
-    @commands.command()
+    @commands.command(aliases=["randm"])
     @commands.cooldown(1, 2, type=commands.BucketType.user)
     async def randmsg(
         self,
@@ -255,9 +255,13 @@ class Fun(Cog):
         present: discord.Message,
         channel: discord.TextChannel | discord.DMChannel,
     ) -> discord.Object:
-        # this should never index error because we at least should have initial message in channel
-        # might be worth caching this
-        oldest = [m async for m in channel.history(limit=1, oldest_first=True)][0]
+        history = [m async for m in channel.history(limit=1, oldest_first=True)]
+
+        # possible if user gives bot empty channel in argument
+        if not history:
+            raise PINKError("Empty channel")
+
+        oldest = history[0]
 
         if present == oldest:
             offset = 0
@@ -267,8 +271,8 @@ class Fun(Cog):
 
         return discord.Object(id=oldest.id + offset)
 
-    @commands.command()
-    @commands.cooldown(1, 4, type=commands.BucketType.user)
+    @commands.command(aliases=["randi"])
+    @commands.cooldown(1, 2, type=commands.BucketType.user)
     async def randimg(
         self,
         ctx: Context,
@@ -285,7 +289,7 @@ class Fun(Cog):
         if channel is None:
             channel = ctx.channel
 
-        if isinstance(channel, discord.TextChannel) and channel.is_nsfw() and not ctx.channel.nsfw:  # type: ignore
+        if isinstance(channel, discord.TextChannel) and channel.nsfw and not ctx.channel.nsfw:  # type: ignore
             raise PINKError("Tried getting image from NSFW channel into SFW")
 
         self._ensure_fetch_perms(ctx.me, ctx.author, channel)
