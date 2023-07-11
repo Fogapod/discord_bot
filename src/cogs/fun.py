@@ -200,7 +200,15 @@ class Fun(Cog):
 
     @commands.command()
     @commands.cooldown(1, 2, type=commands.BucketType.user)
-    async def randmsg(self, ctx: Context, channel: discord.TextChannel = commands.parameter(default=None)) -> None:
+    async def randmsg(
+        self,
+        ctx: Context,
+        channel: discord.TextChannel = commands.parameter(
+            default=None,
+            description="channel to use",
+            displayed_default="current channel",
+        ),
+    ) -> None:
         """
         Returns random message from channel
         """
@@ -208,7 +216,7 @@ class Fun(Cog):
         if channel is None:
             channel = ctx.channel
 
-        self._ensure_fetch_perms(ctx.author, channel)
+        self._ensure_fetch_perms(ctx.me, ctx.author, channel)
         past_point = await self._random_history_point(ctx.message, channel)
 
         # not sure if around always work. if this ever errors, use before/after
@@ -229,12 +237,16 @@ class Fun(Cog):
             )
 
     @staticmethod
-    def _ensure_fetch_perms(user: discord.User | discord.Member, channel: discord.TextChannel) -> None:
+    def _ensure_fetch_perms(
+        me: discord.ClientUser | discord.Member,
+        user: discord.User | discord.Member,
+        channel: discord.TextChannel,
+    ) -> None:
         user_perms = channel.permissions_for(user)  # type: ignore
         if not (user_perms.read_messages and user_perms.read_message_history):
             raise PINKError(f"You do not have access to {channel.mention}")
 
-        my_perms = channel.permissions_for(user)  # type: ignore
+        my_perms = channel.permissions_for(me)  # type: ignore
         if not (my_perms.read_messages and my_perms.read_message_history):
             raise PINKError(f"I do not have access to {channel.mention}")
 
@@ -257,7 +269,15 @@ class Fun(Cog):
 
     @commands.command()
     @commands.cooldown(1, 4, type=commands.BucketType.user)
-    async def randimg(self, ctx: Context, channel: discord.TextChannel = commands.parameter(default=None)) -> None:
+    async def randimg(
+        self,
+        ctx: Context,
+        channel: discord.TextChannel = commands.parameter(
+            default=None,
+            description="channel to use",
+            displayed_default="current channel",
+        ),
+    ) -> None:
         """
         Returns random image from channel
         """
@@ -268,13 +288,13 @@ class Fun(Cog):
         if isinstance(channel, discord.TextChannel) and channel.is_nsfw() and not ctx.channel.nsfw:  # type: ignore
             raise PINKError("Tried getting image from NSFW channel into SFW")
 
-        self._ensure_fetch_perms(ctx.author, channel)
+        self._ensure_fetch_perms(ctx.me, ctx.author, channel)
         past_point = await self._random_history_point(ctx.message, channel)
 
         middle = [m async for m in channel.history(limit=101, around=past_point)]
 
         if (maybe_image := self._find_image(self.spiral_out(middle))) is None:
-            # TODO: expand to left and right from here bt fetching 200 messages at a time and doing spiral
+            # TODO: expand to left and right from here by fetching 200 messages at a time and spiraling joined array
             raise PINKError("Could not find any images")
 
         url, spoiler = maybe_image
@@ -309,6 +329,8 @@ class Fun(Cog):
 
     @staticmethod
     def spiral_out(arr: Sequence[T]) -> Iterator[T]:
+        """Returns sequence items starting from center in a spiral pattern"""
+
         middle = len(arr) // 2
 
         sign = -1
