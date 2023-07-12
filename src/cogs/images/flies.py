@@ -127,11 +127,11 @@ class FlyDrawer:
         fly_src: PIL.Image = None,
     ):
         self.src = src.convert("RGBA")
-        self.src.thumbnail((MAX_SIDE, MAX_SIDE), Image.LANCOZ)
+        self.src.thumbnail((MAX_SIDE, MAX_SIDE), Image.LANCZOS)
 
         if fly_src:
             self.fly_src = fly_src.convert("RGBA")
-            self.fly_src.thumbnail((FLY_SIDE, FLY_SIDE), Image.LANCOZ)
+            self.fly_src.thumbnail((FLY_SIDE, FLY_SIDE), Image.LANCZOS)
         else:
             self.fly_src = None
 
