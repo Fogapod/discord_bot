@@ -15,7 +15,7 @@ RUN apk add --no-cache \
     # Font for trocr
     ttf-dejavu \
     && pip install -U pip \
-    && pip install -U -r requirements.txt \
+    && pip install -r requirements.txt
 
 ARG UID=1188 \
 	GID=1188 \
