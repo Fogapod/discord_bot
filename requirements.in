@@ -22,5 +22,6 @@ sentry-sdk
 orjson
 uvloop
 
-# misc
+# cache
 aiocache
+redis[hiredis]

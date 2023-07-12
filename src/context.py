@@ -9,6 +9,7 @@ import asyncpg
 import discord
 
 from discord.ext import commands
+from redis.asyncio import Redis
 
 from src.hooks import Hookable
 
@@ -33,6 +34,10 @@ class Context(commands.Context["PINK"], Hookable):
     @property
     def pg(self) -> asyncpg.Pool[asyncpg.Record]:
         return self.bot.pg
+
+    @property
+    def redis(self) -> Redis[bytes]:
+        return self.bot.redis
 
     @property
     def session(self) -> aiohttp.ClientSession:

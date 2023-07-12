@@ -5,6 +5,7 @@ import platform
 import aiohttp
 import asyncpg
 import discord
+import redis.asyncio as redis
 
 from .bot import PINK
 from .logging import setup_logging
@@ -45,10 +46,16 @@ async def main() -> None:
         password=settings.database.password,
         database=settings.database.database,
     )
+    rd: redis.Redis[bytes] = redis.Redis(
+        host=settings.redis.host,
+        port=settings.redis.port,
+        db=settings.redis.db,
+    )
 
     pink = PINK(
         session=session,
         pg=pg,
+        redis=rd,
         version=version,
         command_prefix=settings.bot.prefix,
         case_insensitive=True,
@@ -63,7 +70,7 @@ async def main() -> None:
         ),
     )
 
-    async with pink, session, pg:
+    async with pink, session, pg, rd:
         await pink.start(settings.bot.token)
 
 

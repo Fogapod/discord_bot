@@ -9,6 +9,11 @@ user = "pink"
 password = "pass"
 database = "pink"
 
+[redis]
+host = "127.0.0.1"
+port = 6379
+db = 0
+
 [sentry]
 dsn = "https://ABCD@o546834.example.com/123"
 

@@ -217,7 +217,7 @@ class Fun(Cog):
             channel = ctx.channel
 
         self._ensure_fetch_perms(ctx.me, ctx.author, channel)
-        past_point = await self._random_history_point(ctx.message, channel)
+        past_point = await self._random_history_point(ctx, ctx.message, channel)
 
         # pick random one to smooth out randomness of time gaps. without this, messages on sides of gaps are biased
         random_message = random.choice([m async for m in channel.history(limit=101, around=past_point)])
@@ -252,24 +252,31 @@ class Fun(Cog):
 
     @staticmethod
     async def _random_history_point(
+        ctx: Context,
         present: discord.Message,
         channel: discord.TextChannel | discord.DMChannel,
     ) -> discord.Object:
-        history = [m async for m in channel.history(limit=1, oldest_first=True)]
+        cache_key = f"first_channel_message:{channel.id}"
+        if (cached := await ctx.redis.get(cache_key)) is not None:
+            oldest_id = int(cached)
+        else:
+            history = [m async for m in channel.history(limit=1, oldest_first=True)]
 
-        # possible if user gives bot empty channel in argument
-        if not history:
-            raise PINKError("Empty channel")
+            # possible if user gives bot empty channel in argument
+            if not history:
+                raise PINKError("Empty channel")
 
-        oldest = history[0]
+            oldest_id = history[0].id
 
-        if present == oldest:
+            await ctx.redis.set(cache_key, oldest_id, ex=3600)
+
+        if present.id == oldest_id:
             offset = 0
         else:
-            diff = present.id - oldest.id
+            diff = present.id - oldest_id
             offset = random.randrange(diff)
 
-        return discord.Object(id=oldest.id + offset)
+        return discord.Object(id=oldest_id + offset)
 
     @commands.command(aliases=["randi"])
     @commands.cooldown(1, 2, type=commands.BucketType.user)
@@ -293,7 +300,7 @@ class Fun(Cog):
             raise PINKError("Tried getting image from NSFW channel into SFW")
 
         self._ensure_fetch_perms(ctx.me, ctx.author, channel)
-        past_point = await self._random_history_point(ctx.message, channel)
+        past_point = await self._random_history_point(ctx, ctx.message, channel)
 
         middle = [m async for m in channel.history(limit=101, around=past_point)]
 
@@ -351,7 +358,7 @@ class Fun(Cog):
             raise PINKError("Tried getting image from NSFW channel into SFW")
 
         self._ensure_fetch_perms(ctx.me, ctx.author, channel)
-        past_point = await self._random_history_point(ctx.message, channel)
+        past_point = await self._random_history_point(ctx, ctx.message, channel)
 
         # checks up to 701 messages with up to 7 history calls
         middle = [m async for m in channel.history(limit=101, around=past_point)]

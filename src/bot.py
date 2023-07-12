@@ -15,6 +15,7 @@ import discord
 import sentry_sdk
 
 from discord.ext import commands
+from redis.asyncio import Redis
 
 from src.context import Context
 from src.settings import settings
@@ -70,6 +71,7 @@ class PINK(commands.Bot):
         *,
         session: aiohttp.ClientSession,
         pg: asyncpg.Pool[asyncpg.Record],
+        redis: Redis[bytes],
         version: Version,
         **kwargs: Any,
     ) -> None:
@@ -77,6 +79,7 @@ class PINK(commands.Bot):
 
         self.session = session
         self.pg = pg
+        self.redis = redis
         self.version = version
 
         self.prefixes: dict[int, Prefix] = {}

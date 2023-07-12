@@ -75,7 +75,7 @@ class Excited(Accent):
         context_id: Any,
         # renaming to _cls or _ breaks mypy for some reason:
         # Signature of "get_context" incompatible with supertype "Accent"
-        cls: type[ReplacementContext] = ReplacementContext,
+        cls: type[ReplacementContext] = ReplacementContext,  # noqa: ARG002
     ) -> ReplacementContext:
         ctx = ReplacementContext(
             source=text,

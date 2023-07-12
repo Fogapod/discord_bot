@@ -36,6 +36,8 @@ select = [
     "PTH",
     # ruff
     "RUF",
+    # flake8-unused-arguments
+    "ARG",
 ]
 fixable = [
     "I"
@@ -43,6 +45,9 @@ fixable = [
 
 [tool.ruff.flake8-bugbear]
 extend-immutable-calls = ["discord.ext.commands.parameter"]
+
+[tool.ruff.flake8-unused-arguments]
+ignore-variadic-names = true
 
 [tool.ruff.isort]
 combine-as-imports = true

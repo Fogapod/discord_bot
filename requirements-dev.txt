@@ -14,3 +14,4 @@ pip-tools
 # typing
 # https://github.com/MagicStack/asyncpg/issues/569
 asyncpg-stubs
+types-redis

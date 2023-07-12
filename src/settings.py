@@ -214,6 +214,12 @@ class DatabaseSettings(BaseModel):
     database: str
 
 
+class RedisSettings(BaseModel):
+    host: str = "127.0.0.1"
+    port: int = 6379
+    db: str = "0"
+
+
 class SentrySettings(BaseSettings):
     dsn: Optional[str] = None
 
@@ -226,6 +232,7 @@ class OwnersSettings(BaseModel):
 class Settings(BaseSettings):
     bot: BotSettings
     database: DatabaseSettings
+    redis: RedisSettings
     sentry: SentrySettings
     owners: OwnersSettings
 
