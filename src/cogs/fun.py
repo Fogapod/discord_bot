@@ -2,6 +2,7 @@ import logging
 import random
 
 from collections.abc import Iterable
+from datetime import datetime, timezone
 from typing import Optional, Union
 
 import discord
@@ -16,6 +17,30 @@ from src.errors import PINKError
 log = logging.getLogger(__name__)
 
 IMAGE_FORMATS = {"png", "jpg", "jpeg", "webp", "gif"}
+
+
+class DateConverter:
+    @classmethod
+    async def convert(cls, _: Context, argument: str) -> datetime:
+        for pattern in ("%Y", "%Y-%m", "%Y-%m-%d"):
+            try:
+                parsed = datetime.strptime(argument, pattern)
+            except ValueError:
+                continue
+
+            return parsed.replace(tzinfo=timezone.utc)
+
+        raise ValueError("Could not parse date")
+
+
+class RandItemFlags(commands.FlagConverter, delimiter=" ", prefix="--"):
+    before: discord.Message | datetime = commands.flag(
+        default=lambda ctx: ctx.message,
+        converter=Optional[discord.Message | DateConverter],
+    )
+    after: Optional[discord.Message | datetime] = commands.flag(
+        converter=Optional[discord.Message | DateConverter],
+    )
 
 
 class Fun(Cog):
@@ -137,7 +162,7 @@ class Fun(Cog):
                 and target.permissions_for(ctx.author).send_messages  # type: ignore
                 and target.permissions_for(ctx.me).send_messages  # type: ignore
             ):
-                if ctx.channel.is_nsfw() and not target.is_nsfw():  # type: ignore
+                if ctx.channel.nsfw > target.nsfw:  # type: ignore
                     return await ctx.send("Can't throw items from horny channel!")
 
                 return await ctx.send(
@@ -204,23 +229,31 @@ class Fun(Cog):
         self,
         ctx: Context,
         channel: discord.TextChannel = commands.parameter(
-            default=None,
+            # note: commands.CurrentChannel is broken here for some reason. it returns parameter object
+            default=lambda ctx: ctx.channel,
             description="channel to use",
             displayed_default="current channel",
         ),
+        *,
+        flags: RandItemFlags = commands.parameter(description="additional flags"),
     ) -> None:
         """
         Returns random message from channel
+
+        Supports additional flags --before and --after which could be either message link or date in YYYY-MM-DD format.
         """
 
-        if channel is None:
-            channel = ctx.channel
-
         self._ensure_fetch_perms(ctx.me, ctx.author, channel)
-        past_point = await self._random_history_point(ctx, ctx.message, channel)
 
-        # pick random one to smooth out randomness of time gaps. without this, messages on sides of gaps are biased
-        random_message = random.choice([m async for m in channel.history(limit=101, around=past_point)])
+        before = flags.before
+        after = flags.after
+        past_point = await self._random_history_point(ctx, channel, before, after=after)
+
+        middle = [m async for m in channel.history(limit=101, around=past_point, before=before, after=after)]
+        if not middle:
+            raise PINKError("No messages in given interval")
+
+        random_message = random.choice(middle)
 
         if channel == ctx.channel:
             await ctx.send(
@@ -253,30 +286,45 @@ class Fun(Cog):
     @staticmethod
     async def _random_history_point(
         ctx: Context,
-        present: discord.Message,
         channel: discord.TextChannel | discord.DMChannel,
+        before: discord.Message | datetime,
+        after: Optional[discord.Message | datetime] = None,
     ) -> discord.Object:
-        cache_key = f"first_channel_message:{channel.id}"
-        if (cached := await ctx.redis.get(cache_key)) is not None:
-            oldest_id = int(cached)
+        if after is not None:
+            if isinstance(after, datetime):
+                after_id = discord.utils.time_snowflake(after)
+            else:
+                after_id = after.id
         else:
-            history = [m async for m in channel.history(limit=1, oldest_first=True)]
+            cache_key = f"first_channel_message:{channel.id}"
+            if (cached := await ctx.redis.get(cache_key)) is not None:
+                after_id = int(cached)
+            else:
+                history = [m async for m in channel.history(limit=1, oldest_first=True)]
 
-            # possible if user gives bot empty channel in argument
-            if not history:
-                raise PINKError("Empty channel")
+                # possible if user gives bot empty channel in argument
+                if not history:
+                    raise PINKError("Empty channel")
 
-            oldest_id = history[0].id
+                after_id = history[0].id
 
-            await ctx.redis.set(cache_key, oldest_id, ex=3600)
+                await ctx.redis.set(cache_key, after_id, ex=3600)
 
-        if present.id == oldest_id:
+        if isinstance(before, datetime):
+            before_id = discord.utils.time_snowflake(before)
+        else:
+            before_id = before.id
+
+        if before_id < after_id:
+            raise PINKError("After is older than before")
+
+        if before_id == after_id:
             offset = 0
         else:
-            diff = present.id - oldest_id
+            diff = before_id - after_id
             offset = random.randrange(diff)
 
-        return discord.Object(id=oldest_id + offset)
+        return discord.Object(id=after_id + offset)
 
     @commands.command(aliases=["randi"])
     @commands.cooldown(1, 2, type=commands.BucketType.user)
@@ -284,25 +332,31 @@ class Fun(Cog):
         self,
         ctx: Context,
         channel: discord.TextChannel = commands.parameter(
-            default=None,
+            default=lambda ctx: ctx.channel,
             description="channel to use",
             displayed_default="current channel",
         ),
+        *,
+        flags: RandItemFlags = commands.parameter(description="additional flags"),
     ) -> None:
         """
         Returns random image from channel
+
+        Supports additional flags --before and --after which could be either message link or date in YYYY-MM-DD format.
         """
 
-        if channel is None:
-            channel = ctx.channel
+        self._ensure_fetch_perms(ctx.me, ctx.author, channel)
 
-        if isinstance(channel, discord.TextChannel) and channel.nsfw and not ctx.channel.nsfw:  # type: ignore
+        if isinstance(channel, discord.TextChannel) and channel.nsfw > ctx.channel.nsfw:  # type: ignore
             raise PINKError("Tried getting image from NSFW channel into SFW")
 
-        self._ensure_fetch_perms(ctx.me, ctx.author, channel)
-        past_point = await self._random_history_point(ctx, ctx.message, channel)
+        before = flags.before
+        after = flags.after
+        past_point = await self._random_history_point(ctx, channel, before, after=after)
 
-        middle = [m async for m in channel.history(limit=101, around=past_point)]
+        middle = [m async for m in channel.history(limit=101, around=past_point, before=before, after=after)]
+        if not middle:
+            raise PINKError("No messages in given interval")
 
         if not (candidates := self._find_images(middle)):
             # TODO: expand to left and right from here by fetching 200 messages at a time and spiraling joined array
@@ -342,26 +396,32 @@ class Fun(Cog):
         self,
         ctx: Context,
         channel: discord.TextChannel = commands.parameter(
-            default=None,
+            default=lambda ctx: ctx.channel,
             description="channel to use",
             displayed_default="current channel",
         ),
+        *,
+        flags: RandItemFlags = commands.parameter(description="additional flags"),
     ) -> None:
         """
-        Returns random non-image attachment from channel
+        Returns random non-image attachment from channel.
+
+        Supports additional flags --before and --after which could be either message link or date in YYYY-MM-DD format.
         """
 
-        if channel is None:
-            channel = ctx.channel
-
-        if isinstance(channel, discord.TextChannel) and channel.nsfw and not ctx.channel.nsfw:  # type: ignore
-            raise PINKError("Tried getting image from NSFW channel into SFW")
-
         self._ensure_fetch_perms(ctx.me, ctx.author, channel)
-        past_point = await self._random_history_point(ctx, ctx.message, channel)
+
+        if isinstance(channel, discord.TextChannel) and channel.nsfw > ctx.channel.nsfw:  # type: ignore
+            raise PINKError("Tried getting attachment from NSFW channel into SFW")
+
+        before = flags.before
+        after = flags.after
+        past_point = await self._random_history_point(ctx, channel, before, after=after)
 
         # checks up to 701 messages with up to 7 history calls
-        middle = [m async for m in channel.history(limit=101, around=past_point)]
+        middle = [m async for m in channel.history(limit=101, around=past_point, before=before, after=after)]
+        if not middle:
+            raise PINKError("No messages in given interval")
 
         if candidates := await self._find_attachments(middle):
             attachment = random.choice(candidates)
@@ -374,8 +434,8 @@ class Fun(Cog):
 
         # middle failed, spiral out by fetching left and right sides of history
         for _ in range(3):
-            left = [m async for m in channel.history(limit=100, before=middle[0])]
-            right = [m async for m in channel.history(limit=100, after=middle[-1])]
+            left = [m async for m in channel.history(limit=100, before=middle[0], after=after)]
+            right = [m async for m in channel.history(limit=100, after=middle[-1], before=before)]
             middle = [*left, *right]
 
             if candidates := await self._find_attachments(middle):
@@ -388,7 +448,7 @@ class Fun(Cog):
                 return
 
             # one or both sides hit channel end
-            if len(left) + len(right) < 200:
+            if len(middle) < 200:
                 break
 
         raise PINKError("Could not find any attachemnts")

@@ -43,7 +43,11 @@ class ErrorHandler(Cog):
 
         # owner bypassable
         if isinstance(e, commands.CommandOnCooldown | commands.DisabledCommand) and ctx.author.id in ctx.bot.owner_ids:
-            await ctx.reinvoke()
+            try:
+                await ctx.reinvoke()
+            except Exception as err:
+                await ctx.reply(f"Error while reinvoking {type(e)}: **{err}**")
+
             return
 
         # TODO: track error frequency and sort this mess or use map
