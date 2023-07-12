@@ -1,8 +1,7 @@
-import itertools
 import logging
 import random
 
-from collections.abc import Iterable, Iterator, Sequence
+from collections.abc import Iterable
 from typing import Optional, TypeVar, Union
 
 import discord
@@ -220,8 +219,8 @@ class Fun(Cog):
         self._ensure_fetch_perms(ctx.me, ctx.author, channel)
         past_point = await self._random_history_point(ctx.message, channel)
 
-        # not sure if around always work. if this ever errors, use before/after
-        random_message = [m async for m in channel.history(limit=1, around=past_point)][0]
+        # pick random one to smooth out randomness of time gaps. without this, messages on sides of gaps are biased
+        random_message = random.choice([m async for m in channel.history(limit=101, around=past_point)])
 
         if channel == ctx.channel:
             await ctx.send(
@@ -298,23 +297,24 @@ class Fun(Cog):
 
         middle = [m async for m in channel.history(limit=101, around=past_point)]
 
-        if (maybe_image := self._find_image(self.spiral_out(middle))) is None:
+        if not (candidates := self._find_images(middle)):
             # TODO: expand to left and right from here by fetching 200 messages at a time and spiraling joined array
             raise PINKError("Could not find any images")
 
-        url, spoiler = maybe_image
+        # same as randmsg: do not pick first
+        url, spoiler = random.choice(candidates)
         if spoiler:
             url = f"|| {url} ||"
 
         await ctx.reply(url, mention_author=False, accents=[])
 
     @staticmethod
-    def _find_image(messages: Iterable[discord.Message]) -> Optional[tuple[str, bool]]:
-        """Returns as soon as it hits image"""
+    def _find_images(messages: Iterable[discord.Message]) -> list[tuple[str, bool]]:
+        """Returns all images"""
+
+        candidates = []
 
         for message in messages:
-            candidates = []
-
             for attachment in message.attachments:
                 extension = attachment.filename.rpartition(".")[-1].lower()
                 if extension in ("png", "jpg", "jpeg", "webp", "gif"):
@@ -327,10 +327,7 @@ class Fun(Cog):
                 if embed.thumbnail and embed.thumbnail.url:
                     candidates.append((embed.thumbnail.url, False))
 
-            if candidates:
-                return random.choice(candidates)
-
-        return None
+        return candidates
 
     @commands.command(aliases=["randa"])
     @commands.cooldown(1, 5, type=commands.BucketType.user)
@@ -359,45 +356,42 @@ class Fun(Cog):
         # checks up to 701 messages with up to 7 history calls
         middle = [m async for m in channel.history(limit=101, around=past_point)]
 
-        if (file_ := await self._find_attachment(self.spiral_out(middle))) is not None:
-            await ctx.reply(file=file_, mention_author=False, accents=[])
+        if candidates := await self._find_attachments(middle):
+            attachment = random.choice(candidates)
+            await ctx.reply(
+                file=await attachment.to_file(spoiler=attachment.is_spoiler()),
+                mention_author=False,
+                accents=[],
+            )
             return
 
         # middle failed, spiral out by fetching left and right sides of history
         for _ in range(3):
             left = [m async for m in channel.history(limit=100, before=middle[0])]
             right = [m async for m in channel.history(limit=100, after=middle[-1])]
+            middle = [*left, *right]
 
-            left_len, right_len = len(left), len(right)
-            if left_len != right_len:
-                # one of the sides hit channel end. spiral out inside common length, then sequentially go through
-                # remaining longer side
-                common = min(left_len, right_len)
-                left_common, left_rest = left[left_len - common :], left[: left_len - common]
-                right_common, right_rest = right[:common], right[common:]
-                middle = [*left_common, *right_common]
-                rest = [*left_rest, *right_rest]
-            else:
-                middle = [*left, *right]
-                rest = []
-
-            if (file_ := await self._find_attachment(itertools.chain(self.spiral_out(middle), rest))) is not None:
-                await ctx.reply(file=file_, mention_author=False, accents=[])
+            if candidates := await self._find_attachments(middle):
+                attachment = random.choice(candidates)
+                await ctx.reply(
+                    file=await attachment.to_file(spoiler=attachment.is_spoiler()),
+                    mention_author=False,
+                    accents=[],
+                )
                 return
 
             # one or both sides hit channel end
-            if len(middle) < 200:
+            if len(left) + len(right) < 200:
                 break
 
         raise PINKError("Could not find any attachemnts")
 
     @staticmethod
-    async def _find_attachment(messages: Iterable[discord.Message]) -> Optional[discord.File]:
-        """Returns as soon as it hits non-image attachment"""
+    async def _find_attachments(messages: Iterable[discord.Message]) -> list[discord.Attachment]:
+        """Returns all non-image attachments"""
 
+        candidates = []
         for message in messages:
-            candidates = []
-
             for attachment in message.attachments:
                 extension = attachment.filename.rpartition(".")[-1].lower()
                 if extension in ("png", "jpg", "jpeg", "webp", "gif"):
@@ -405,25 +399,7 @@ class Fun(Cog):
 
                 candidates.append(attachment)
 
-            if candidates:
-                chosen = random.choice(candidates)
-
-                return await chosen.to_file(spoiler=chosen.is_spoiler())
-
-        return None
-
-    @staticmethod
-    def spiral_out(arr: Sequence[T]) -> Iterator[T]:
-        """Returns sequence items starting from center in a spiral pattern"""
-
-        middle = len(arr) // 2
-
-        sign = -1
-
-        for i in range(1, len(arr) + 1):
-            sign *= -1
-
-            yield arr[middle + i // 2 * sign]
+        return candidates
 
 
 async def setup(bot: PINK) -> None:
