@@ -2,7 +2,7 @@ import logging
 import random
 
 from collections.abc import Iterable
-from typing import Optional, TypeVar, Union
+from typing import Optional, Union
 
 import discord
 
@@ -15,7 +15,7 @@ from src.errors import PINKError
 
 log = logging.getLogger(__name__)
 
-T = TypeVar("T")
+IMAGE_FORMATS = {"png", "jpg", "jpeg", "webp", "gif"}
 
 
 class Fun(Cog):
@@ -324,7 +324,7 @@ class Fun(Cog):
         for message in messages:
             for attachment in message.attachments:
                 extension = attachment.filename.rpartition(".")[-1].lower()
-                if extension in ("png", "jpg", "jpeg", "webp", "gif"):
+                if extension in IMAGE_FORMATS:
                     candidates.append((attachment.url, attachment.is_spoiler()))
 
             for embed in message.embeds:
@@ -401,7 +401,7 @@ class Fun(Cog):
         for message in messages:
             for attachment in message.attachments:
                 extension = attachment.filename.rpartition(".")[-1].lower()
-                if extension in ("png", "jpg", "jpeg", "webp", "gif"):
+                if extension in IMAGE_FORMATS:
                     continue
 
                 candidates.append(attachment)
