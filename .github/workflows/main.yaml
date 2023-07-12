@@ -22,7 +22,7 @@ jobs:
       - name: install mypy
         run: |
           pip install -U pip
-          pip install mypy -r requirements.txt asyncpg-stubs
+          pip install mypy -r requirements.txt asyncpg-stubs types-redis
       - uses: pre-commit/action@v3.0.0
 
   deploy:
