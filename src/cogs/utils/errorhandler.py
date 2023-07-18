@@ -44,7 +44,9 @@ class ErrorHandler(Cog):
         # owner bypassable
         if isinstance(e, commands.CommandOnCooldown | commands.DisabledCommand) and ctx.author.id in ctx.bot.owner_ids:
             try:
-                await ctx.reinvoke()
+                # for some reason, restart=True breaks when there is a space between prefix and command.
+                # . impersonate Username a passes 'impersonate' into user while .impersonate Username passes 'Username'
+                await ctx.reinvoke(restart=False)
             except Exception as err:
                 await ctx.reply(f"Error while reinvoking {type(e)}: **{err}**")
 

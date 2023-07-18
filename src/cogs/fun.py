@@ -3,7 +3,7 @@ import random
 
 from collections.abc import Iterable
 from datetime import datetime, timezone
-from typing import Optional, Union
+from typing import Optional
 
 import discord
 
@@ -89,13 +89,7 @@ class Fun(Cog):
         self,
         ctx: Context,
         target: Optional[
-            Union[
-                discord.User,
-                discord.TextChannel,
-                discord.CategoryChannel,
-                discord.VoiceChannel,
-                str,
-            ]
+            discord.User | discord.TextChannel | discord.CategoryChannel | discord.VoiceChannel | str
         ] = None,
         *,
         item: Optional[str] = None,
@@ -184,7 +178,7 @@ class Fun(Cog):
     # disable for now, might remove later
     @commands.command(aliases=["pretend"], enabled=False)
     @commands.bot_has_permissions(manage_webhooks=True)
-    async def impersonate(self, ctx: Context, user: Union[discord.Member, discord.User], *, text: str) -> None:
+    async def impersonate(self, ctx: Context, user: discord.Member | discord.User, *, text: str) -> None:
         """Send message as someone else"""
 
         name = user.display_name[:32]
