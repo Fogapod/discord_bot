@@ -241,7 +241,7 @@ class Fun(Cog):
 
         before = flags.before
         after = flags.after
-        past_point = await self._random_history_point(ctx, channel, before, after=after)
+        past_point = await self._random_history_point(channel, before, after=after)
 
         middle = [m async for m in channel.history(limit=101, around=past_point, before=before, after=after)]
         if not middle:
@@ -279,30 +279,17 @@ class Fun(Cog):
 
     @staticmethod
     async def _random_history_point(
-        ctx: Context,
         channel: discord.TextChannel | discord.DMChannel,
         before: discord.Message | datetime,
         after: Optional[discord.Message | datetime] = None,
     ) -> discord.Object:
-        if after is not None:
+        if after is None:
+            after_id = channel.id
+        else:
             if isinstance(after, datetime):
                 after_id = discord.utils.time_snowflake(after)
             else:
                 after_id = after.id
-        else:
-            cache_key = f"first_channel_message:{channel.id}"
-            if (cached := await ctx.redis.get(cache_key)) is not None:
-                after_id = int(cached)
-            else:
-                history = [m async for m in channel.history(limit=1, oldest_first=True)]
-
-                # possible if user gives bot empty channel in argument
-                if not history:
-                    raise PINKError("Empty channel")
-
-                after_id = history[0].id
-
-                await ctx.redis.set(cache_key, after_id, ex=3600)
 
         if isinstance(before, datetime):
             before_id = discord.utils.time_snowflake(before)
@@ -346,7 +333,7 @@ class Fun(Cog):
 
         before = flags.before
         after = flags.after
-        past_point = await self._random_history_point(ctx, channel, before, after=after)
+        past_point = await self._random_history_point(channel, before, after=after)
 
         middle = [m async for m in channel.history(limit=101, around=past_point, before=before, after=after)]
         if not middle:
@@ -354,7 +341,7 @@ class Fun(Cog):
 
         if not (candidates := self._find_images(middle)):
             # TODO: expand to left and right from here by fetching 200 messages at a time and spiraling joined array
-            raise PINKError("Could not find any images")
+            raise PINKError("Could not find any images (101)")
 
         # same as randmsg: do not pick first
         url, spoiler = random.choice(candidates)
@@ -410,7 +397,7 @@ class Fun(Cog):
 
         before = flags.before
         after = flags.after
-        past_point = await self._random_history_point(ctx, channel, before, after=after)
+        past_point = await self._random_history_point(channel, before, after=after)
 
         # checks up to 701 messages with up to 7 history calls
         middle = [m async for m in channel.history(limit=101, around=past_point, before=before, after=after)]
@@ -425,6 +412,8 @@ class Fun(Cog):
                 accents=[],
             )
             return
+
+        checked_messages = 101
 
         # middle failed, spiral out by fetching left and right sides of history
         for _ in range(3):
@@ -441,11 +430,13 @@ class Fun(Cog):
                 )
                 return
 
+            checked_messages += len(middle)
+
             # one or both sides hit channel end
             if len(middle) < 200:
                 break
 
-        raise PINKError("Could not find any attachemnts")
+        raise PINKError(f"Could not find any attachemnts ({checked_messages})")
 
     @staticmethod
     async def _find_attachments(messages: Iterable[discord.Message]) -> list[discord.Attachment]:
