@@ -6,6 +6,8 @@
 *.json
 *.toml
 
+!.github/**/*.yaml
+!.forgejo/**/*.yaml
 !example.env
 !example.settings.toml
 

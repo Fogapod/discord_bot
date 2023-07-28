@@ -1,0 +1,47 @@
+name: CI
+on:
+  pull_request:
+    branches:
+      - "*"
+  push:
+    branches:
+      - main
+
+env:
+  IMAGE_NAME: fogapod/pink
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      # because pre-commit uses external mypy
+      - name: install mypy
+        run: |
+          pip install -U pip
+          pip install mypy -r requirements.txt asyncpg-stubs types-redis
+      - uses: pre-commit/action@v3.0.0
+
+  deploy:
+    needs: [lint]
+    if: ${{ github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build image
+        run: |
+          docker pull $IMAGE_NAME
+          docker build --pull --cache-from $IMAGE_NAME -t $IMAGE_NAME:latest . \
+            --build-arg GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD) \
+            --build-arg GIT_COMMIT=$(git rev-parse HEAD) \
+            --build-arg GIT_DIRTY=$(git status --porcelain=v1 2>/dev/null | wc -l)
+      - name: Log in into Docker Hub
+        run: |
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+
+      - name: Push image to registry
+        run: |
+          docker push $IMAGE_NAME
