@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: https://github.com/actions/setup-python@v4
         with:
           python-version: '3.11'
       # because pre-commit uses external mypy
@@ -23,14 +23,14 @@ jobs:
         run: |
           pip install -U pip
           pip install mypy -r requirements.txt asyncpg-stubs types-redis
-      - uses: pre-commit/action@v3.0.0
+      - uses: https://github.com/pre-commit/action@v3.0.0
 
   deploy:
     needs: [lint]
     if: ${{ github.event_name == 'push' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Build image
         run: |
           docker pull $IMAGE_NAME
