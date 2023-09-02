@@ -8,6 +8,7 @@ from typing import Optional
 import discord
 
 from discord.ext import commands
+from discord.ext.commands import MessageConverter
 
 from src.bot import PINK
 from src.cog import Cog
@@ -20,6 +21,8 @@ IMAGE_FORMATS = {"png", "jpg", "jpeg", "webp", "gif"}
 
 
 class DateConverter:
+    """Converts string to datetime"""
+
     @classmethod
     async def convert(cls, _: Context, argument: str) -> datetime:
         for pattern in ("%Y", "%Y-%m", "%Y-%m-%d"):
@@ -33,13 +36,22 @@ class DateConverter:
         raise ValueError("Could not parse date")
 
 
+class MessageDateConverter(MessageConverter):
+    """Takes date out of message"""
+
+    async def convert(self, ctx: Context, argument: str) -> datetime:  # type: ignore
+        msg = await super().convert(ctx, argument)
+
+        return msg.created_at
+
+
 class RandItemFlags(commands.FlagConverter, delimiter=" ", prefix="--"):
-    before: discord.Message | datetime = commands.flag(
+    before: datetime = commands.flag(
         default=lambda ctx: ctx.message,
-        converter=Optional[discord.Message | DateConverter],
+        converter=Optional[MessageDateConverter | DateConverter],
     )
-    after: Optional[discord.Message | datetime] = commands.flag(
-        converter=Optional[discord.Message | DateConverter],
+    after: Optional[datetime] = commands.flag(
+        converter=Optional[MessageDateConverter | DateConverter],
     )
 
 
@@ -280,32 +292,20 @@ class Fun(Cog):
     @staticmethod
     async def _random_history_point(
         channel: discord.TextChannel | discord.DMChannel,
-        before: discord.Message | datetime,
-        after: Optional[discord.Message | datetime] = None,
+        before: datetime,
+        after: Optional[datetime] = None,
     ) -> discord.Object:
         if after is None:
             after_id = channel.id
         else:
-            if isinstance(after, datetime):
-                after_id = discord.utils.time_snowflake(after)
-            else:
-                after_id = after.id
+            after_id = discord.utils.time_snowflake(after)
 
-        if isinstance(before, datetime):
-            before_id = discord.utils.time_snowflake(before)
-        else:
-            before_id = before.id
+        before_id = discord.utils.time_snowflake(before)
 
         if before_id < after_id:
             raise PINKError("After is older than before")
 
-        if before_id == after_id:
-            offset = 0
-        else:
-            diff = before_id - after_id
-            offset = random.randrange(diff)
-
-        return discord.Object(id=after_id + offset)
+        return discord.Object(id=random.randrange(before_id, after_id + 1))
 
     @commands.command(aliases=["randi"])
     @commands.cooldown(1, 2, type=commands.BucketType.user)

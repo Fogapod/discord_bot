@@ -31,6 +31,7 @@ DIRECTIONS = {
     210: "7",
     165: "8",
 }
+FIRST_DIRECTION = next(iter(DIRECTIONS))
 
 # state of legs
 FIRST_STATE = 1
@@ -50,7 +51,7 @@ class Fly:
         self.bounds_x = (0, 0)
         self.bounds_y = (0, 0)
 
-        self.angle = list(DIRECTIONS.keys())[0]
+        self.angle = FIRST_DIRECTION
         self.state = FIRST_STATE
 
         self._modified = True
@@ -67,7 +68,7 @@ class Fly:
             new_x = min(self.bounds_x[1], max(self.bounds_x[0], new_x))
             new_y = min(self.bounds_y[1], max(self.bounds_y[0], new_y))
             if self.angle > 270:
-                self.angle = list(DIRECTIONS.keys())[0]
+                self.angle = FIRST_DIRECTION
             else:
                 self.angle += 90
 

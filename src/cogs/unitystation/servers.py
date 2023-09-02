@@ -103,7 +103,7 @@ class Server:
     address: str = field(init=False)
     downloads: list[DownloadAddress]
 
-    def __post_init__(self, _name: str, _players: str) -> None:
+    def __post_init__(self, _name: str, _players: str) -> None:  # type: ignore
         # newlines are allowed in server names
         self.name = _name.replace("\n", " ")
 
