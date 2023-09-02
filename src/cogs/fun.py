@@ -298,14 +298,17 @@ class Fun(Cog):
         if after is None:
             after_id = channel.id
         else:
-            after_id = discord.utils.time_snowflake(after)
+            after_id = discord.utils.time_snowflake(after) - 1
 
-        before_id = discord.utils.time_snowflake(before)
+        before_id = discord.utils.time_snowflake(before) - 1
+
+        # randrange needs at least 1 step difference
+        before_id += 1
 
         if before_id < after_id:
             raise PINKError("After is older than before")
 
-        return discord.Object(id=random.randrange(before_id, after_id + 1))
+        return discord.Object(id=random.randrange(after_id, before_id))
 
     @commands.command(aliases=["randi"])
     @commands.cooldown(1, 2, type=commands.BucketType.user)
