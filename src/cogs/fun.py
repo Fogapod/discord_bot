@@ -47,7 +47,7 @@ class MessageDateConverter(MessageConverter):
 
 class RandItemFlags(commands.FlagConverter, delimiter=" ", prefix="--"):
     before: datetime = commands.flag(
-        default=lambda ctx: ctx.message,
+        default=lambda ctx: ctx.message.created_at,
         converter=Optional[MessageDateConverter | DateConverter],
     )
     after: Optional[datetime] = commands.flag(
