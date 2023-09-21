@@ -17,7 +17,7 @@ RUN : \
         ttf-dejavu \
     && pip install -U pip \
     && pip install -r requirements.txt \
-	&& rm requirements.txt
+    && rm requirements.txt
 
 ARG UID=1188 \
 	GID=1188 \
