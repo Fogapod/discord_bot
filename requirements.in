@@ -25,3 +25,6 @@ uvloop
 # cache
 aiocache
 redis[hiredis]
+
+# url manipulation
+yarl

@@ -9,13 +9,15 @@ WORKDIR /code
 
 COPY requirements.txt .
 
-RUN apk add --no-cache \
-    # gif optimizer
-    gifsicle \
-    # Font for trocr
-    ttf-dejavu \
+RUN : \
+    && apk add --no-cache \
+        # gif optimizer
+        gifsicle \
+        # Font for trocr
+        ttf-dejavu \
     && pip install -U pip \
-    && pip install -r requirements.txt
+    && pip install -r requirements.txt \
+	&& rm requirements.txt
 
 ARG UID=1188 \
 	GID=1188 \

@@ -13,6 +13,7 @@ from typing import Any, Literal, Optional
 import aiohttp
 import discord
 import PIL
+import yarl
 
 from discord.ext import commands
 from PIL.Image import DecompressionBombWarning
@@ -300,7 +301,7 @@ class Image:
         allow_static: bool = True,
         allow_animated: bool = False,
     ) -> Optional[str]:
-        extension = url.rpartition(".")[-1].lower()
+        extension = yarl.URL(url).path.rpartition(".")[-1].lower()
         if (extension in cls.STATIC_FORMATS and allow_static) or (extension in cls.ANIMATED_FORMATS and allow_animated):
             return extension
 

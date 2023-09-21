@@ -20,7 +20,7 @@ asyncpg==0.28.0
     # via -r requirements.in
 attrs==23.1.0
     # via aiohttp
-brotli==1.0.9
+brotli==1.1.0
     # via discord-py
 certifi==2023.7.22
     # via
@@ -47,9 +47,9 @@ hiredis==2.2.3
     # via redis
 hpack==4.0.0
     # via h2
-httpcore==0.17.3
+httpcore==0.18.0
     # via httpx
-httpx==0.24.1
+httpx==0.25.0
     # via googletrans-py
 hyperframe==6.0.1
     # via h2
@@ -62,11 +62,11 @@ multidict==6.0.4
     # via
     #   aiohttp
     #   yarl
-orjson==3.9.5
+orjson==3.9.7
     # via
     #   -r requirements.in
     #   discord-py
-pillow==10.0.0
+pillow==10.0.1
     # via -r requirements.in
 pink-accents==0.0.4
     # via -r requirements.in
@@ -76,16 +76,18 @@ pycparser==2.21
     # via cffi
 redis[hiredis]==5.0.0
     # via -r requirements.in
-sentry-sdk==1.30.0
+sentry-sdk==1.31.0
     # via -r requirements.in
 sniffio==1.3.0
     # via
     #   anyio
     #   httpcore
     #   httpx
-urllib3==2.0.4
+urllib3==2.0.5
     # via sentry-sdk
 uvloop==0.17.0
     # via -r requirements.in
 yarl==1.9.2
-    # via aiohttp
+    # via
+    #   -r requirements.in
+    #   aiohttp
