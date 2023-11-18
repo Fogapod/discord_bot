@@ -2,6 +2,7 @@
 !/src
 !/requirements.txt
 !/accents
-!/accents2/examples
+!/accents2
+#!/accents2/examples
 
 **/__pycache__

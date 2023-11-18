@@ -8,6 +8,7 @@ ENV PYTHONUNBUFFERED=yes \
 WORKDIR /code
 
 COPY requirements.txt .
+COPY accents2 accents2
 
 RUN : \
     && apk add --no-cache --virtual .build-deps \
@@ -26,8 +27,7 @@ RUN : \
     && cargo install pink_accents \
         --features cli \
         --root /usr \
-        --git 'https://git.based.computer/fogapod/pink_accents.git' \
-        --rev 3af4251e6f \
+        --path accents2 \
     && apk del --purge .build-deps
 
 ARG UID=1188 \
