@@ -10,14 +10,21 @@ WORKDIR /code
 COPY requirements.txt .
 
 RUN : \
+    && apk add --no-cache --virtual .build-deps \
+        # compiling pink_accents
+        cargo \
     && apk add --no-cache \
         # gif optimizer
         gifsicle \
         # Font for trocr
         ttf-dejavu \
+        # pink_accents needs this at runtime for some reason
+        libgcc \
     && pip install -U pip \
     && pip install -r requirements.txt \
-    && rm requirements.txt
+    && rm requirements.txt \
+    && cargo install pink_accents --features cli --root /usr \
+    && apk del --purge .build-deps
 
 ARG UID=1188 \
 	GID=1188 \

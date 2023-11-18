@@ -7,6 +7,7 @@ import logging
 import random
 
 from collections.abc import Iterable
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Optional
 
 import discord
@@ -98,6 +99,39 @@ class Accents(Cog, HookHost):
         """
 
         await ctx.send_help(ctx.command)
+
+    @commands.command(aliases=["ac2l"], hidden=True)
+    async def accent2_ls(self, ctx: Context) -> None:
+        """list pink_accents: https://github.com/Fogapod/pink_accents"""
+
+        await ctx.reply(", ".join(f.stem for f in sorted(Path("/code/accents2/examples/").iterdir())))
+
+    @commands.command(aliases=["ac2"], hidden=True)
+    async def accent2(self, ctx: Context, accent: str, intensity: int, *, text: str) -> None:
+        """test pink_accents: https://github.com/Fogapod/pink_accents"""
+
+        process = await asyncio.create_subprocess_exec(
+            "/usr/bin/pink_accents",
+            "--accent",
+            # this is safe from injections because of the .ron at the end (unless at some point ron files are added)
+            f"/code/accents2/examples/{accent}.ron",
+            "--intensity",
+            str(intensity),
+            stdin=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+
+        assert process.stdin is not None
+        process.stdin.write(text.encode())
+        process.stdin.write_eof()
+
+        stdout, stderr = await process.communicate()
+
+        if process.returncode == 0:
+            await ctx.reply(stdout.decode())
+        else:
+            await ctx.reply("```\n{stderr.decode()}```")
 
     @commands.command()
     async def accents(self, ctx: Context, user: Optional[discord.Member] = None) -> None:

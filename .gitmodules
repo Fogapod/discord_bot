@@ -1,0 +1,3 @@
+[submodule "accents2"]
+	path = accents2
+	url = https://git.based.computer/fogapod/pink_accents.git

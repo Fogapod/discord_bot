@@ -1,38 +1,7 @@
+*
+!/src
+!/requirements.txt
+!/accents
+!/accents2
+
 **/__pycache__
-
-# repo metadata
-/.github
-/LICENSE
-/README.md
-/scripts
-
-# configs
-*.env
-**/*.yml
-**/*.yaml
-**/*.toml
-**/*.json
-
-# deployment configs
-/units
-
-# tool configs
-/Dockerfile
-/.dockerignore
-**/.gitignore
-
-# tool cache/data
-/.venv
-/.git
-/.mypy_cache
-/.pytest_cache
-/.ruff_cache
-/target
-
-# dependency configs (except requirements.txt)
-**/*.txt
-**/*.in
-!requirements.txt
-
-# IDEs
-/.vscode
