@@ -27,6 +27,7 @@ RUN : \
         --features cli \
         --root /usr \
         --git 'https://git.based.computer/fogapod/pink_accents.git' \
+        --rev 3af4251e6f \
     && apk del --purge .build-deps
 
 ARG UID=1188 \
