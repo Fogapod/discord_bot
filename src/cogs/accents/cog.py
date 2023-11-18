@@ -137,7 +137,7 @@ class Accents(Cog, HookHost):
     async def accents(self, ctx: Context, user: Optional[discord.Member] = None) -> None:
         """Alias for accent list"""
 
-        await ctx.invoke(self._list, user=user)  # type: ignore
+        await ctx.invoke(self._list, user=user)
 
     @accent.command(name="list", aliases=["ls"])  # type: ignore
     async def _list(self, ctx: Context, user: Optional[discord.Member] = None) -> None:

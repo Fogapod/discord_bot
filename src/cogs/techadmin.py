@@ -81,7 +81,7 @@ class TechAdmin(Cog):
         self._last_reloaded_extension: Optional[str] = last_reloaded
 
     async def cog_unload(self) -> None:
-        self.bot.__i_am_sorry_this_is_needed_for_reload_will_delete_later_i_promise = self._last_reloaded_extension  # type: ignore  # noqa: E501
+        self.bot.__i_am_sorry_this_is_needed_for_reload_will_delete_later_i_promise = self._last_reloaded_extension  # type: ignore
 
     # TODO: a converter
     # TODO: resolve cogs inside groups properly (folders without __ini__.py)
@@ -261,7 +261,7 @@ async def __pink_eval__():
             # SAFETY: owner only command
             exec(wrapped_source, glob)
         except Exception as e:
-            return "".join(traceback.format_exception_only(e))  # type: ignore[arg-type]
+            return "".join(traceback.format_exception_only(e))
 
         fake_stdout = io.StringIO()
 
@@ -269,7 +269,7 @@ async def __pink_eval__():
             with redirect_stdout(fake_stdout):
                 returned = await glob["__pink_eval__"]()  # type: ignore
         except Exception as e:
-            return f"{fake_stdout.getvalue()}{''.join(traceback.format_exception_only(e))}"  # type: ignore[arg-type]
+            return f"{fake_stdout.getvalue()}{''.join(traceback.format_exception_only(e))}"
 
         from_stdout = fake_stdout.getvalue()
 

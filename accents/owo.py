@@ -4,7 +4,7 @@ import re
 
 from typing import Optional
 
-from _shared import DISCORD_MESSAGE_END, DISCORD_MESSAGE_START  # type: ignore[import]
+from _shared import DISCORD_MESSAGE_END, DISCORD_MESSAGE_START  # type: ignore[import-not-found]
 from pink_accents import Accent, Match, Replacement
 from pink_accents.types import PatternMapType
 
