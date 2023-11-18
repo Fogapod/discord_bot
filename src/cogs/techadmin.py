@@ -22,47 +22,11 @@ from src.bot import PINK
 from src.checks import is_owner
 from src.cog import Cog
 from src.context import Context
+from src.converters import Code
 from src.utils import run_process_shell
 
 COG_MODULE_PREFIX = "src.cogs."
 PG_UNNAMED_COLUMN = "?column?"
-
-
-class Code:
-    _codeblock_regex = re.compile(r"```(?P<language>[\w+-]*)\n*(?P<body>.*?)\n*```[^`]*", re.DOTALL)
-
-    __slots__ = (
-        "language",
-        "body",
-        "has_codeblock",
-    )
-
-    def __init__(self, *, language: Optional[str], body: str, has_codeblock: bool = True):
-        self.language = language
-        self.body = body
-        self.has_codeblock = has_codeblock
-
-    @classmethod
-    async def convert(cls, _: Context, argument: str) -> Code:
-        if match := cls._codeblock_regex.fullmatch(argument):
-            if body := match["body"]:
-                language = match["language"] or None
-            else:
-                # discord displays language in codeblocks without code as code, be consistent with that
-                language = None
-                body = match["language"]
-
-            return Code(language=language, body=body)
-
-        return Code(language=None, body=argument, has_codeblock=False)
-
-    def __str__(self) -> str:
-        if not self.has_codeblock:
-            return self.body
-
-        # this is not completely accurate because it always inserts \n between language and body. also newlines around
-        # body are stripped
-        return f"```{'' if self.language is None else self.language}\n{self.body}```"
 
 
 class TechAdmin(Cog):

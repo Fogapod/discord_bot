@@ -23,7 +23,10 @@ RUN : \
     && pip install -U pip \
     && pip install -r requirements.txt \
     && rm requirements.txt \
-    && cargo install pink_accents --features cli --root /usr \
+    && cargo install pink_accents \
+        --features cli \
+        --root /usr \
+        --git 'https://git.based.computer/fogapod/pink_accents.git' \
     && apk del --purge .build-deps
 
 ARG UID=1188 \

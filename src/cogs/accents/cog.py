@@ -19,6 +19,7 @@ from src.bot import PINK
 from src.cache import LRU
 from src.cog import Cog
 from src.context import Context
+from src.converters import Code
 from src.errors import PINKError
 from src.hooks import HookHost
 
@@ -106,17 +107,33 @@ class Accents(Cog, HookHost):
 
         await ctx.reply(", ".join(f.stem for f in sorted(Path("/code/accents2/examples/").iterdir())))
 
-    @commands.command(aliases=["ac2"], hidden=True)
-    async def accent2(self, ctx: Context, accent: str, intensity: int, *, text: str) -> None:
-        """test pink_accents: https://github.com/Fogapod/pink_accents"""
+    async def run_accent2(
+        self,
+        ctx: Context,
+        accent: str,
+        text: str,
+        accent_is_custom: bool,
+        intensity: int = 0,
+    ) -> None:
+        args = [
+            "--intensity",
+            str(intensity),
+        ]
+
+        if accent_is_custom:
+            args.extend(("--accent-string", accent))
+        else:
+            args.extend(
+                (
+                    "--accent",
+                    # this is safe from injections because of .ron at the end (unless at some point ron files are added)
+                    f"/code/accents2/examples/{accent}.ron",
+                )
+            )
 
         process = await asyncio.create_subprocess_exec(
             "/usr/bin/pink_accents",
-            "--accent",
-            # this is safe from injections because of the .ron at the end (unless at some point ron files are added)
-            f"/code/accents2/examples/{accent}.ron",
-            "--intensity",
-            str(intensity),
+            *args,
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
@@ -131,7 +148,19 @@ class Accents(Cog, HookHost):
         if process.returncode == 0:
             await ctx.reply(stdout.decode())
         else:
-            await ctx.reply("```\n{stderr.decode()}```")
+            await ctx.reply(f"```\n{stderr.decode()}```")
+
+    @commands.command(aliases=["ac2"], hidden=True)
+    async def accent2(self, ctx: Context, accent: str, intensity: int, *, text: str) -> None:
+        """test pink_accents: https://github.com/Fogapod/pink_accents"""
+
+        await self.run_accent2(ctx, accent, text, accent_is_custom=False, intensity=intensity)
+
+    @commands.command(aliases=["ac2c"], hidden=True)
+    async def accent2_custom(self, ctx: Context, intensity: int, *, code: Code) -> None:
+        """custom pink_accent: https://github.com/Fogapod/pink_accents"""
+
+        await self.run_accent2(ctx, code.body, code.the_rest, accent_is_custom=True, intensity=intensity)
 
     @commands.command()
     async def accents(self, ctx: Context, user: Optional[discord.Member] = None) -> None:
