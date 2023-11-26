@@ -14,7 +14,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: https://github.com/actions/setup-python@v4
         with:
           python-version: '3.11'
@@ -30,7 +30,7 @@ jobs:
     if: ${{ github.event_name == 'push' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Build image
         run: |
           docker pull $IMAGE_NAME
