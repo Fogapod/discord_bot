@@ -272,7 +272,10 @@ class Fun(Cog):
             group_words = [w for _, w in group]
 
             for i, word in zip(indexes, random.sample(group_words, k=len(group_words))):
-                words[i] = word
+                # replace and copy case for each letter from old value
+                words[i] = "".join(
+                    [c_new.upper() if c_old.isupper() else c_new.lower() for c_new, c_old in zip(word, words[i])]
+                )
 
         words_list = words.values()
         special_list = special.values()
