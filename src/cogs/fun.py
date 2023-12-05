@@ -1,6 +1,8 @@
+import itertools
 import logging
 import random
 
+from collections import defaultdict
 from collections.abc import Iterable
 from datetime import datetime, timezone
 from typing import Optional
@@ -178,6 +180,105 @@ class Fun(Cog):
                 )
 
             await ctx.send(f"{item} bounces back from {mention} and hits `{ctx.author}`!")
+
+    @commands.command()
+    async def scramble(self, ctx: Context, *, text: Optional[str]) -> None:
+        """Scramble words in text"""
+
+        if text is None:
+            if (reference := ctx.message.reference) is None:
+                await ctx.reply("Give text or reference a message")
+
+                return
+
+            if not isinstance(reference.resolved, discord.Message):
+                await ctx.reply("Referenced message is either deleted or not cached")
+
+                return
+
+            text = reference.resolved.content
+
+        words: defaultdict[int, str] = defaultdict(str)
+        special: defaultdict[int, str] = defaultdict(str)
+
+        in_special = False
+        i = 0
+        for c in text:
+            if c.isalnum():
+                if in_special:
+                    in_special = False
+                    i += 1
+                words[i] += c
+            else:
+                if not in_special:
+                    in_special = True
+                    i += 1
+                special[i] += c
+
+        word_was_first = words and next(iter(words)) == 0
+
+        words_list = random.sample(list(words.values()), k=len(words))
+        special_list = special.values()
+
+        first, second = (words_list, special_list) if word_was_first else (special_list, words_list)
+        await ctx.send("".join(itertools.chain(*itertools.zip_longest(first, second, fillvalue=""))))
+
+    @commands.command()
+    async def scramble2(self, ctx: Context, *, text: Optional[str]) -> None:
+        """Scramble words of same lengths in text"""
+
+        if text is None:
+            if (reference := ctx.message.reference) is None:
+                await ctx.reply("Give text or reference a message")
+
+                return
+
+            if not isinstance(reference.resolved, discord.Message):
+                await ctx.reply("Referenced message is either deleted or not cached")
+
+                return
+
+            text = reference.resolved.content
+
+        words: defaultdict[int, str] = defaultdict(str)
+        special: defaultdict[int, str] = defaultdict(str)
+
+        in_special = False
+        i = 0
+        for c in text:
+            if c.isalnum():
+                if in_special:
+                    in_special = False
+                    i += 1
+                words[i] += c
+            else:
+                if not in_special:
+                    in_special = True
+                    i += 1
+                special[i] += c
+
+        word_was_first = words and next(iter(words)) == 0
+
+        # TODO: itertools.groupby maybe
+        lengths = defaultdict(list)
+        for i, word in words.items():
+            lengths[len(word)].append((i, word))
+
+        for group in lengths.values():
+            if len(group) == 1:
+                continue
+
+            indexes = [i for i, _ in group]
+            group_words = [w for _, w in group]
+
+            for i, word in zip(indexes, random.sample(group_words, k=len(group_words))):
+                words[i] = word
+
+        words_list = words.values()
+        special_list = special.values()
+
+        first, second = (words_list, special_list) if word_was_first else (special_list, words_list)
+        await ctx.send("".join(itertools.chain(*itertools.zip_longest(first, second, fillvalue=""))))
 
     @commands.command()
     async def say(self, ctx: Context, *, text: str) -> None:
