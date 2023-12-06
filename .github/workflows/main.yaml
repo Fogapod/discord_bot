@@ -36,7 +36,7 @@ jobs:
       - name: Build image
         run: |
           docker pull $IMAGE_NAME
-          docker build --pull --cache-from $IMAGE_NAME -t $IMAGE_NAME:latest . \
+          docker build -t $IMAGE_NAME:latest . \
             --build-arg GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD) \
             --build-arg GIT_COMMIT=$(git rev-parse HEAD) \
             --build-arg GIT_DIRTY=$(git status --porcelain=v1 2>/dev/null | wc -l)
