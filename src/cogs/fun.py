@@ -198,30 +198,35 @@ class Fun(Cog):
 
             text = reference.resolved.content
 
-        words: defaultdict[int, str] = defaultdict(str)
-        special: defaultdict[int, str] = defaultdict(str)
+        words = [""]
+        nonwords = []
 
-        in_special = False
-        i = 0
+        in_word = True
         for c in text:
             if c.isalnum():
-                if in_special:
-                    in_special = False
-                    i += 1
-                words[i] += c
+                if not in_word:
+                    in_word = True
+                    words.append(c)
+                else:
+                    words[-1] += c
             else:
-                if not in_special:
-                    in_special = True
-                    i += 1
-                special[i] += c
+                if in_word:
+                    in_word = False
+                    nonwords.append(c)
+                else:
+                    nonwords[-1] += c
 
-        word_was_first = words and next(iter(words)) == 0
+        if words[0] == "":
+            word_was_first = False
+            words.pop(0)
+        else:
+            word_was_first = True
+            nonwords.append("")
 
-        words_list = random.sample(list(words.values()), k=len(words))
-        special_list = special.values()
+        words = random.sample(words, k=len(words))
 
-        first, second = (words_list, special_list) if word_was_first else (special_list, words_list)
-        await ctx.send("".join(itertools.chain(*itertools.zip_longest(first, second, fillvalue=""))))
+        first, second = (words, nonwords) if word_was_first else (nonwords, words)
+        await ctx.send("".join(itertools.chain(*zip(first, second))))
 
     @commands.command()
     async def scramble2(self, ctx: Context, *, text: Optional[str]) -> None:
@@ -240,28 +245,34 @@ class Fun(Cog):
 
             text = reference.resolved.content
 
-        words: defaultdict[int, str] = defaultdict(str)
-        special: defaultdict[int, str] = defaultdict(str)
+        words = [""]
+        nonwords = []
 
-        in_special = False
-        i = 0
+        in_word = True
         for c in text:
             if c.isalnum():
-                if in_special:
-                    in_special = False
-                    i += 1
-                words[i] += c
+                if not in_word:
+                    in_word = True
+                    words.append(c)
+                else:
+                    words[-1] += c
             else:
-                if not in_special:
-                    in_special = True
-                    i += 1
-                special[i] += c
+                if in_word:
+                    in_word = False
+                    nonwords.append(c)
+                else:
+                    nonwords[-1] += c
 
-        word_was_first = words and next(iter(words)) == 0
+        if words[0] == "":
+            word_was_first = False
+            words.pop(0)
+        else:
+            word_was_first = True
+            nonwords.append("")
 
         # TODO: itertools.groupby maybe
         lengths = defaultdict(list)
-        for i, word in words.items():
+        for i, word in enumerate(words):
             lengths[len(word)].append((i, word))
 
         for group in lengths.values():
@@ -277,11 +288,8 @@ class Fun(Cog):
                     [c_new.upper() if c_old.isupper() else c_new.lower() for c_new, c_old in zip(word, words[i])]
                 )
 
-        words_list = words.values()
-        special_list = special.values()
-
-        first, second = (words_list, special_list) if word_was_first else (special_list, words_list)
-        await ctx.send("".join(itertools.chain(*itertools.zip_longest(first, second, fillvalue=""))))
+        first, second = (words, nonwords) if word_was_first else (nonwords, words)
+        await ctx.send("".join(itertools.chain(*zip(first, second))))
 
     @commands.command()
     async def say(self, ctx: Context, *, text: str) -> None:
