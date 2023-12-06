@@ -186,17 +186,7 @@ class Fun(Cog):
         """Scramble words in text"""
 
         if text is None:
-            if (reference := ctx.message.reference) is None:
-                await ctx.reply("Give text or reference a message")
-
-                return
-
-            if not isinstance(reference.resolved, discord.Message):
-                await ctx.reply("Referenced message is either deleted or not cached")
-
-                return
-
-            text = reference.resolved.content
+            text = self.get_referenced_text(ctx)
 
         words = [""]
         nonwords = []
@@ -232,17 +222,7 @@ class Fun(Cog):
         """Scramble words of same lengths in text"""
 
         if text is None:
-            if (reference := ctx.message.reference) is None:
-                await ctx.reply("Give text or reference a message")
-
-                return
-
-            if not isinstance(reference.resolved, discord.Message):
-                await ctx.reply("Referenced message is either deleted or not cached")
-
-                return
-
-            text = reference.resolved.content
+            text = self.get_referenced_text(ctx)
 
         words = [""]
         nonwords = []
@@ -288,6 +268,19 @@ class Fun(Cog):
 
         first, second = (words, nonwords) if word_was_first else (nonwords, words)
         await ctx.send("".join(itertools.chain(*itertools.zip_longest(first, second, fillvalue=""))))
+
+    @staticmethod
+    def get_referenced_text(ctx: Context) -> str:
+        if (reference := ctx.message.reference) is None:
+            raise PINKError("Give text or reference a message")
+
+        if not isinstance(reference.resolved, discord.Message):
+            raise PINKError("Referenced message is either deleted or not cached")
+
+        if not (content := reference.resolved.content):
+            raise PINKError("Referenced message has no text")
+
+        return content
 
     @commands.command()
     async def say(self, ctx: Context, *, text: str) -> None:
