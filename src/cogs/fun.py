@@ -221,12 +221,11 @@ class Fun(Cog):
             words.pop(0)
         else:
             word_was_first = True
-            nonwords.append("")
 
         words = random.sample(words, k=len(words))
 
         first, second = (words, nonwords) if word_was_first else (nonwords, words)
-        await ctx.send("".join(itertools.chain(*zip(first, second))))
+        await ctx.send("".join(itertools.chain(*itertools.zip_longest(first, second, fillvalue=""))))
 
     @commands.command()
     async def scramble2(self, ctx: Context, *, text: Optional[str]) -> None:
@@ -268,7 +267,6 @@ class Fun(Cog):
             words.pop(0)
         else:
             word_was_first = True
-            nonwords.append("")
 
         # TODO: itertools.groupby maybe
         lengths = defaultdict(list)
@@ -289,7 +287,7 @@ class Fun(Cog):
                 )
 
         first, second = (words, nonwords) if word_was_first else (nonwords, words)
-        await ctx.send("".join(itertools.chain(*zip(first, second))))
+        await ctx.send("".join(itertools.chain(*itertools.zip_longest(first, second, fillvalue=""))))
 
     @commands.command()
     async def say(self, ctx: Context, *, text: str) -> None:
