@@ -103,7 +103,7 @@ class Fun(Cog):
         self,
         ctx: Context,
         target: Optional[
-            discord.User | discord.TextChannel | discord.CategoryChannel | discord.VoiceChannel | str
+            discord.User | discord.Member | discord.TextChannel | discord.CategoryChannel | discord.VoiceChannel | str
         ] = None,
         *,
         item: Optional[str] = None,
@@ -117,7 +117,7 @@ class Fun(Cog):
             if isinstance(ctx.channel, discord.DMChannel):
                 target = random.choice((ctx.me, ctx.author))  # type: ignore
             else:
-                target = random.choice(ctx.channel.members)  # type: ignore
+                target = await self.get_throw_target_from_history(ctx)
 
         preposition = "at"
 
@@ -180,6 +180,40 @@ class Fun(Cog):
                 )
 
             await ctx.send(f"{item} bounces back from {mention} and hits `{ctx.author}`!")
+
+    @staticmethod
+    async def get_throw_target_from_history(ctx: Context) -> discord.Member | str:
+        """20% select from server, 80% select from 50 recent messages, excluding bot and author in both cases"""
+
+        assert isinstance(ctx.channel, discord.Thread | discord.TextChannel)
+        assert isinstance(ctx.me, discord.Member)
+        assert isinstance(ctx.author, discord.Member)
+
+        excluded = [ctx.me, ctx.author]
+
+        if random.random() > 0.8:
+            assert ctx.guild is not None
+
+            candidates = ctx.guild.members
+        else:
+            # not guaranteed to be unique dedup with set
+            candidates = list({m.author async for m in ctx.channel.history(limit=50)})  # type: ignore
+
+        # this is manual random.choice combined with skipping excluded to avoid creating new list by removing items
+        offset = 0
+        index = random.randrange(0, len(candidates))
+
+        while offset <= len(excluded):
+            # skip excluded and wrap around if we are at the end because of skips
+            index_with_offset = (index + offset) % len(candidates)
+
+            if (selected := candidates[index_with_offset]) not in excluded:
+                return selected
+
+            offset += 1
+
+        # this could be server with 1 user and bot or only author and bot talked recently
+        return "ghost"
 
     @commands.command()
     async def scramble(self, ctx: Context, *, text: Optional[str]) -> None:
