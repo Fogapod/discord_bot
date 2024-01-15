@@ -197,9 +197,7 @@ class Image:
         def pick_format(target_animated: bool) -> Optional[Literal["webp", "jpeg", "jpg", "png", "gif"]]:
             if allow_static and allow_animated:
                 return (
-                    cls.DEFAULT_ANIMATED_FORMAT
-                    if target_animated
-                    else cls.DEFAULT_STATIC_FORMAT  # type: ignore[return-value]
+                    cls.DEFAULT_ANIMATED_FORMAT if target_animated else cls.DEFAULT_STATIC_FORMAT  # type: ignore[return-value]
                 )
 
             if allow_animated and target_animated:
