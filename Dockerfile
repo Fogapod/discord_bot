@@ -1,12 +1,10 @@
-FROM alpine:3.19 as accents_builder
+FROM rust:alpine as accents_builder
 
 WORKDIR /build
 
 COPY accents2 .
 
-RUN : \
-    && apk add cargo libgcc \
-    && cargo build --features cli --release
+RUN cargo build --features cli --release
 
 FROM python:3.11-alpine3.19
 
