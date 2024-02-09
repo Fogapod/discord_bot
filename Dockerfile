@@ -4,7 +4,9 @@ WORKDIR /build
 
 COPY accents2 .
 
-RUN cargo build --features cli --release
+RUN : \
+    && apk add --no-cache musl-dev \
+    && cargo build --features cli --release
 
 FROM python:3.11-alpine3.19
 
@@ -28,7 +30,7 @@ RUN : \
     && pip install -r requirements.txt \
     && rm requirements.txt
 
-COPY --from=accents_builder /build/target/release/pink_accents /usr/bin/pink_accents
+COPY --from=accents_builder /build/target/release/sayit /usr/bin/sayit
 
 ARG UID=1188 \
     GID=1188 \

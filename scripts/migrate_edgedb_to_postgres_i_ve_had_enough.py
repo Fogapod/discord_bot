@@ -6,7 +6,7 @@ import edgedb  # type: ignore
 
 sys.path.append(".")
 
-from src.settings import settings  # noqa
+from src.settings import settings
 
 
 async def main() -> None:

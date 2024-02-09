@@ -132,7 +132,7 @@ class Accents(Cog, HookHost):
             )
 
         process = await asyncio.create_subprocess_exec(
-            "/usr/bin/pink_accents",
+            "/usr/bin/sayit",
             *args,
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
