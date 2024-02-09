@@ -1,4 +1,4 @@
-FROM alpine:3.18 as accents_builder
+FROM alpine:3.19 as accents_builder
 
 WORKDIR /build
 
@@ -8,7 +8,7 @@ RUN : \
     && apk add cargo libgcc \
     && cargo build --features cli --release
 
-FROM python:3.11-alpine3.18
+FROM python:3.11-alpine3.19
 
 ENV PYTHONUNBUFFERED=yes \
     PYTHONDONTWRITEBYTECODE=yes \
