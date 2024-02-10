@@ -1,5 +1,7 @@
 [tool.ruff]
 line-length = 121
+
+[tool.ruff.lint]
 ignore = [
     # doesn't like Optional
     # https://github.com/charliermarsh/ruff/issues/4858
@@ -43,13 +45,13 @@ fixable = [
     "I"
 ]
 
-[tool.ruff.flake8-bugbear]
+[tool.ruff.lint.flake8-bugbear]
 extend-immutable-calls = ["discord.ext.commands.parameter"]
 
-[tool.ruff.flake8-unused-arguments]
+[tool.ruff.lint.flake8-unused-arguments]
 ignore-variadic-names = true
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 combine-as-imports = true
 lines-between-types = 1
 
@@ -78,8 +80,6 @@ no_implicit_reexport = true
 strict_equality = true
 namespace_packages = true
 
-# discord.ext seem to require `namespace_packages = true`, but it is currently broken in mypy:
-# https://github.com/python/mypy/issues/12257
 [[tool.mypy.overrides]]
 module = [
     "googletrans.*",
