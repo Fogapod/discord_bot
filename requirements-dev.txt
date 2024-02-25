@@ -6,7 +6,7 @@ mypy
 ruff
 
 # dependency management
-pip-tools
+uv
 
 # typing
 # https://github.com/MagicStack/asyncpg/issues/569

@@ -14,7 +14,7 @@ def cursed_e_generator(count: int) -> Generator[str, None, None]:
     yield from random.choices(CURSED_ES, k=count)
 
 
-def next_cursed_e(ctx: ReplacementContext) -> str:
+def next_cursed_e(ctx: ReplacementContext[Generator[str, None, None]]) -> str:
     if ctx.state is None:
         # this is a little hack for knowing the amount of e's we will need ahead of time.
         # this number will usually be greater than the actual amount of e's used because

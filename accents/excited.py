@@ -2,6 +2,8 @@
 This is heavily based on E accent.
 """
 
+from __future__ import annotations
+
 import random
 
 from collections.abc import Generator
@@ -9,18 +11,20 @@ from math import log10
 from typing import Any
 
 from pink_accents import Accent, Match, Replacement, ReplacementContext
-from pink_accents.errors import BadSeverity
+from pink_accents.errors import BadSeverityError
 
 
 def excited(m: Match) -> str:
+    state: State = m.context.state  # type: ignore[assignment]
+
     # special value
     if m.severity == 0:
-        if m.context.state.previous_capital:
+        if state.previous_capital:
             fn = str.lower
         else:
             fn = str.upper
 
-        m.context.state.previous_capital = not m.context.state.previous_capital
+        m.context.state.previous_capital = not state.previous_capital  # type: ignore[union-attr]
 
         return fn(m.original)
 
@@ -29,7 +33,7 @@ def excited(m: Match) -> str:
     else:
         fn = str.upper
 
-    if m.context.state.next_float() + log10(abs(m.severity)) > 0.5:
+    if m.context.state.next_float() + log10(abs(m.severity)) > 0.5:  # type: ignore[union-attr]
         return fn(m.original)
 
     return m.original
@@ -41,7 +45,7 @@ class State:
         "previous_capital",
     )
 
-    def __init__(self, ctx: ReplacementContext):
+    def __init__(self, ctx: ReplacementContext[State]):
         self._generator = self._float_generator(len(ctx.source))
         self.previous_capital = False
 
@@ -63,7 +67,7 @@ class Excited(Accent):
     def severity(self, value: int) -> None:
         # support negative severity
         if not isinstance(value, int):
-            raise BadSeverity("Must be integer")
+            raise BadSeverityError("Must be integer")
 
         self._severity = value
 
@@ -75,9 +79,9 @@ class Excited(Accent):
         context_id: Any,
         # renaming to _cls or _ breaks mypy for some reason:
         # Signature of "get_context" incompatible with supertype "Accent"
-        cls: type[ReplacementContext] = ReplacementContext,  # noqa: ARG002
-    ) -> ReplacementContext:
-        ctx = ReplacementContext(
+        cls: type[ReplacementContext[State]] = ReplacementContext[State],  # noqa: ARG002
+    ) -> ReplacementContext[State]:
+        ctx: ReplacementContext[State] = ReplacementContext(
             source=text,
             id=context_id,
             accent=self,

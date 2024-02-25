@@ -185,7 +185,7 @@ class Accents(Cog, HookHost):
                 if user.bot and user.id != ctx.me.id:
                     return await ctx.send("Bots cannot have accents")
 
-            user_accent_map = {a.name: a for a in self.get_user_accents(user)}  # type: ignore
+            user_accent_map = {a.name(): a for a in self.get_user_accents(user)}  # type: ignore[arg-type]
 
         body = ""
 
@@ -203,14 +203,14 @@ class Accents(Cog, HookHost):
             ALL_ACCENTS.values(),
             key=lambda a: (
                 # sort by position in global accent list, leave missing at the end
-                -iterable_find(user_accent_map.keys(), a.name),
-                a.name,
+                -iterable_find(user_accent_map.keys(), a.name()),
+                a.name(),
             ),
         ):
-            if instance := user_accent_map.get(accent.name):  # type: ignore
+            if instance := user_accent_map.get(accent.name()):
                 line = f"+ {instance.full_name:>{longest_name}} : {accent.description}\n"
             else:
-                line = f"- {accent.name:>{longest_name}} : {accent.description}\n"
+                line = f"- {accent.name():>{longest_name}} : {accent.description}\n"
 
             body += line
 
@@ -222,7 +222,7 @@ class Accents(Cog, HookHost):
         )
 
     async def _add_accents(self, ctx: Context, member: discord.Member, accents: _UserAccentsType) -> None:
-        user_accent_map = {a.name: a for a in self.get_user_accents(member)}
+        user_accent_map = {a.name(): a for a in self.get_user_accents(member)}
 
         something_changed = False
 
@@ -230,10 +230,10 @@ class Accents(Cog, HookHost):
         accents = list(dict.fromkeys(accents))
 
         for accent_to_add in accents:
-            existing = user_accent_map.get(accent_to_add.name)
+            existing = user_accent_map.get(accent_to_add.name())
 
             if existing is None or existing.severity != accent_to_add.severity:
-                user_accent_map[accent_to_add.name] = accent_to_add
+                user_accent_map[accent_to_add.name()] = accent_to_add
 
                 something_changed = True
 
@@ -254,7 +254,7 @@ class Accents(Cog, HookHost):
                 "SET name = EXCLUDED.name",
                 ctx.guild.id,  # type: ignore
                 member.id,
-                accent.name,
+                accent.name(),
                 accent.severity,
             )
 
@@ -271,15 +271,15 @@ class Accents(Cog, HookHost):
 
             return
 
-        name_to_accent = {a.name: a for a in self.get_user_accents(member)}
+        name_to_accent = {a.name(): a for a in self.get_user_accents(member)}
 
         to_remove = []
 
         for accent_to_remove in set(accents):
-            if accent_to_remove.name in name_to_accent:
+            if accent_to_remove.name() in name_to_accent:
                 to_remove.append(accent_to_remove)
 
-                del name_to_accent[accent_to_remove.name]
+                del name_to_accent[accent_to_remove.name()]
 
         if not to_remove:
             raise PINKError("Nothing to do")
@@ -291,7 +291,7 @@ class Accents(Cog, HookHost):
                 "DELETE FROM accents WHERE guild_id = $1 AND user_id = $2 AND name = $3",
                 ctx.guild.id,  # type: ignore
                 member.id,
-                accent.name,
+                accent.name(),
             )
 
     async def _update_nick(self, ctx: Context) -> None:
@@ -418,10 +418,10 @@ class Accents(Cog, HookHost):
         min_severity: int = 1,
         max_severity: int = 1,
     ) -> None:
-        my_accents = [a.name for a in self.get_user_accents(ctx.me)]  # type: ignore
+        my_accents = [a.name() for a in self.get_user_accents(ctx.me)]  # type: ignore[arg-type]
 
-        if accent.name in my_accents:  # type: ignore
-            await self._remove_accents(ctx, ctx.me, [accent(1)])  # type: ignore
+        if accent.name() in my_accents:
+            await self._remove_accents(ctx, ctx.me, [accent(1)])  # type: ignore[arg-type]
         else:
             if min_severity == max_severity:
                 severity = min_severity
@@ -432,7 +432,7 @@ class Accents(Cog, HookHost):
 
         await self._update_nick(ctx)
 
-        await ctx.send(f"{accent.name} toggled")
+        await ctx.send(f"{accent.name()} toggled")
 
     @commands.command()
     @commands.guild_only()

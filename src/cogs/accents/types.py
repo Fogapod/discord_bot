@@ -2,7 +2,7 @@ import re
 
 from discord.ext import commands
 from pink_accents import Accent
-from pink_accents.errors import BadSeverity
+from pink_accents.errors import BadSeverityError
 
 from src.context import Context
 
@@ -34,5 +34,5 @@ class PINKAccent(Accent, register=False):
 
         try:
             return accent(severity)
-        except BadSeverity as e:
+        except BadSeverityError as e:
             raise commands.BadArgument(f"{name}: bad severity: {e}") from None
