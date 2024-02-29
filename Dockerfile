@@ -12,8 +12,6 @@ FROM python:3.11-alpine3.19
 
 ENV PYTHONUNBUFFERED=yes \
     PYTHONDONTWRITEBYTECODE=yes \
-    PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_ROOT_USER_ACTION=ignore
 
 WORKDIR /code
@@ -26,8 +24,9 @@ RUN : \
         gifsicle \
         # Font for trocr
         ttf-dejavu \
-    && pip install -U pip \
-    && pip install -r requirements.txt \
+    && pip install uv --no-cache-dir --disable-pip-version-check \
+    && uv pip install -r requirements.txt --no-cache \
+    && uv pip uninstall uv \
     && rm requirements.txt
 
 COPY --from=accents_builder /build/target/release/sayit /usr/bin/sayit

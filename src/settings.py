@@ -38,8 +38,7 @@ class Field:
         self.default = default
 
 
-class BaseConfig:
-    ...
+class BaseConfig: ...
 
 
 def merge_configs(base: type[BaseConfig], overrides: Optional[type[BaseConfig]]) -> type[BaseConfig]:
