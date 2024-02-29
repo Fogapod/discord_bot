@@ -208,9 +208,9 @@ class Accents(Cog, HookHost):
             ),
         ):
             if instance := user_accent_map.get(accent.name()):
-                line = f"+ {instance.full_name:>{longest_name}} : {accent.description}\n"
+                line = f"+ {instance.full_name:>{longest_name}} : {accent.description()}\n"
             else:
-                line = f"- {accent.name():>{longest_name}} : {accent.description}\n"
+                line = f"- {accent.name():>{longest_name}} : {accent.description()}\n"
 
             body += line
 
