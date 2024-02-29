@@ -40,11 +40,12 @@ class UnityStation(Cog):
             await self._server_list.fetch(ctx)
 
             if server is None:
-                text = await self._servers()
+                text = await self._servers(ctx)
             else:
                 text = await self._server(server)
 
-        await ctx.send(text)
+        if text is not None:
+            await ctx.send(text)
 
     async def _server(self, server_name: str) -> str:
         server_name = server_name.lower()
@@ -79,7 +80,7 @@ class UnityStation(Cog):
 
         return f"```\n{main_info}\n\nDownloads\n{downloads}```"
 
-    async def _servers(self) -> str:
+    async def _servers(self, ctx: Context) -> Optional[str]:
         servers = self._server_list.servers
 
         if not servers:
@@ -105,6 +106,19 @@ class UnityStation(Cog):
                 row.append(value)
             data.append(row)
 
+        # this section applies accents to data to not break table alignment
+        # accents only work in guilds
+        if ctx.guild is None or (accent_cog := ctx.bot.get_cog("Accents")) is None:
+
+            def apply_accent(s: str) -> str:
+                return s
+        else:
+
+            def apply_accent(s: str) -> str:
+                return accent_cog.apply_member_accents_to_text(member=ctx.me, text=s)  # type: ignore[attr-defined]
+
+        data = [[apply_accent(s) for s in row] for row in data]
+
         column_widths: dict[int, int] = {}
 
         for row in data:
@@ -125,7 +139,9 @@ class UnityStation(Cog):
 
             body += f"{' | '.join(values)}\n"
 
-        return f"```\n{header}\n{separator}\n{body}```"
+        await ctx.send(f"```\n{header}\n{separator}\n{body}```", accents=[])
+
+        return None
 
     @commands.command(aliases=["cl"])
     async def changelog(self, ctx: Context, *, build: Optional[str] = None) -> None:
