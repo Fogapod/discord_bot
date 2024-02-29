@@ -25,8 +25,8 @@ RUN : \
         # Font for trocr
         ttf-dejavu \
     && pip install uv --no-cache-dir --disable-pip-version-check \
-    && uv pip install -r requirements.txt --no-cache \
-    && uv pip uninstall uv \
+    && uv pip install -r requirements.txt --no-cache --system \
+    && uv pip uninstall uv --system \
     && rm requirements.txt
 
 COPY --from=accents_builder /build/target/release/sayit /usr/bin/sayit
