@@ -22,7 +22,7 @@ jobs:
       - name: install mypy
         run: |
           pip install uv --no-cache-dir --disable-pip-version-check
-          uv pip install --system --no-cache mypy -r requirements.txt asyncpg-stubs types-redis
+          uv pip install --system --no-cache -r requirements/base.txt mypy asyncpg-stubs types-redis
       - uses: pre-commit/action@v3.0.0
 
   deploy:
