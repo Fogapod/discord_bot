@@ -16,7 +16,7 @@ ENV PYTHONUNBUFFERED=yes \
 
 WORKDIR /code
 
-COPY requirements.txt .
+COPY requirements/base.txt requirements.txt
 
 RUN : \
     && apk add --no-cache \

@@ -21,8 +21,8 @@ jobs:
       # because pre-commit uses external mypy
       - name: install mypy
         run: |
-          pip install -U pip
-          pip install mypy -r requirements.txt asyncpg-stubs types-redis
+          pip install uv --no-cache-dir --disable-pip-version-check
+          uv pip install --system --no-cache mypy -r requirements.txt asyncpg-stubs types-redis
       - uses: pre-commit/action@v3.0.0
 
   deploy:

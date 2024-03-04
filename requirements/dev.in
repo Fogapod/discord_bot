@@ -1,12 +1,8 @@
--r requirements.txt
+-r base.txt
 
 # linting
-pre-commit
 mypy
 ruff
-
-# dependency management
-uv
 
 # typing
 # https://github.com/MagicStack/asyncpg/issues/569
