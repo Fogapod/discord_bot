@@ -1,6 +1,6 @@
 *
 !/src
-!/requirements.txt
+!/requirements/base.txt
 !/accents
 !/accents2
 #!/accents2/examples
