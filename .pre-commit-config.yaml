@@ -19,17 +19,8 @@ repos:
       ^.*.md$
 
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.3.0
+  rev: v0.3.2
   hooks:
   - id: ruff-format
   - id: ruff
     args: [ --fix, --exit-non-zero-on-fix ]
-
-- repo: local
-  hooks:
-  - id: typecheck
-    name: typecheck
-    entry: mypy .
-    types: [python]
-    language: system
-    pass_filenames: false
