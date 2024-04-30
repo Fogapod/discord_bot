@@ -49,7 +49,7 @@ class FetchedImage:
         self.bytes = data
 
     @in_executor()
-    def to_pil(self, *, max_dimensions: int = 10000) -> PIL.Image:
+    def to_pil(self, *, max_dimensions: int = 10000) -> PIL.Image.Image:
         """Returns Pillow image created from bytes. Should be closed manually. Maybe."""
 
         try:
@@ -479,7 +479,7 @@ class Image:
 
             raise commands.BadArgument(error) from e
 
-    async def to_pil(self, ctx: Context) -> PIL.Image:
+    async def to_pil(self, ctx: Context) -> PIL.Image.Image:
         fetched = await self.fetch(ctx)
 
         return await fetched.to_pil()

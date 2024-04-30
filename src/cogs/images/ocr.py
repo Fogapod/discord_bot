@@ -8,9 +8,7 @@ from collections.abc import Sequence
 from io import BytesIO
 from typing import Any, ClassVar, Optional
 
-import PIL
-
-from PIL import ImageDraw, ImageFilter, ImageFont
+from PIL import Image as PilImage, ImageDraw, ImageFilter, ImageFont
 from pink_accents import Accent
 
 from src.context import Context
@@ -42,7 +40,7 @@ _VerticesType = tuple[_VertexType, _VertexType, _VertexType, _VertexType]
 OCR_API_URL = "https://content-vision.googleapis.com/v1/images:annotate"
 OCR_RATELIMIT = 30
 
-FONT = ImageFont.truetype("DejaVuSans.ttf")
+FONT = ImageFont.truetype("DejaVuSans.ttf")  # type: ignore
 
 _ocr_queue: asyncio.Queue[tuple[asyncio.Future[dict[str, Any]], bytes, Context]] = asyncio.Queue(5)
 _task: Optional[asyncio.Task[Any]] = None
@@ -87,7 +85,7 @@ class AngleUndetectableError(TROCRError):
 
 
 class TextField:
-    def __init__(self, full_text: str, src: PIL.Image, padding: int = 3):
+    def __init__(self, full_text: str, src: PilImage.Image, padding: int = 3):
         self.text = full_text
 
         self.left: Optional[int] = None
@@ -411,7 +409,7 @@ async def ocr(ctx: Context, image: Image) -> dict[str, Any]:
 
 
 @in_executor()
-def _draw_trocr(src: PIL.Image, fields: Sequence[TextField]) -> BytesIO:
+def _draw_trocr(src: PilImage.Image, fields: Sequence[TextField]) -> BytesIO:
     field_cap = 150
 
     fields = fields[:field_cap]
@@ -422,7 +420,7 @@ def _draw_trocr(src: PIL.Image, fields: Sequence[TextField]) -> BytesIO:
         cropped = src.crop(field.coords_padded)
 
         # NOTE: next line causes segfaults if coords are wrong, debug from here
-        blurred = cropped.filter(ImageFilter.GaussianBlur(10))
+        blurred = cropped.filter(ImageFilter.GaussianBlur(10))  # type: ignore
 
         # Does not work anymore for some reason, black stroke is good anyway
         # field.inverted_avg_color = ImageOps.invert(
@@ -437,7 +435,7 @@ def _draw_trocr(src: PIL.Image, fields: Sequence[TextField]) -> BytesIO:
         font = FONT.font_variant(size=field.font_size)
 
         left, top, right, bottom = font.getbbox(field.text, stroke_width=field.stroke_width)
-        text_im = PIL.Image.new("RGBA", size=(right - left, bottom - top))
+        text_im = PilImage.new("RGBA", size=(right - left, bottom - top))
 
         ImageDraw.Draw(text_im).text(
             (0, 0),
@@ -448,13 +446,13 @@ def _draw_trocr(src: PIL.Image, fields: Sequence[TextField]) -> BytesIO:
             stroke_fill=(0, 0, 0),
         )
 
-        src.alpha_composite(
-            text_im.resize(
+        src.alpha_composite(  # type: ignore
+            text_im.resize(  # type: ignore
                 (
                     min((text_im.width, field.width)),
                     min((text_im.height, field.height)),
                 ),
-            ).rotate(field.angle, expand=True, resample=PIL.Image.BICUBIC),
+            ).rotate(field.angle, expand=True, resample=PilImage.BICUBIC),  # type: ignore
             field.coords_padded[:2],
         )
 
@@ -631,7 +629,7 @@ async def textboxes(ctx: Context, image: StaticImage, outline: tuple[int, int, i
 
 
 @in_executor()
-def _draw_textboxes(src: PIL.Image, fields: Sequence[TextField], outline: tuple[int, int, int]) -> BytesIO:
+def _draw_textboxes(src: PilImage.Image, fields: Sequence[TextField], outline: tuple[int, int, int]) -> BytesIO:
     field_cap = 150
 
     fields = fields[:field_cap]

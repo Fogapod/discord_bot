@@ -7,8 +7,7 @@ import time
 from collections.abc import Sequence
 from math import cos, pi, sin
 from pathlib import Path
-
-import PIL
+from typing import Optional
 
 from PIL import Image
 
@@ -122,17 +121,17 @@ class Fly:
 class FlyDrawer:
     def __init__(
         self,
-        src: Image,
+        src: Image.Image,
         flies: Sequence[Fly],
         steps: int = 100,
-        fly_src: PIL.Image = None,
+        fly_src: Optional[Image.Image] = None,
     ):
         self.src = src.convert("RGBA")
-        self.src.thumbnail((MAX_SIDE, MAX_SIDE), Image.LANCZOS)
+        self.src.thumbnail((MAX_SIDE, MAX_SIDE), Image.LANCZOS)  # type: ignore
 
         if fly_src:
-            self.fly_src = fly_src.convert("RGBA")
-            self.fly_src.thumbnail((FLY_SIDE, FLY_SIDE), Image.LANCZOS)
+            self.fly_src: Optional[Image.Image] = fly_src.convert("RGBA")
+            self.fly_src.thumbnail((FLY_SIDE, FLY_SIDE), Image.LANCZOS)  # type: ignore
         else:
             self.fly_src = None
 
@@ -148,16 +147,16 @@ class FlyDrawer:
         for fly in self.flies:
             fly.spawn(bounds_x, bounds_y)
 
-        self._cached_flies: dict[str, Image] = {}
-        self._frames: list[Image] = []
+        self._cached_flies: dict[str, Image.Image] = {}
+        self._frames: list[Image.Image] = []
 
-    def _get_fly_image(self, angle: int, state: int) -> Image:
+    def _get_fly_image(self, angle: int, state: int) -> Image.Image:
         name = f"{DIRECTIONS[angle]}_{state if not self.fly_src else 0}"
         if name in self._cached_flies:
             img = self._cached_flies[name]
         else:
             if self.fly_src:
-                img = self.fly_src.rotate(angle, expand=True)
+                img = self.fly_src.rotate(angle, expand=True)  # type: ignore
             else:
                 img = Image.open(Path(__file__).parent / "templates" / "flies" / f"{name}.png")
 
@@ -181,7 +180,7 @@ class FlyDrawer:
         for fly in self.flies:
             fly._modified = False
             img = self._get_fly_image(fly.angle, fly.state)
-            overlay.alpha_composite(img, (fly.pos_x, fly.pos_y))
+            overlay.alpha_composite(img, (fly.pos_x, fly.pos_y))  # type: ignore
 
         self._frames.append(overlay)
 
@@ -223,8 +222,8 @@ class FlyDrawer:
 
 @in_executor()
 def draw_flies(
-    src: PIL.Image,
-    fly_src: PIL.Image,
+    src: Image.Image,
+    fly_src: Image.Image,
     steps: int,
     speed: int,
     amount: int,

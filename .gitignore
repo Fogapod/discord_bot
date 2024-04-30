@@ -1,6 +1,6 @@
 # configs
-*.env
-*.toml
+.env
+settings.toml
 
 !/example.env
 !/example.settings.toml
@@ -11,3 +11,6 @@ __pycache__
 /.venv
 /.mypy_cache
 /.pytest_cache
+
+# db
+/pink.db
