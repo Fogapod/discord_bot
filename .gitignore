@@ -1,22 +1,13 @@
 # configs
 *.env
-*.yml
-*.yaml
-*.toml
-*.json
 *.toml
 
-!.github/**/*.yaml
-!.forgejo/**/*.yaml
-!example.env
-!example.settings.toml
+!/example.env
+!/example.settings.toml
 
 # cache
 __pycache__
-target
-.venv
-.mypy_cache
-.pytest_cache
-
-# IDEs
-.vscode
+/target
+/.venv
+/.mypy_cache
+/.pytest_cache
