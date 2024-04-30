@@ -8,7 +8,7 @@ RUN : \
     && apk add --no-cache musl-dev \
     && cargo build --features cli --release
 
-FROM python:3.11-alpine3.19
+FROM python:3.12-alpine3.19
 
 ENV PYTHONUNBUFFERED=yes \
     PYTHONDONTWRITEBYTECODE=yes \
