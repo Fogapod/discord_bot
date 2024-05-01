@@ -3,6 +3,6 @@
 !/requirements/base.txt
 !/accents
 !/accents2
-#!/accents2/examples
+!/schema.sql
 
 **/__pycache__
