@@ -14,7 +14,9 @@ async def main() -> None:
         password=input("password: "),
         database=input("database: "),
     )
-    conn = sqlite3.connect("pink.db")
+
+    sqlite_path = input("sqlite path: ")
+    conn = sqlite3.connect(sqlite_path)
     db = conn.cursor()
 
     with Path("schema.sql").open() as f:
