@@ -351,7 +351,7 @@ class Meta(Cog):
             return
 
         settings = Prefix(ctx.bot, prefix=prefix.lower())
-        await settings.write(ctx)
+        settings.write(ctx)
 
         ctx.bot.prefixes[ctx.guild.id] = settings
 
@@ -367,8 +367,7 @@ class Meta(Cog):
         assert ctx.guild is not None
 
         if ctx.guild.id in ctx.bot.prefixes:
-            await Prefix.delete(ctx)
-
+            Prefix.delete(ctx)
             del ctx.bot.prefixes[ctx.guild.id]
 
         await ctx.ok()

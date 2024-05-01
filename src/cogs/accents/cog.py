@@ -60,7 +60,9 @@ class Accents(Cog, HookHost):
         # current name: PINK
         self.accent_wh_name = f"{self.bot.user.name} bot accent webhook"  # type: ignore
 
-        for settings in await self.bot.pg.fetch("SELECT guild_id, user_id, name, severity FROM accents"):
+        db = self.bot.db_cursor()
+        db.execute("SELECT guild_id, user_id, name, severity FROM accents")
+        for settings in db.fetchall():
             if (accent_cls := ALL_ACCENTS.get(settings["name"].lower())) is None:
                 log.error(
                     "unknown accent: guild=%s user=%s %s", settings["guild_id"], settings["user_id"], settings["name"]
@@ -247,24 +249,32 @@ class Accents(Cog, HookHost):
 
         self.set_user_accents(member, all_accents)
 
-        for accent in all_accents:
-            await self.bot.pg.fetchrow(
-                "INSERT INTO accents (guild_id, user_id, name, severity) VALUES ($1, $2, $3, $4) "
-                "ON CONFLICT (guild_id, user_id, name) DO UPDATE "
-                "SET name = EXCLUDED.name",
+        rows = (
+            (
                 ctx.guild.id,  # type: ignore
                 member.id,
                 accent.name(),
                 accent.severity,
             )
+            for accent in all_accents
+        )
+
+        ctx.db.executemany(
+            "INSERT INTO accents (guild_id, user_id, name, severity) VALUES (?, ?, ?, ?) "
+            "ON CONFLICT (guild_id, user_id, name) DO UPDATE "
+            "SET name = EXCLUDED.name",
+            rows,
+        )
 
     async def _remove_accents(self, ctx: Context, member: discord.Member, accents: _UserAccentsType) -> None:
         # a special case. empty iterable means remove everything
         if not accents:
-            await self.bot.pg.fetchrow(
-                "DELETE FROM accents WHERE guild_id = $1 AND user_id = $2",
-                ctx.guild.id,  # type: ignore
-                member.id,
+            await ctx.db.execute(
+                "DELETE FROM accents WHERE guild_id = ? AND user_id = ?",
+                (
+                    ctx.guild.id,  # type: ignore
+                    member.id,
+                ),
             )
 
             self.set_user_accents(member, [])
@@ -286,13 +296,15 @@ class Accents(Cog, HookHost):
 
         self.set_user_accents(member, name_to_accent.values())
 
-        for accent in to_remove:
-            await self.bot.pg.fetchrow(
-                "DELETE FROM accents WHERE guild_id = $1 AND user_id = $2 AND name = $3",
+        rows = (
+            (
                 ctx.guild.id,  # type: ignore
                 member.id,
                 accent.name(),
             )
+            for accent in to_remove
+        )
+        ctx.db.executemany("DELETE FROM accents WHERE guild_id = ? AND user_id = ? AND name = ?", rows)
 
     async def _update_nick(self, ctx: Context) -> None:
         new_nick = ctx.me.name

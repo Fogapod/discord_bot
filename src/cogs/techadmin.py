@@ -6,6 +6,7 @@ import copy
 import io
 import random
 import re
+import sqlite3
 import textwrap
 import traceback
 
@@ -13,7 +14,6 @@ from contextlib import redirect_stdout
 from pprint import pformat
 from typing import Any, Optional, Union
 
-import asyncpg
 import discord
 
 from discord.ext import commands
@@ -167,8 +167,9 @@ class TechAdmin(Cog):
 
         async with ctx.typing():
             try:
-                data = await ctx.pg.fetch(query)
-            except asyncpg.PostgresError as e:
+                db = ctx.db.execute(query)
+                data = db.fetchall()
+            except sqlite3.Error as e:
                 return await ctx.send(f"Error: **{type(e).__name__}**: `{e}`")
 
             if not data:
@@ -266,7 +267,7 @@ async def __pink_eval__():
 
         return result
 
-    async def _sql_table(self, result: list[asyncpg.Record]) -> str:
+    async def _sql_table(self, result: list[sqlite3.Row]) -> str:
         # convert to list because otherwise iterator is exhausted
         columns = list(result[0].keys())
 
@@ -274,7 +275,7 @@ async def __pink_eval__():
         col_widths = [0 if no_named_columns and c == PG_UNNAMED_COLUMN else len(c) for c in columns]
 
         for row in result:
-            for i, value in enumerate(row.values()):
+            for i, value in enumerate(row):
                 col_widths[i] = max((col_widths[i], len(str(value))))
 
         if no_named_columns:
@@ -289,8 +290,7 @@ async def __pink_eval__():
             return str(value).replace("\n", "\\n")
 
         body = "\n".join(
-            " | ".join(f"{sanitize_value(value):<{col_widths[i]}}" for i, value in enumerate(row.values()))
-            for row in result
+            " | ".join(f"{sanitize_value(value):<{col_widths[i]}}" for i, value in enumerate(row)) for row in result
         )
 
         return f"```prolog\n{header}{body}```"

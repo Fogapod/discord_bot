@@ -5,6 +5,4 @@ mypy
 ruff
 
 # typing
-# https://github.com/MagicStack/asyncpg/issues/569
-asyncpg-stubs
 types-redis

@@ -205,14 +205,6 @@ class BotSettings(BaseModel):
     prefix: str
 
 
-class DatabaseSettings(BaseModel):
-    host: str
-    port: int
-    user: str
-    password: str
-    database: str
-
-
 class RedisSettings(BaseModel):
     host: str = "127.0.0.1"
     port: int = 6379
@@ -228,12 +220,16 @@ class OwnersSettings(BaseModel):
     mode: Literal["combine", "overwrite"] = "combine"
 
 
+class Db(BaseModel):
+    path: Path
+
+
 class Settings(BaseSettings):
     bot: BotSettings
-    database: DatabaseSettings
     redis: RedisSettings
     sentry: SentrySettings
     owners: OwnersSettings
+    db: Db
 
     class Config(BaseConfig):
         env_prefix = "PINK_BOT"

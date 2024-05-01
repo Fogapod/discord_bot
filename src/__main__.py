@@ -3,7 +3,6 @@ import logging
 import platform
 
 import aiohttp
-import asyncpg
 import discord
 import redis.asyncio as redis
 
@@ -39,13 +38,6 @@ async def main() -> None:
         log.warning("skipped sentry initialization")
 
     session = aiohttp.ClientSession(headers={"user-agent": "PINK bot"})
-    pg = asyncpg.create_pool(
-        host=settings.database.host,
-        port=settings.database.port,
-        user=settings.database.user,
-        password=settings.database.password,
-        database=settings.database.database,
-    )
     rd: redis.Redis[bytes] = redis.Redis(
         host=settings.redis.host,
         port=settings.redis.port,
@@ -54,7 +46,6 @@ async def main() -> None:
 
     pink = PINK(
         session=session,
-        pg=pg,
         redis=rd,
         version=version,
         command_prefix=settings.bot.prefix,
@@ -70,7 +61,7 @@ async def main() -> None:
         ),
     )
 
-    async with pink, session, pg, rd:
+    async with pink, session, rd:
         await pink.start(settings.bot.token)
 
 

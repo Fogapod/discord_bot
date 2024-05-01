@@ -2,13 +2,6 @@
 token = "NTU2NTI4MDcwNjMxMjI3NDAy.XI1xJF.xl6iW44dagmEjnZVjzBHTL_w-pM"
 prefix = "!"
 
-[database]
-host = "localhost"
-port = 10700
-user = "pink"
-password = "pass"
-database = "pink"
-
 [redis]
 host = "127.0.0.1"
 port = 6379
@@ -22,6 +15,9 @@ dsn = "https://ABCD@o546834.example.com/123"
 ids = [439205512425504771, 80528701850124288]
 # either "combine"  or "overwrite"
 mode = "combine"
+
+[db]
+path = "/data/pink.db"
 
 [cog.servermyserver]
 server = 391987311468085248

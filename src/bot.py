@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import re
+import sqlite3
 import time
 
 from collections.abc import Iterator
@@ -10,7 +11,6 @@ from pathlib import Path
 from typing import Any, Optional
 
 import aiohttp
-import asyncpg
 import discord
 import sentry_sdk
 
@@ -45,21 +45,26 @@ class Prefix:
         self.prefix_re = mention_or_prefix_regex(bot.user.id, self.prefix)  # type: ignore
 
     @classmethod
-    def from_pg(cls, bot: PINK, data: asyncpg.Record) -> Prefix:
+    def from_db(cls, bot: PINK, data: sqlite3.Row) -> Prefix:
         return cls(bot, prefix=data["prefix"])
 
-    async def write(self, ctx: Context) -> None:
-        await ctx.pg.fetchrow(
-            "INSERT INTO prefixes (guild_id, prefix) VALUES ($1, $2) "
+    def write(self, ctx: Context) -> None:
+        ctx.db.execute(
+            "INSERT INTO prefixes (guild_id, prefix) VALUES (?, ?) "
             "ON CONFLICT (guild_id) DO UPDATE "
             "SET prefix = EXCLUDED.prefix",
-            ctx.guild.id,  # type: ignore
-            self.prefix,
+            (
+                ctx.guild.id,  # type: ignore
+                self.prefix,
+            ),
         )
 
     @staticmethod
-    async def delete(ctx: Context) -> None:
-        await ctx.pg.fetchrow("DELETE FROM prefixes WHERE guild_id = $1", ctx.guild.id)  # type: ignore
+    def delete(ctx: Context) -> None:
+        ctx.db.execute(
+            "DELETE FROM prefixes WHERE guild_id = ?",
+            (ctx.guild.id,),  # type: ignore
+        )
 
     def __repr__(self) -> str:
         return f"<{type(self).__name__} prefix={self.prefix}>"
@@ -70,7 +75,6 @@ class PINK(commands.Bot):
         self,
         *,
         session: aiohttp.ClientSession,
-        pg: asyncpg.Pool[asyncpg.Record],
         redis: Redis[bytes],
         version: Version,
         **kwargs: Any,
@@ -78,30 +82,49 @@ class PINK(commands.Bot):
         super().__init__(**kwargs)
 
         self.session = session
-        self.pg = pg
         self.redis = redis
         self.version = version
 
         self.prefixes: dict[int, Prefix] = {}
         self.owner_ids: set[int] = set()
 
+    def init_db(self) -> None:
+        with Path("schema.sql").open() as f:
+            db = self.db_cursor()
+            db.executescript(f.read())
+
+    def db_cursor(self) -> sqlite3.Cursor:
+        conn = sqlite3.connect(settings.db.path)
+        conn.isolation_level = None
+        conn.execute("PRAGMA journal_mode=wal")
+        conn.execute("PRAGMA foreign_keys=ON")
+        conn.row_factory = sqlite3.Row
+
+        return conn.cursor()
+
     # --- overloads ---
     async def setup_hook(self) -> None:
         self.launched_at = time.monotonic()
 
-        await self._load_prefixes()
+        self.init_db()
 
-        await self._load_cogs()
-
-        asyncio.gather(
+        await asyncio.gather(
+            self._load_prefixes(),
+            self._load_cogs(),
             self._fetch_owners(),
         )
 
     async def _load_prefixes(self) -> None:
-        self._default_prefix_re = mention_or_prefix_regex(self.user.id, settings.bot.prefix)  # type: ignore
+        self._default_prefix_re = mention_or_prefix_regex(
+            self.user.id,  # type: ignore
+            settings.bot.prefix,
+        )
 
-        for guild in await self.pg.fetch("SELECT guild_id, prefix FROM prefixes"):
-            self.prefixes[guild["guild_id"]] = Prefix.from_pg(self, guild)
+        db = self.db_cursor()
+        db.execute("SELECT guild_id, prefix FROM prefixes")
+
+        for guild in db.fetchall():
+            self.prefixes[guild["guild_id"]] = Prefix.from_db(self, guild)
 
     async def _fetch_owners(self) -> None:
         owners = settings.owners.ids.copy()

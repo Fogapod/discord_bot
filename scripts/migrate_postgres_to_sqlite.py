@@ -22,11 +22,11 @@ async def main() -> None:
     with Path("schema.sql").open() as f:
         db.executescript(f.read())
 
-    prefixes = [r async for r in pg.fetch("SELECT * FROM prefixes")]
+    prefixes = await pg.fetch("SELECT * FROM prefixes")
     print("inserting", len(prefixes), "prefixes")
     db.executemany("INSERT INTO prefixes (guild_id, prefix) VALUES (?, ?)", prefixes)
 
-    accents = [r async for r in pg.fetch("SELECT * FROM accents")]
+    accents = await pg.fetch("SELECT * FROM accents")
     print("inserting", len(accents), "accents")
     db.executemany("INSERT INTO accents (guild_id, user_id, name, severity) VALUES (?, ?, ?, ?)", accents)
 

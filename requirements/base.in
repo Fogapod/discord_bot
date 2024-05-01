@@ -3,9 +3,6 @@
 # discord framework/extensions
 discord.py[speed]>=2.0
 
-# databases
-asyncpg
-
 # api libs for commands
 googletrans-py==4.0.0
 
@@ -18,7 +15,7 @@ Pillow
 # error reporting
 sentry-sdk
 
-# perfomance
+# performance
 orjson
 uvloop
 

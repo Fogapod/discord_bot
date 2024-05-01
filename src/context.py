@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import io
+import sqlite3
 
 from typing import TYPE_CHECKING, Any, Optional
 
 import aiohttp
-import asyncpg
 import discord
 
 from discord.ext import commands
@@ -32,8 +32,8 @@ class Context(commands.Context["PINK"], Hookable):
         self._prefix = None if value is None else value.rstrip()
 
     @property
-    def pg(self) -> asyncpg.Pool[asyncpg.Record]:
-        return self.bot.pg
+    def db(self) -> sqlite3.Cursor:
+        return self.bot.db_cursor()
 
     @property
     def redis(self) -> Redis[bytes]:
