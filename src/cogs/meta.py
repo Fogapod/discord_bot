@@ -137,7 +137,7 @@ class Meta(Cog):
             module_aliases.get,
             ctx.bot.get_cog,
         ):
-            if (obj := getter(object_name)) is not None:  # type: ignore[operator]
+            if (obj := getter(object_name)) is not None:
                 break
         else:
             return ()

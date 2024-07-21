@@ -156,7 +156,7 @@ class FlyDrawer:
             img = self._cached_flies[name]
         else:
             if self.fly_src:
-                img = self.fly_src.rotate(angle, expand=True)  # type: ignore
+                img = self.fly_src.rotate(angle, expand=True)
             else:
                 img = Image.open(Path(__file__).parent / "templates" / "flies" / f"{name}.png")
 
@@ -180,7 +180,7 @@ class FlyDrawer:
         for fly in self.flies:
             fly._modified = False
             img = self._get_fly_image(fly.angle, fly.state)
-            overlay.alpha_composite(img, (fly.pos_x, fly.pos_y))  # type: ignore
+            overlay.alpha_composite(img, (fly.pos_x, fly.pos_y))
 
         self._frames.append(overlay)
 

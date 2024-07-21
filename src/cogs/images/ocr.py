@@ -9,6 +9,7 @@ from io import BytesIO
 from typing import Any, ClassVar, Optional
 
 from PIL import Image as PilImage, ImageDraw, ImageFilter, ImageFont
+from PIL.Image import Resampling
 from pink_accents import Accent
 
 from src.context import Context
@@ -40,7 +41,7 @@ _VerticesType = tuple[_VertexType, _VertexType, _VertexType, _VertexType]
 OCR_API_URL = "https://content-vision.googleapis.com/v1/images:annotate"
 OCR_RATELIMIT = 30
 
-FONT = ImageFont.truetype("DejaVuSans.ttf")  # type: ignore
+FONT = ImageFont.truetype("DejaVuSans.ttf")
 
 _ocr_queue: asyncio.Queue[tuple[asyncio.Future[dict[str, Any]], bytes, Context]] = asyncio.Queue(5)
 _task: Optional[asyncio.Task[Any]] = None
@@ -420,7 +421,7 @@ def _draw_trocr(src: PilImage.Image, fields: Sequence[TextField]) -> BytesIO:
         cropped = src.crop(field.coords_padded)
 
         # NOTE: next line causes segfaults if coords are wrong, debug from here
-        blurred = cropped.filter(ImageFilter.GaussianBlur(10))  # type: ignore
+        blurred = cropped.filter(ImageFilter.GaussianBlur(10))
 
         # Does not work anymore for some reason, black stroke is good anyway
         # field.inverted_avg_color = ImageOps.invert(
@@ -432,7 +433,7 @@ def _draw_trocr(src: PilImage.Image, fields: Sequence[TextField]) -> BytesIO:
     for field in fields:
         # TODO: figure out how to fit text into boxes with Pillow without creating
         # extra images
-        font = FONT.font_variant(size=field.font_size)
+        font = FONT.font_variant(size=field.font_size)  # type: ignore[no-untyped-call]
 
         left, top, right, bottom = font.getbbox(field.text, stroke_width=field.stroke_width)
         text_im = PilImage.new("RGBA", size=(right - left, bottom - top))
@@ -446,13 +447,13 @@ def _draw_trocr(src: PilImage.Image, fields: Sequence[TextField]) -> BytesIO:
             stroke_fill=(0, 0, 0),
         )
 
-        src.alpha_composite(  # type: ignore
-            text_im.resize(  # type: ignore
+        src.alpha_composite(
+            text_im.resize(
                 (
                     min((text_im.width, field.width)),
                     min((text_im.height, field.height)),
                 ),
-            ).rotate(field.angle, expand=True, resample=PilImage.BICUBIC),  # type: ignore
+            ).rotate(field.angle, expand=True, resample=Resampling.BICUBIC),
             field.coords_padded[:2],
         )
 
