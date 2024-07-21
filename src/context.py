@@ -19,9 +19,7 @@ if TYPE_CHECKING:
 __all__ = ("Context",)
 
 
-class Context(commands.Context["PINK"], Hookable):
-    bot: PINK
-
+class Context(commands.Context[PINK], Hookable):
     @property
     def prefix(self) -> Optional[str]:
         return self._prefix

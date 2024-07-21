@@ -269,7 +269,7 @@ class Accents(Cog, HookHost):
     async def _remove_accents(self, ctx: Context, member: discord.Member, accents: _UserAccentsType) -> None:
         # a special case. empty iterable means remove everything
         if not accents:
-            await ctx.db.execute(
+            ctx.db.execute(
                 "DELETE FROM accents WHERE guild_id = ? AND user_id = ?",
                 (
                     ctx.guild.id,  # type: ignore
