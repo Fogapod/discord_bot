@@ -8,7 +8,7 @@ port = 6379
 db = 0
 
 [sentry]
-dsn = "https://ABCD@o546834.example.com/123"
+dsn = "https://ABCD@o546834.example.org/123"
 
 [owners]
 # owners are fetched from application info. use this to to add extra owners or override application owners completely

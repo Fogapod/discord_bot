@@ -1,8 +1,0 @@
--r base.txt
-
-# linting
-mypy
-ruff
-
-# typing
-types-redis

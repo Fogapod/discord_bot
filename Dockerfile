@@ -1,4 +1,4 @@
-FROM rust:alpine as accents_builder
+FROM rust:1.80-alpine3.20 as accents_builder
 
 WORKDIR /build
 
@@ -8,15 +8,16 @@ RUN : \
     && apk add --no-cache musl-dev \
     && cargo build --features cli --release
 
-FROM python:3.12-alpine3.19
+FROM python:3.12-alpine3.20
 
 ENV PYTHONUNBUFFERED=yes \
-    PYTHONDONTWRITEBYTECODE=yes \
-    PIP_ROOT_USER_ACTION=ignore
+    PYTHONDONTWRITEBYTECODE=yes
 
 WORKDIR /code
 
-COPY requirements/base.txt requirements.txt
+COPY --from=ghcr.io/astral-sh/uv:0.3.3 /uv /bin/uv
+COPY uv.lock .
+COPY pyproject.toml .
 
 RUN : \
     && apk add --no-cache \
@@ -24,10 +25,9 @@ RUN : \
         gifsicle \
         # Font for trocr
         ttf-dejavu \
-    && pip install uv --no-cache-dir --disable-pip-version-check \
-    && uv pip install -r requirements.txt --no-cache --system \
-    && uv pip uninstall uv --system \
-    && rm requirements.txt
+    && uv sync --frozen --no-cache \
+    && rm uv.lock pyproject.toml \
+    && rm /bin/uv
 
 COPY --from=accents_builder /build/target/release/sayit /usr/bin/sayit
 
@@ -49,4 +49,4 @@ USER pink
 
 COPY --chown=pink:pink . .
 
-ENTRYPOINT ["python", "-m", "src"]
+ENTRYPOINT ["/code/.venv/bin/python", "-m", "src"]

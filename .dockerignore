@@ -1,6 +1,7 @@
 *
 !/src
-!/requirements/base.txt
+!/uv.lock
+!/pyproject.toml
 !/accents
 !/accents2
 !/schema.sql
