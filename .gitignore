@@ -6,11 +6,10 @@ settings.toml
 !/example.settings.toml
 
 # cache
-__pycache__
+__pycache__/
 /target
-/.venv
-/.mypy_cache
-/.pytest_cache
+/.venv/
+*.egg-info/
 
 # db
 /pink.db

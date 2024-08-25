@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-import asyncio
 import base64
 import re
 import warnings
 
-from asyncio import TimeoutError
 from enum import Enum, auto
 from io import BytesIO
 from typing import Any, Literal, Optional
@@ -448,7 +446,7 @@ class Image:
         max_content_length: int = 8000000,
     ) -> bytes:
         try:
-            async with ctx.session.get(url, timeout=timeout) as r:
+            async with ctx.session.get(url, timeout=aiohttp.ClientTimeout(total=timeout)) as r:
                 if r.status != 200:
                     raise PINKError(f"bad status code: **{r.status}**")
 
@@ -470,7 +468,7 @@ class Image:
                 return await r.read()
         except PINKError:
             raise
-        except (Exception, asyncio.TimeoutError) as e:
+        except (Exception, TimeoutError) as e:
             error = "Download error: "
             if isinstance(e, TimeoutError):
                 error += f"timeout reached: **{timeout}s**"

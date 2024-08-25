@@ -1,9 +1,8 @@
-*
-!/src
+**/*
+
+!/src/**/*.py
 !/uv.lock
 !/pyproject.toml
 !/accents
-!/accents2
+!/accents2/
 !/schema.sql
-
-**/__pycache__

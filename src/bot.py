@@ -27,7 +27,7 @@ log = logging.getLogger(__name__)
 def mention_or_prefix_regex(user_id: int, prefix: str) -> re.Pattern[str]:
     choices = [re.escape(prefix), rf"<@!?{user_id}>"]
 
-    return re.compile(rf"(?:{'|'.join(choices)})\s*", re.I)
+    return re.compile(rf"(?:{'|'.join(choices)})\s*", re.IGNORECASE)
 
 
 class Prefix:

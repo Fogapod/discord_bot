@@ -228,9 +228,7 @@ def draw_flies(
     speed: int,
     amount: int,
 ) -> Path:
-    flies = []
-    for _ in range(amount):
-        flies.append(Fly(speed=speed))
+    flies = [Fly(speed=speed) for _ in range(amount)]
 
     filename = FlyDrawer(src, flies, steps=steps, fly_src=fly_src).run()
     src.close()

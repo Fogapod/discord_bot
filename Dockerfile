@@ -25,8 +25,7 @@ RUN : \
         gifsicle \
         # Font for trocr
         ttf-dejavu \
-    && uv sync --frozen --no-cache \
-    && rm uv.lock pyproject.toml \
+    && uv sync --frozen --no-cache --no-dev \
     && rm /bin/uv
 
 COPY --from=accents_builder /build/target/release/sayit /usr/bin/sayit
@@ -48,5 +47,6 @@ RUN addgroup -g $GID -S pink \
 USER pink
 
 COPY --chown=pink:pink . .
+RUN rm uv.lock pyproject.toml
 
 ENTRYPOINT ["/code/.venv/bin/python", "-m", "src"]

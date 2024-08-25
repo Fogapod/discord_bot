@@ -4,7 +4,7 @@ import random
 
 from collections import defaultdict
 from collections.abc import Iterable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Optional
 
 import discord
@@ -33,7 +33,7 @@ class DateConverter:
             except ValueError:
                 continue
 
-            return parsed.replace(tzinfo=timezone.utc)
+            return parsed.replace(tzinfo=UTC)
 
         raise ValueError("Could not parse date")
 
@@ -294,10 +294,13 @@ class Fun(Cog):
             indexes = [i for i, _ in group]
             group_words = [w for _, w in group]
 
-            for i, word in zip(indexes, random.sample(group_words, k=len(group_words))):
+            for i, word in zip(indexes, random.sample(group_words, k=len(group_words)), strict=True):
                 # replace and copy case for each letter from old value
                 words[i] = "".join(
-                    [c_new.upper() if c_old.isupper() else c_new.lower() for c_new, c_old in zip(word, words[i])]
+                    [
+                        c_new.upper() if c_old.isupper() else c_new.lower()
+                        for c_new, c_old in zip(word, words[i], strict=True)
+                    ]
                 )
 
         first, second = (words, nonwords) if word_was_first else (nonwords, words)
