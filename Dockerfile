@@ -1,4 +1,4 @@
-FROM rust:1.80-alpine3.20 as accents_builder
+FROM rust:1.80-alpine3.20 AS accents_builder
 
 WORKDIR /build
 
