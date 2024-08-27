@@ -9,7 +9,7 @@ This is a personal discord bot that has a few commands related to Unitystation. 
 Rough instructions:
 
 Building podman/docker image: `podman build . -t fogapod/pink` (no tricks)  
-Running podman/docker image: `podman run --rm --name pink -v $(pwd)/settings.toml:/code/settings.toml -v $(pwd)/pink.db:/code/pink.db fogapod/pink`
+Running podman/docker image: `podman run --rm --name pink -v $(pwd)/settings.toml:/code/settings.toml -v $(pwd)/pink.db:/data/pink.db fogapod/pink`
 
 Running on production:
 

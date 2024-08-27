@@ -15,18 +15,17 @@ ENV PYTHONUNBUFFERED=yes \
 
 WORKDIR /code
 
-COPY --from=ghcr.io/astral-sh/uv:0.3.3 /uv /bin/uv
-COPY uv.lock .
-COPY pyproject.toml .
+COPY --from=ghcr.io/astral-sh/uv:0.3.5 /uv /bin/uv
+COPY uv.lock pyproject.toml .
 
-RUN : \
+RUN --mount=type=cache,target=/root/.cache/uv : \
     && apk add --no-cache \
         # gif optimizer
         gifsicle \
         # Font for trocr
         ttf-dejavu \
-    && uv sync --frozen --no-cache --no-dev \
-    && rm /bin/uv
+    && uv sync --frozen --no-dev --link-mode=copy \
+    && rm /bin/uv pyproject.toml uv.lock
 
 COPY --from=accents_builder /build/target/release/sayit /usr/bin/sayit
 
@@ -46,7 +45,9 @@ RUN addgroup -g $GID -S pink \
 
 USER pink
 
-COPY --chown=pink:pink . .
-RUN rm uv.lock pyproject.toml
+COPY --chown=pink:pink src src
+COPY --chown=pink:pink accents2/examples accents2/examples
+COPY --chown=pink:pink accents accents
+COPY --chown=pink:pink schema.sql .
 
 ENTRYPOINT ["/code/.venv/bin/python", "-m", "src"]

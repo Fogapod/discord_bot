@@ -1,8 +1,11 @@
 **/*
 
-!/src/**/*.py
+!/src/
+!/accents/*.py
 !/uv.lock
 !/pyproject.toml
-!/accents
 !/accents2/
 !/schema.sql
+
+**/__pycache__/
+**/*.egg-info
