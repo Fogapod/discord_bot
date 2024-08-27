@@ -37,7 +37,7 @@ jobs:
       - name: Set up Python
         run: uv python install
       - name: install mypy
-        run: uv sync
+        run: uv sync --dev
       - name: pre-commit
         run: uv run pre-commit run --all-files
       - name: Minimize uv cache
