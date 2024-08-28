@@ -1,7 +1,6 @@
 [project]
 name = "PINK"
 version = "0.1.0"
-description = "Potato Is Not Kiwi"
 requires-python = "==3.12.*"
 dependencies = [
     "discord-py[speed]>=2.0",
@@ -15,11 +14,6 @@ dependencies = [
     "redis[hiredis]>=5.0.8",
     "yarl>=1.9.4",
 ]
-
-# a way to have virtual package until https://github.com/astral-sh/uv/pull/6585
-# is released
-[tool.uv.workspace]
-members = []
 
 [tool.uv]
 dev-dependencies = [

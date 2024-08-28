@@ -30,7 +30,7 @@ jobs:
           key: pre-commit|${{ env.PY }}|${{ hashFiles('.pre-commit-config.yaml') }}
       - uses: actions/checkout@v4
       - name: Set up uv
-        run: curl -LsSf https://astral.sh/uv/0.3.5/install.sh | sh
+        run: curl -LsSf https://astral.sh/uv/0.4.0/install.sh | sh
       - name: Set up Python
         run: uv python install
       - name: install dependencies
