@@ -51,4 +51,4 @@ COPY --chown=pink:pink accents2/examples accents2/examples
 COPY --chown=pink:pink accents accents
 COPY --chown=pink:pink schema.sql .
 
-ENTRYPOINT ["/code/.venv/bin/python", "-m", "src"]
+ENTRYPOINT ["python", "-m", "src"]
