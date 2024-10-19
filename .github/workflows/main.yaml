@@ -18,15 +18,15 @@ jobs:
           version: "0.4.24"
           enable-cache: true
 
+      - name: Install Python
+        run: uv python install
+
       - name: pre-commit cache key
         run: echo "PY=$(python -VV | sha256sum | cut -d' ' -f1)" >> $GITHUB_ENV
       - uses: actions/cache@v4
         with:
           path: ~/.cache/pre-commit
           key: pre-commit|${{ env.PY }}|${{ hashFiles('.pre-commit-config.yaml') }}
-
-      - name: Install Python
-        run: uv python install
 
       - name: install dependencies
         run: uv sync
