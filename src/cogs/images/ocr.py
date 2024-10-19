@@ -433,10 +433,10 @@ def _draw_trocr(src: PilImage.Image, fields: Sequence[TextField]) -> BytesIO:
     for field in fields:
         # TODO: figure out how to fit text into boxes with Pillow without creating
         # extra images
-        font = FONT.font_variant(size=field.font_size)  # type: ignore[no-untyped-call]
+        font = FONT.font_variant(size=field.font_size)
 
         left, top, right, bottom = font.getbbox(field.text, stroke_width=field.stroke_width)
-        text_im = PilImage.new("RGBA", size=(right - left, bottom - top))
+        text_im = PilImage.new("RGBA", size=(int(right - left), int(bottom - top)))
 
         ImageDraw.Draw(text_im).text(
             (0, 0),
