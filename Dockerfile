@@ -1,4 +1,4 @@
-FROM rust:1.80-alpine3.20 AS accents_builder
+FROM rust:1.82-alpine3.20 AS accents_builder
 
 WORKDIR /build
 
@@ -11,21 +11,22 @@ RUN : \
 FROM python:3.12-alpine3.20
 
 ENV PYTHONUNBUFFERED=yes \
-    PYTHONDONTWRITEBYTECODE=yes
+    PYTHONDONTWRITEBYTECODE=yes \
+    UV_LINK_MODE=copy
 
 WORKDIR /code
 
-COPY --from=ghcr.io/astral-sh/uv:0.4.0 /uv /bin/uv
-COPY uv.lock pyproject.toml .
-
-RUN --mount=type=cache,target=/root/.cache/uv : \
-    && apk add --no-cache \
+RUN --mount=from=ghcr.io/astral-sh/uv:0.4.24,source=/uv,target=/bin/uv \
+    --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    apk add --no-cache \
         # gif optimizer
         gifsicle \
         # Font for trocr
         ttf-dejavu \
-    && uv sync --frozen --no-dev --link-mode=copy \
-    && rm /bin/uv pyproject.toml uv.lock
+    # export requirements from uv.lock since uv does not support sync withour venv
+    && uv export --frozen --format requirements-txt --no-dev --quiet | uv pip install --system -r -
 
 COPY --from=accents_builder /build/target/release/sayit /usr/bin/sayit
 
